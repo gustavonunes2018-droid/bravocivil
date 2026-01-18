@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - V59 Gantt Engine</title>
+    <title>Bravo CIVIL - V60 Cloud Gantt</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,49 +17,59 @@
         .row-group { background: #f1f5f9 !important; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
         .critical-row { border-left: 4px solid #ef4444 !important; }
         
-        /* GANTT STYLES */
-        .gantt-container { display: grid; grid-template-columns: repeat(24, 40px); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; }
-        .gantt-day { background: white; height: 24px; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .bar-item { height: 12px; border-radius: 4px; background: #3b82f6; position: relative; }
-        .bar-critical { background: #ef4444 !important; }
+        /* GANTT */
+        .gantt-bar { height: 12px; border-radius: 4px; background: #3b82f6; position: relative; min-width: 2px; }
+        .bar-critical { background: #ef4444 !important; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
         .bar-group { background: #1e293b; height: 6px; border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
-        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
-            <h1 class="text-4xl font-black italic mb-2">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">V59 Gantt Engine</p>
-            <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl mb-4 outline-none" placeholder="Usuário">
-            <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl mb-6 outline-none" placeholder="Senha">
-            <button onclick="auth.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg">Entrar</button>
+        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm">
+            <h1 class="text-4xl font-black italic mb-2 text-center text-slate-900">Bravo<span class="text-blue-600">CIVIL</span></h1>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">V60 Cloud Sync</p>
+            <div class="space-y-4">
+                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Usuário">
+                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Senha">
+                <button onclick="auth.login()" id="btn-login" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg hover:bg-blue-700 transition-all">Entrar</button>
+            </div>
+            <p id="log-err" class="text-red-500 text-[10px] font-black mt-4 hidden text-center uppercase">Acesso Negado: Verifique Usuário/Senha</p>
+        </div>
+    </div>
+
+    <div id="page-manager" class="page bg-slate-50">
+        <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-black italic">Bravo<span class="text-blue-600">CIVIL</span></h1>
+            <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase">+ Novo Projeto</button>
+        </nav>
+        <div class="max-w-6xl mx-auto p-12">
+            <div id="grid-projects" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </div>
     </div>
 
     <div id="page-editor" class="page bg-white">
         <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50">
             <div class="flex items-center gap-4">
-                <h2 class="font-black italic uppercase">Bravo<span class="text-blue-600">CIVIL</span></h2>
+                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="arrow-left"></i></button>
+                <h2 id="edit-name" class="font-black italic uppercase text-sm">Editor</h2>
             </div>
             <div class="flex bg-slate-800 p-1 rounded-2xl">
                 <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">Planejamento</button>
-                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Fluxo de Caixa</button>
+                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Financeiro</button>
             </div>
-            <button onclick="location.reload()" class="text-slate-400 hover:text-white"><i data-lucide="log-out"></i></button>
+            <div class="w-8"></div>
         </header>
 
         <main class="p-6">
             <div id="v-table" class="view">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-black text-xs uppercase text-slate-400 flex items-center gap-2">
-                        Cronograma de Obra <span class="text-red-500 ml-4">• Caminho Crítico Ativo</span>
-                    </h3>
-                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-6 py-2.5 rounded-xl font-black uppercase shadow-lg">+ Etapa</button>
+                    <h3 class="font-black text-[10px] uppercase text-slate-400">Cronograma & Caminho Crítico</h3>
+                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-6 py-2 rounded-xl font-black uppercase shadow-lg">+ Etapa</button>
                 </div>
                 
-                <div class="grid grid-cols-12 gap-0 border rounded-2xl overflow-hidden shadow-sm">
-                    <div class="col-span-8 overflow-x-auto border-r">
+                <div class="flex border rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div class="w-2/3 overflow-x-auto border-r">
                         <table class="w-full text-xs">
                             <thead class="bg-slate-50 font-black uppercase text-slate-400 border-b">
                                 <tr>
@@ -75,63 +85,104 @@
                             <tbody id="tbody"></tbody>
                         </table>
                     </div>
-                    <div class="col-span-4 bg-slate-50 overflow-x-auto">
-                        <div id="gantt-header" class="flex border-b h-[41px]"></div>
-                        <div id="gantt-body" class="flex flex-col"></div>
+                    <div class="w-1/3 bg-slate-50/50 overflow-x-hidden relative">
+                        <div class="h-[41px] border-b bg-slate-100 flex items-center px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Timeline (Visual)</div>
+                        <div id="gantt-body"></div>
                     </div>
                 </div>
             </div>
 
             <div id="v-cash" class="view hidden">
                 <div class="bg-white p-8 rounded-[40px] border shadow-sm mb-6">
-                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6 tracking-widest text-center">Fluxo Financeiro Mensal</h3>
+                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6 text-center">Desembolso Mensal</h3>
                     <div class="h-[300px]"><canvas id="cash-chart"></canvas></div>
                 </div>
-                <div id="cash-panel" class="bg-white rounded-3xl border shadow-sm">
-                    <div class="p-6 border-b bg-slate-50 rounded-t-3xl font-black uppercase text-[10px] text-slate-500 flex justify-between">
-                        <span>Detalhamento do Desembolso</span>
-                        <span id="selected-month" class="text-blue-600 italic">Selecione um mês no gráfico</span>
-                    </div>
-                    <div id="cash-details" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <p class="col-span-2 text-center text-slate-300 italic py-8">Os custos de cada etapa aparecerão aqui ao clicar nas barras do gráfico.</p>
-                    </div>
+                <div id="cash-details" class="bg-slate-900 p-8 rounded-[40px] text-white min-h-[150px]">
+                    <h4 id="cash-title" class="text-blue-400 font-black uppercase text-xs mb-4 italic">Selecione um mês no gráfico</h4>
+                    <div id="cash-list" class="space-y-3"></div>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
+        const FB_URL = "https://bravo-civil-default-rtdb.firebaseio.com/";
+
         const auth = {
-            login() { 
-                if(document.getElementById('log-u').value === 'admin') { router.go('editor'); editor.recalc(); }
-                else { alert("Acesso negado"); }
+            ss: null,
+            async login() {
+                const u = document.getElementById('log-u').value;
+                const p = document.getElementById('log-p').value;
+                const btn = document.getElementById('btn-login');
+                btn.innerText = "Validando...";
+                
+                try {
+                    const res = await fetch(`${FB_URL}users.json`);
+                    const users = await res.json();
+                    let found = null;
+                    for (let id in users) {
+                        if (users[id].u === u && users[id].p === p) { found = { ...users[id], id }; break; }
+                    }
+
+                    if (found) {
+                        this.ss = found;
+                        await projectManager.load();
+                        router.go('manager');
+                    } else {
+                        document.getElementById('log-err').classList.remove('hidden');
+                        btn.innerText = "Entrar";
+                    }
+                } catch (e) { alert("Erro de conexão."); btn.innerText = "Entrar"; }
             }
         };
 
         const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); }};
 
-        const editor = {
-            db: [
-                {uuid:'m', name:'OBRA MESTRE', type:'master', cost:0, start:'2024-01-01'},
-                {uuid:'g1', name:'INFRAESTRUTURA', type:'group', parent:'m', cost:0},
-                {uuid:'t1', name:'Locação da Obra', type:'item', parent:'g1', cost:5000, start:'2024-01-05', duration:5},
-                {uuid:'t2', name:'Escavação', type:'item', parent:'g1', cost:12000, duration:10, pred:['t1']}
-            ],
-            iMap: {}, uMap: {},
+        const projectManager = {
+            all: [],
+            path() { return `db_${this.authId()}`; },
+            authId() { return auth.ss.role === 'admin' ? 'admin' : (auth.ss.parentId || auth.ss.id); },
+            async load() {
+                const res = await fetch(`${FB_URL}${this.path()}.json`);
+                this.all = await res.json() || [];
+                this.render();
+            },
+            async save() { await fetch(`${FB_URL}${this.path()}.json`, { method:'PUT', body: JSON.stringify(this.all) }); },
+            render() {
+                const g = document.getElementById('grid-projects'); g.innerHTML = '';
+                this.all.forEach(p => {
+                    g.innerHTML += `<div class="bg-white p-8 rounded-[35px] shadow-sm border-2 border-transparent hover:border-blue-500 cursor-pointer" onclick="editor.open('${p.id}')">
+                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3>
+                    <p class="text-[10px] font-black text-slate-400 mt-2 uppercase">Abrir Projeto</p></div>`;
+                });
+            },
+            async create() {
+                const n = prompt("Nome da Obra:"); if(!n) return;
+                this.all.push({id: 'p'+Date.now(), name: n, data: [{uuid:'m', name: n.toUpperCase(), type:'master', cost:0, start: new Date().toISOString().split('T')[0]}]});
+                await this.save(); this.render();
+            }
+        };
 
+        const editor = {
+            curr: null, db: [], iMap: {}, uMap: {},
+            open(id) { 
+                this.curr = id; this.db = projectManager.all.find(x=>x.id===id).data;
+                document.getElementById('edit-name').innerText = projectManager.all.find(x=>x.id===id).name;
+                router.go('editor'); this.recalc(); 
+            },
             recalc() {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
-
-                // Reset e Cálculo CPM (Caminho Crítico Simplificado)
-                this.db.forEach(t => { 
+                
+                // Cálculo de Datas e Dependências
+                this.db.forEach(t => {
                     t.isCritical = false;
                     if(t.type === 'item') {
                         if(t.pred?.length) {
                             let maxEnd = "";
                             t.pred.forEach(pid => {
                                 const p = this.db.find(x=>x.uuid === pid);
-                                if(p && (!maxEnd || p.end > maxEnd)) maxEnd = p.end;
+                                if(p && p.end > maxEnd) maxEnd = p.end;
                             });
                             if(maxEnd) t.start = this.addD(maxEnd, 1);
                         }
@@ -139,94 +190,72 @@
                     }
                 });
 
-                // Identificar o fim do projeto para achar o crítico
-                const projectEnd = [...this.db].filter(x=>x.end).sort((a,b)=>b.end.localeCompare(a.end))[0]?.end;
-                this.db.forEach(t => {
-                    if(t.type==='item' && t.end === projectEnd) t.isCritical = true;
-                });
-                // Volta (Backward)
-                for(let i=this.db.length-1; i>=0; i--) {
-                    const t = this.db[i];
-                    const successors = this.db.filter(x=>x.pred?.includes(t.uuid));
-                    if(successors.some(s=>s.isCritical)) t.isCritical = true;
-                }
+                // Caminho Crítico (Simplificado)
+                const lastEnd = [...this.db].filter(x=>x.end).sort((a,b)=>b.end.localeCompare(a.end))[0]?.end;
+                this.db.forEach(t => { if(t.end === lastEnd) t.isCritical = true; });
 
-                this.render();
+                this.render(); this.autoSave();
             },
-
             addD(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
-
             render() {
                 const b = document.getElementById('tbody'); b.innerHTML = '';
                 const gb = document.getElementById('gantt-body'); gb.innerHTML = '';
-                
                 this.db.forEach((t, i) => {
-                    const isG = t.type === 'group';
-                    const isM = t.type === 'master';
+                    const isG = t.type==='group', isM = t.type==='master';
                     if(isM) return;
-
-                    // Render Tabela
                     b.innerHTML += `<tr class="${isG?'row-group':''} ${t.isCritical?'critical-row':''} border-b">
                         <td class="p-3 text-center opacity-30 font-bold">${i+1}</td>
-                        <td class="p-3"><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.isCritical?'text-red-500':''}"></td>
-                        <td class="p-3 text-right"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${!isG?'':'disabled'}></td>
-                        <td class="p-3 text-center"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${t.pred?.length?'disabled':''}></td>
-                        <td class="p-3 text-center"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center"></td>
-                        <td class="p-3 text-center"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-bold text-blue-600"></td>
-                        <td class="p-3"><button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button></td>
+                        <td><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.isCritical?'text-red-500':''}"></td>
+                        <td><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right"></td>
+                        <td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${t.pred?.length?'disabled':''}></td>
+                        <td><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center"></td>
+                        <td><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-bold text-blue-600"></td>
+                        <td><button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button></td>
                     </tr>`;
-
-                    // Render Gantt (Visual Simplificado 30 dias)
-                    const startDay = t.start ? new Date(t.start+"T00:00:00").getDate() : 1;
-                    const width = (t.duration || 1) * 10; 
-                    gb.innerHTML += `<div class="h-[41px] flex items-center px-2 border-b">
-                        <div class="${isG?'bar-group':'bar-item'} ${t.isCritical?'bar-critical':''}" style="margin-left:${startDay*2}px; width:${width}px"></div>
+                    
+                    // Gantt
+                    const margin = t.start ? (new Date(t.start+"T00:00:00").getDate() * 2) : 0;
+                    gb.innerHTML += `<div class="h-[41px] flex items-center px-4 border-b">
+                        <div class="${isG?'bar-group':'gantt-bar'} ${t.isCritical?'bar-critical':''}" style="margin-left:${margin}px; width:${(t.duration||1)*5}px"></div>
                     </div>`;
                 });
                 lucide.createIcons();
             },
-
             renderCash() {
                 const ctx = document.getElementById('cash-chart').getContext('2d');
                 if(window.cashCh) window.cashCh.destroy();
-                
-                const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
                 const data = Array(12).fill(0);
-                const details = Array.from({length:12}, () => []);
+                const items = Array.from({length:12}, () => []);
 
-                this.db.filter(t=>t.type==='item' && t.start).forEach(t => {
+                this.db.filter(t=>t.cost > 0 && t.start).forEach(t => {
                     const m = new Date(t.start+"T00:00:00").getMonth();
-                    data[m] += parseFloat(t.cost) || 0;
-                    details[m].push({n: t.name, v: t.cost});
+                    data[m] += parseFloat(t.cost);
+                    items[m].push(t);
                 });
 
                 window.cashCh = new Chart(ctx, {
                     type:'bar',
-                    data: { labels: months, datasets:[{label:'Desembolso', data, backgroundColor:'#3b82f6', borderRadius:10}]},
+                    data: { labels, datasets:[{label:'Custo Mensal', data, backgroundColor:'#3b82f6', borderRadius:8}]},
                     options: {
-                        onClick: (e, elements) => {
-                            if(elements.length > 0) {
-                                const i = elements[0].index;
-                                document.getElementById('selected-month').innerText = months[i] + " de 2024";
+                        onClick: (e, el) => {
+                            if(el.length) {
+                                const i = el[0].index;
+                                document.getElementById('cash-title').innerText = `Detalhamento: ${labels[i]}`;
                                 let h = '';
-                                details[i].forEach(it => h += `<div class="p-4 bg-slate-50 rounded-xl flex justify-between border"><b>${it.n}</b><span class="text-blue-600 font-black">R$ ${it.v.toLocaleString()}</span></div>`);
-                                document.getElementById('cash-details').innerHTML = h || '<p class="col-span-2 text-center py-8">Sem gastos neste mês.</p>';
+                                items[i].forEach(it => h+= `<div class="flex justify-between border-b border-slate-800 pb-2 text-[10px]"><span>${it.name}</span><b>R$ ${parseFloat(it.v||it.cost).toLocaleString()}</b></div>`);
+                                document.getElementById('cash-list').innerHTML = h || 'Sem custos.';
                             }
                         }
                     }
                 });
             },
-
             upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
             updPr(u,v) { const t=this.db.find(x=>x.uuid===u); t.pred=v.split(',').map(n=>this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
             addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', cost:0}); this.recalc(); },
-            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
-            rem(u) { if(u!=='m') { this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); } },
-            switch(v) {
-                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
-                document.getElementById('v-'+v).classList.remove('hidden');
-                if(v==='cash') this.renderCash();
-            }
+            rem(u) { this.db=this.db.filter(x=>x.uuid!==u); this.recalc(); },
+            switch(v) { document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden')); document.getElementById('v-'+v).classList.remove('hidden'); if(v==='cash') this.renderCash(); },
+            async autoSave() { const i = projectManager.all.findIndex(x=>x.id===this.curr); if(i!==-1){ projectManager.all[i].data=this.db; await projectManager.save(); } }
         };
     </script>
 </body>
