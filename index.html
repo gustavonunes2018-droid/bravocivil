@@ -3,106 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - V60 Cloud Gantt</title>
+    <title>Bravo CIVIL - Ultimate V61</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; }
         .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; }
         .page.active { display: block; }
-        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; }
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; }
         .input-cell:focus { border-color: #3b82f6; background: white; }
-        .row-group { background: #f1f5f9 !important; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
-        .critical-row { border-left: 4px solid #ef4444 !important; }
-        
-        /* GANTT */
-        .gantt-bar { height: 12px; border-radius: 4px; background: #3b82f6; position: relative; min-width: 2px; }
-        .bar-critical { background: #ef4444 !important; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
-        .bar-group { background: #1e293b; height: 6px; border-radius: 2px; }
+        .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
+        .row-group { background: #e2e8f0 !important; font-weight: 700; }
+        .row-critical { border-left: 4px solid #ef4444 !important; }
+        .is-critical { color: #ef4444 !important; font-weight: 900; }
+        .baseline-text { font-size: 9px; color: #94a3b8; font-style: italic; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; }
+        .modal.active { display:flex; }
+        .card-dash { background: white; padding: 20px; border-radius: 24px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
     <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
-        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm">
-            <h1 class="text-4xl font-black italic mb-2 text-center text-slate-900">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 text-center">V60 Cloud Sync</p>
-            <div class="space-y-4">
-                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Usuário">
-                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Senha">
-                <button onclick="auth.login()" id="btn-login" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg hover:bg-blue-700 transition-all">Entrar</button>
+        <div class="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center">
+            <h1 class="text-4xl font-black italic mb-2 text-slate-900">Bravo<span class="text-blue-600">CIVIL</span></h1>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10">Ultimate Engine v61</p>
+            <div class="space-y-4 mb-8">
+                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Usuário">
+                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Senha">
             </div>
-            <p id="log-err" class="text-red-500 text-[10px] font-black mt-4 hidden text-center uppercase">Acesso Negado: Verifique Usuário/Senha</p>
+            <button onclick="auth.login()" id="btn-entrar" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-xl hover:bg-blue-700 transition-all">Entrar</button>
+            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase">Acesso Negado</p>
         </div>
     </div>
 
-    <div id="page-manager" class="page bg-slate-50">
-        <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+    <div id="page-manager" class="page">
+        <nav class="bg-white border-b px-8 py-5 flex justify-between items-center sticky top-0 z-10">
             <h1 class="text-xl font-black italic">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase">+ Novo Projeto</button>
+            <div class="flex gap-4">
+                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase shadow-lg">+ Novo Projeto</button>
+                <button onclick="auth.logout()" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="log-out"></i></button>
+            </div>
         </nav>
-        <div class="max-w-6xl mx-auto p-12">
+        <div class="max-w-7xl mx-auto p-12">
             <div id="grid-projects" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </div>
     </div>
 
     <div id="page-editor" class="page bg-white">
-        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+        <header class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center sticky top-0 z-50">
             <div class="flex items-center gap-4">
-                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="arrow-left"></i></button>
+                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-xl"><i data-lucide="chevron-left"></i></button>
                 <h2 id="edit-name" class="font-black italic uppercase text-sm">Editor</h2>
             </div>
-            <div class="flex bg-slate-800 p-1 rounded-2xl">
-                <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">Planejamento</button>
+            <div class="flex bg-slate-800 p-1 rounded-2xl border border-slate-700">
+                <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Planilha</button>
+                <button onclick="editor.switch('dash')" id="t-dash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Resumo</button>
                 <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Financeiro</button>
             </div>
-            <div class="w-8"></div>
+            <button onclick="editor.setBaseline()" class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-amber-500 hover:text-white transition-all">Fixar Baseline</button>
         </header>
 
-        <main class="p-6">
+        <main class="p-8">
             <div id="v-table" class="view">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-black text-[10px] uppercase text-slate-400">Cronograma & Caminho Crítico</h3>
-                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-6 py-2 rounded-xl font-black uppercase shadow-lg">+ Etapa</button>
+                    <div class="flex gap-4">
+                        <span class="flex items-center gap-2 text-[10px] font-black text-red-500 uppercase"><span class="w-3 h-3 bg-red-500 rounded-sm"></span> Caminho Crítico</span>
+                        <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase"><span class="w-3 h-3 bg-slate-200 rounded-sm"></span> Baseline</span>
+                    </div>
+                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-8 py-3 rounded-xl font-black uppercase shadow-lg">+ Etapa</button>
                 </div>
-                
-                <div class="flex border rounded-2xl overflow-hidden shadow-sm bg-white">
+                <div class="flex border rounded-3xl overflow-hidden bg-white shadow-sm">
                     <div class="w-2/3 overflow-x-auto border-r">
-                        <table class="w-full text-xs">
-                            <thead class="bg-slate-50 font-black uppercase text-slate-400 border-b">
+                        <table class="w-full text-xs border-collapse">
+                            <thead class="bg-slate-50 text-[9px] font-black uppercase text-slate-400 border-b">
                                 <tr>
-                                    <th class="p-3 w-10">ID</th>
-                                    <th class="p-3 text-left">Atividade</th>
-                                    <th class="p-3 w-24 text-right">Custo</th>
-                                    <th class="p-3 w-28 text-center">Início</th>
-                                    <th class="p-3 w-12 text-center">Dias</th>
-                                    <th class="p-3 w-12 text-center">Pred.</th>
-                                    <th class="p-3 w-8"></th>
+                                    <th class="p-4 w-12 text-center">ID</th>
+                                    <th class="p-4 text-left">Atividade</th>
+                                    <th class="p-4 w-32 text-right">Custo</th>
+                                    <th class="p-4 w-32 text-center">Início</th>
+                                    <th class="p-4 w-16 text-center">Dias</th>
+                                    <th class="p-4 w-16 text-center">Pred.</th>
+                                    <th class="p-4 w-32 text-center">Restrição</th>
+                                    <th class="p-4 w-12 text-center">C/D</th>
+                                    <th class="p-4 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody id="tbody"></tbody>
                         </table>
                     </div>
-                    <div class="w-1/3 bg-slate-50/50 overflow-x-hidden relative">
-                        <div class="h-[41px] border-b bg-slate-100 flex items-center px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Timeline (Visual)</div>
-                        <div id="gantt-body"></div>
+                    <div class="w-1/3 bg-slate-50/30 overflow-hidden">
+                        <div class="h-[49px] border-b bg-slate-100/50 flex items-center px-4 text-[9px] font-black text-slate-400 uppercase tracking-tighter">Cronograma Visual</div>
+                        <div id="gantt-rows"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="v-dash" class="view hidden">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="card-dash bg-slate-900 text-white">
+                        <p class="text-[10px] font-black uppercase opacity-50">Total Orçado</p>
+                        <h2 id="d-total" class="text-3xl font-black italic mt-1 text-blue-400">R$ 0,00</h2>
+                    </div>
+                    <div class="card-dash border-l-4 border-l-red-500">
+                        <p class="text-[10px] font-black uppercase text-slate-400">Tarefas Críticas</p>
+                        <h2 id="d-critical" class="text-3xl font-black italic mt-1">0</h2>
+                    </div>
+                    <div class="md:col-span-2 card-dash">
+                        <h3 class="font-black text-[10px] uppercase mb-4 text-blue-600">Próximas Compras (Alertas)</h3>
+                        <div id="list-alertas" class="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
 
             <div id="v-cash" class="view hidden">
-                <div class="bg-white p-8 rounded-[40px] border shadow-sm mb-6">
-                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6 text-center">Desembolso Mensal</h3>
-                    <div class="h-[300px]"><canvas id="cash-chart"></canvas></div>
+                <div class="bg-white p-10 rounded-[40px] border shadow-sm mb-8">
+                    <h3 class="font-black text-[10px] text-slate-400 uppercase mb-8 tracking-[0.3em]">Curva de Desembolso</h3>
+                    <div class="h-[350px]"><canvas id="cash-chart"></canvas></div>
                 </div>
-                <div id="cash-details" class="bg-slate-900 p-8 rounded-[40px] text-white min-h-[150px]">
-                    <h4 id="cash-title" class="text-blue-400 font-black uppercase text-xs mb-4 italic">Selecione um mês no gráfico</h4>
-                    <div id="cash-list" class="space-y-3"></div>
+                <div id="cash-panel" class="bg-white rounded-[30px] border shadow-sm overflow-hidden">
+                    <div id="cash-month-title" class="bg-slate-50 px-8 py-4 font-black text-xs uppercase border-b">Detalhamento Mensal</div>
+                    <div id="cash-details" class="p-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <p class="text-slate-300 italic text-center col-span-2">Selecione uma barra no gráfico para detalhar.</p>
+                    </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="modal-supply" class="modal">
+        <div class="bg-white p-10 rounded-[50px] w-full max-w-md shadow-2xl">
+            <h3 class="font-black text-2xl italic uppercase mb-6">Suprimentos</h3>
+            <div class="space-y-6">
+                <label class="flex items-center gap-3 cursor-pointer bg-blue-50 p-4 rounded-2xl">
+                    <input type="checkbox" id="sup-alert" class="w-5 h-5 accent-blue-600">
+                    <span class="text-[10px] font-black uppercase text-blue-600">Ativar Alerta de Compra</span>
+                </label>
+                <select id="sup-mode" onchange="editor.toggleSupMode()" class="w-full border-2 p-4 rounded-2xl font-bold bg-slate-50">
+                    <option value="padrao">Pagamento no Início</option>
+                    <option value="personalizado">Entrada + Parcelas</option>
+                </select>
+                <div id="sup-fields" class="hidden space-y-4 bg-slate-50 p-6 rounded-3xl border">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="number" id="sup-lead" placeholder="Antecedência" class="p-4 rounded-xl border w-full">
+                        <select id="sup-unit" class="p-4 rounded-xl border font-bold">
+                            <option value="d">Dias</option>
+                            <option value="m">Meses</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black uppercase">Entrada %</span><input type="number" id="sup-entry" class="w-20 p-2 rounded-lg border text-center font-bold" value="100"></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black uppercase">Parcelas</span><input type="number" id="sup-install" class="w-20 p-2 rounded-lg border text-center font-bold" value="1"></div>
+                </div>
+                <button onclick="editor.saveSup()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase shadow-lg">Salvar Estratégia</button>
+                <button onclick="editor.closeSup()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -111,152 +168,230 @@
         const auth = {
             ss: null,
             async login() {
-                const u = document.getElementById('log-u').value;
-                const p = document.getElementById('log-p').value;
-                const btn = document.getElementById('btn-login');
-                btn.innerText = "Validando...";
-                
+                const u = document.getElementById('log-u').value, p = document.getElementById('log-p').value;
+                const btn = document.getElementById('btn-entrar'); btn.innerText = "Sincronizando...";
                 try {
                     const res = await fetch(`${FB_URL}users.json`);
                     const users = await res.json();
-                    let found = null;
                     for (let id in users) {
-                        if (users[id].u === u && users[id].p === p) { found = { ...users[id], id }; break; }
+                        if (users[id].u === u && users[id].p === p) {
+                            this.ss = { ...users[id], id };
+                            await projectManager.load();
+                            router.go('manager');
+                            return;
+                        }
                     }
-
-                    if (found) {
-                        this.ss = found;
-                        await projectManager.load();
-                        router.go('manager');
-                    } else {
-                        document.getElementById('log-err').classList.remove('hidden');
-                        btn.innerText = "Entrar";
-                    }
-                } catch (e) { alert("Erro de conexão."); btn.innerText = "Entrar"; }
-            }
+                    document.getElementById('log-err').classList.remove('hidden'); btn.innerText = "Entrar";
+                } catch (e) { alert("Erro de rede."); btn.innerText = "Entrar"; }
+            },
+            logout() { location.reload(); }
         };
 
         const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); }};
 
         const projectManager = {
             all: [],
-            path() { return `db_${this.authId()}`; },
-            authId() { return auth.ss.role === 'admin' ? 'admin' : (auth.ss.parentId || auth.ss.id); },
-            async load() {
-                const res = await fetch(`${FB_URL}${this.path()}.json`);
-                this.all = await res.json() || [];
-                this.render();
-            },
+            path() { return `db_${auth.ss.role === 'admin' ? 'admin' : (auth.ss.parentId || auth.ss.id)}`; },
+            async load() { const res = await fetch(`${FB_URL}${this.path()}.json`); this.all = await res.json() || []; this.render(); },
             async save() { await fetch(`${FB_URL}${this.path()}.json`, { method:'PUT', body: JSON.stringify(this.all) }); },
             render() {
                 const g = document.getElementById('grid-projects'); g.innerHTML = '';
                 this.all.forEach(p => {
-                    g.innerHTML += `<div class="bg-white p-8 rounded-[35px] shadow-sm border-2 border-transparent hover:border-blue-500 cursor-pointer" onclick="editor.open('${p.id}')">
-                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3>
-                    <p class="text-[10px] font-black text-slate-400 mt-2 uppercase">Abrir Projeto</p></div>`;
-                });
+                    g.innerHTML += `<div class="bg-white p-8 rounded-[40px] shadow-sm border-2 border-transparent hover:border-blue-600 cursor-pointer transition-all" onclick="editor.open('${p.id}')">
+                    <div class="flex justify-between mb-4"><i data-lucide="layout" class="text-blue-600"></i><button onclick="event.stopPropagation(); projectManager.del('${p.id}')" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3></div>`;
+                }); lucide.createIcons();
             },
             async create() {
                 const n = prompt("Nome da Obra:"); if(!n) return;
                 this.all.push({id: 'p'+Date.now(), name: n, data: [{uuid:'m', name: n.toUpperCase(), type:'master', cost:0, start: new Date().toISOString().split('T')[0]}]});
                 await this.save(); this.render();
-            }
+            },
+            async del(id) { if(confirm("Excluir?")) { this.all = this.all.filter(x=>x.id!==id); await this.save(); this.render(); } }
         };
 
         const editor = {
             curr: null, db: [], iMap: {}, uMap: {},
-            open(id) { 
-                this.curr = id; this.db = projectManager.all.find(x=>x.id===id).data;
-                document.getElementById('edit-name').innerText = projectManager.all.find(x=>x.id===id).name;
-                router.go('editor'); this.recalc(); 
+            open(id) {
+                this.curr = id; const p = projectManager.all.find(x=>x.id===id);
+                this.db = p.data; document.getElementById('edit-name').innerText = p.name;
+                router.go('editor'); this.recalc();
             },
+
             recalc() {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
                 
-                // Cálculo de Datas e Dependências
                 this.db.forEach(t => {
                     t.isCritical = false;
                     if(t.type === 'item') {
+                        let calcStart = t.start;
                         if(t.pred?.length) {
                             let maxEnd = "";
-                            t.pred.forEach(pid => {
-                                const p = this.db.find(x=>x.uuid === pid);
-                                if(p && p.end > maxEnd) maxEnd = p.end;
-                            });
-                            if(maxEnd) t.start = this.addD(maxEnd, 1);
+                            t.pred.forEach(pid => { const p = this.db.find(x=>x.uuid === pid); if(p && p.end > maxEnd) maxEnd = p.end; });
+                            if(maxEnd) calcStart = this.addD(maxEnd, 1);
                         }
+                        if(t.constraintDate && t.constraintDate > calcStart) calcStart = t.constraintDate;
+                        t.start = calcStart;
                         if(t.start && t.duration) t.end = this.addD(t.start, t.duration - 1);
                     }
                 });
 
-                // Caminho Crítico (Simplificado)
+                // Caminho Crítico
                 const lastEnd = [...this.db].filter(x=>x.end).sort((a,b)=>b.end.localeCompare(a.end))[0]?.end;
                 this.db.forEach(t => { if(t.end === lastEnd) t.isCritical = true; });
+                for(let i=this.db.length-1; i>=0; i--) {
+                    const successors = this.db.filter(x=>x.pred?.includes(this.db[i].uuid));
+                    if(successors.some(s=>s.isCritical)) this.db[i].isCritical = true;
+                }
 
-                this.render(); this.autoSave();
+                this.db.filter(t=>t.type==='group').forEach(g => {
+                    const k = this.db.filter(x=>x.parent === g.uuid);
+                    g.cost = k.reduce((s, x) => s + (parseFloat(x.cost) || 0), 0);
+                    const ds = k.map(x=>x.start).filter(Boolean).sort(); if(ds.length) g.start = ds[0];
+                    const es = k.map(x=>x.end).filter(Boolean).sort().reverse(); if(es.length) g.end = es[0];
+                });
+
+                this.db[0].cost = this.db.filter(t=>t.type==='group').reduce((s, g) => s + g.cost, 0);
+                this.renderT(); this.autoSave();
             },
-            addD(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
-            render() {
+
+            addD(s, d) { if(!s) return ""; let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
+
+            renderT() {
                 const b = document.getElementById('tbody'); b.innerHTML = '';
-                const gb = document.getElementById('gantt-body'); gb.innerHTML = '';
+                const gr = document.getElementById('gantt-rows'); gr.innerHTML = '';
                 this.db.forEach((t, i) => {
-                    const isG = t.type==='group', isM = t.type==='master';
-                    if(isM) return;
-                    b.innerHTML += `<tr class="${isG?'row-group':''} ${t.isCritical?'critical-row':''} border-b">
-                        <td class="p-3 text-center opacity-30 font-bold">${i+1}</td>
-                        <td><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.isCritical?'text-red-500':''}"></td>
-                        <td><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right"></td>
-                        <td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${t.pred?.length?'disabled':''}></td>
-                        <td><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center"></td>
-                        <td><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-bold text-blue-600"></td>
-                        <td><button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button></td>
+                    if(t.type === 'master') return;
+                    const isG = t.type==='group', isI = t.type==='item';
+                    b.innerHTML += `<tr class="${isG?'row-group':''} ${t.isCritical && isI ? 'row-critical' : ''} border-b">
+                        <td class="p-4 text-center opacity-30 font-bold">${i+1}</td>
+                        <td class="p-4">
+                            <input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.isCritical && isI ? 'text-red-600':''}">
+                            ${t.baseStart ? `<div class="baseline-text">Base: ${t.baseStart}</div>` : ''}
+                        </td>
+                        <td class="p-4"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right font-bold" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-bold text-blue-600" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="date" value="${t.constraintDate||''}" onchange="editor.upd('${t.uuid}','constraintDate',this.value)" class="input-cell text-[10px] text-center bg-amber-50 rounded"></td>
+                        <td class="p-4 text-center">
+                            <div class="flex gap-2 justify-center">
+                                ${isG ? `<button onclick="editor.openSup('${t.uuid}')" class="${t.supply?.alert?'text-blue-600':'text-slate-300'}"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>` : ''}
+                                ${isG ? `<button onclick="editor.dupl('${t.uuid}')" class="text-slate-300 hover:text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button>` : ''}
+                                ${isG ? `<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500"><i data-lucide="plus" class="w-4 h-4"></i></button>` : ''}
+                            </div>
+                        </td>
+                        <td class="p-4 text-center"><button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                     </tr>`;
-                    
-                    // Gantt
+
+                    // Gantt Row
                     const margin = t.start ? (new Date(t.start+"T00:00:00").getDate() * 2) : 0;
-                    gb.innerHTML += `<div class="h-[41px] flex items-center px-4 border-b">
-                        <div class="${isG?'bar-group':'gantt-bar'} ${t.isCritical?'bar-critical':''}" style="margin-left:${margin}px; width:${(t.duration||1)*5}px"></div>
+                    gr.innerHTML += `<div class="h-[49px] flex items-center px-4 border-b">
+                        <div class="${isG?'h-1.5 bg-slate-800 rounded':'h-3 bg-blue-500 rounded'} ${t.isCritical?'bg-red-500':''}" style="margin-left:${margin}px; width:${(t.duration||1)*4}px"></div>
                     </div>`;
                 });
                 lucide.createIcons();
             },
+
+            dupl(u) {
+                const g = this.db.find(x=>x.uuid===u), k = this.db.filter(x=>x.parent===u);
+                const nid = 'g'+Date.now();
+                this.db.push({...g, uuid:nid, name: g.name + " (Cópia)"});
+                k.forEach(x=>this.db.push({...x, uuid:'t'+Math.random(), parent:nid, pred:[]}));
+                this.recalc();
+            },
+
+            setBaseline() {
+                if(confirm("Fixar cronograma atual como Baseline?")) {
+                    this.db.forEach(t => { t.baseStart = t.start; t.baseCost = t.cost; });
+                    this.recalc();
+                }
+            },
+
             renderCash() {
                 const ctx = document.getElementById('cash-chart').getContext('2d');
                 if(window.cashCh) window.cashCh.destroy();
                 const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                const data = Array(12).fill(0);
-                const items = Array.from({length:12}, () => []);
+                const data = Array.from({length:12}, () => ({total: 0, items: []}));
 
-                this.db.filter(t=>t.cost > 0 && t.start).forEach(t => {
-                    const m = new Date(t.start+"T00:00:00").getMonth();
-                    data[m] += parseFloat(t.cost);
-                    items[m].push(t);
+                this.db.filter(t=>t.type==='group' && t.start).forEach(t => {
+                    const startDt = new Date(t.start+"T00:00:00");
+                    if(t.supply?.mode === 'personalizado') {
+                        let buyDt = new Date(startDt);
+                        if(t.supply.unit==='d') buyDt.setDate(buyDt.getDate()-t.supply.lead); else buyDt.setMonth(buyDt.getMonth()-t.supply.lead);
+                        const m0 = buyDt.getMonth() % 12;
+                        const vE = t.cost * (t.supply.entry/100), vR = (t.cost - vE)/(t.supply.install||1);
+                        data[m0].total += vE; data[m0].items.push({n: t.name + " (Entrada)", v: vE});
+                        for(let i=0; i<t.supply.install; i++) {
+                            const mP = (m0 + 1 + i) % 12;
+                            data[mP].total += vR; data[mP].items.push({n: t.name + ` (Parc ${i+1})`, v: vR});
+                        }
+                    } else {
+                        const m = startDt.getMonth(); data[m].total += t.cost; data[m].items.push({n: t.name, v: t.cost});
+                    }
                 });
 
                 window.cashCh = new Chart(ctx, {
                     type:'bar',
-                    data: { labels, datasets:[{label:'Custo Mensal', data, backgroundColor:'#3b82f6', borderRadius:8}]},
-                    options: {
-                        onClick: (e, el) => {
-                            if(el.length) {
-                                const i = el[0].index;
-                                document.getElementById('cash-title').innerText = `Detalhamento: ${labels[i]}`;
-                                let h = '';
-                                items[i].forEach(it => h+= `<div class="flex justify-between border-b border-slate-800 pb-2 text-[10px]"><span>${it.name}</span><b>R$ ${parseFloat(it.v||it.cost).toLocaleString()}</b></div>`);
-                                document.getElementById('cash-list').innerHTML = h || 'Sem custos.';
-                            }
+                    data: { labels, datasets:[{label:'Desembolso', data: data.map(d=>d.total), backgroundColor:'#3b82f6', borderRadius:10}]},
+                    options: { onClick: (e, el) => {
+                        if(el.length) {
+                            const i = el[0].index; const d = data[i];
+                            document.getElementById('cash-month-title').innerText = "Detalhamento: " + labels[i];
+                            let h = '';
+                            d.items.forEach(it => h += `<div class="p-4 bg-slate-50 rounded-xl flex justify-between border"><b>${it.n}</b><span class="font-black text-blue-600">R$ ${it.v.toLocaleString()}</span></div>`);
+                            document.getElementById('cash-details').innerHTML = h || '<p class="col-span-2 text-center text-slate-300">Sem gastos.</p>';
                         }
-                    }
+                    }}
                 });
             },
+
+            renderDash() {
+                document.getElementById('d-total').innerText = `R$ ${this.db[0].cost.toLocaleString()}`;
+                document.getElementById('d-critical').innerText = this.db.filter(t=>t.isCritical && t.type==='item').length;
+                const list = document.getElementById('list-alertas'); list.innerHTML = '';
+                this.db.filter(t=>t.type==='group' && t.supply?.alert).forEach(t => {
+                    let d = new Date(t.start+"T00:00:00");
+                    if(t.supply.unit==='d') d.setDate(d.getDate()-t.supply.lead); else d.setMonth(d.getMonth()-t.supply.lead);
+                    list.innerHTML += `<div class="p-3 bg-slate-50 border-l-4 border-amber-500 flex justify-between rounded-r-lg">
+                        <span class="text-[9px] font-black uppercase">${t.name}<br><small class="text-slate-400">Limite: ${d.toLocaleDateString()}</small></span>
+                        <span class="font-black text-xs">R$ ${t.cost.toLocaleString()}</span>
+                    </div>`;
+                });
+            },
+
             upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
             updPr(u,v) { const t=this.db.find(x=>x.uuid===u); t.pred=v.split(',').map(n=>this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
             addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', cost:0}); this.recalc(); },
-            rem(u) { this.db=this.db.filter(x=>x.uuid!==u); this.recalc(); },
-            switch(v) { document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden')); document.getElementById('v-'+v).classList.remove('hidden'); if(v==='cash') this.renderCash(); },
-            async autoSave() { const i = projectManager.all.findIndex(x=>x.id===this.curr); if(i!==-1){ projectManager.all[i].data=this.db; await projectManager.save(); } }
+            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Nova Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
+            rem(u) { if(u!=='m'){ this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); } },
+            openSup(u) {
+                this.currSup = u; const t = this.db.find(x=>x.uuid===u);
+                document.getElementById('sup-alert').checked = t.supply?.alert || false;
+                document.getElementById('sup-mode').value = t.supply?.mode || 'padrao';
+                document.getElementById('sup-lead').value = t.supply?.lead || 0;
+                document.getElementById('sup-unit').value = t.supply?.unit || 'd';
+                document.getElementById('sup-entry').value = t.supply?.entry || 100;
+                document.getElementById('sup-install').value = t.supply?.install || 1;
+                this.toggleSupMode(); document.getElementById('modal-supply').classList.add('active');
+            },
+            toggleSupMode() { document.getElementById('sup-fields').className = document.getElementById('sup-mode').value==='personalizado'?'space-y-4 bg-slate-50 p-6 rounded-3xl border':'hidden'; },
+            saveSup() {
+                const t = this.db.find(x=>x.uuid===this.currSup);
+                t.supply = { alert: document.getElementById('sup-alert').checked, mode: document.getElementById('sup-mode').value, lead: parseInt(document.getElementById('sup-lead').value)||0, unit: document.getElementById('sup-unit').value, entry: parseFloat(document.getElementById('sup-entry').value)||0, install: parseInt(document.getElementById('sup-install').value)||1 };
+                document.getElementById('modal-supply').classList.remove('active'); this.recalc();
+            },
+            closeSup() { document.getElementById('modal-supply').classList.remove('active'); },
+            switch(v) {
+                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden')); document.getElementById('v-'+v).classList.remove('hidden');
+                document.querySelectorAll('[id^="t-"]').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+                document.getElementById('t-'+v).classList.add('bg-blue-600', 'text-white');
+                if(v==='cash') this.renderCash(); if(v==='dash') this.renderDash();
+            },
+            async autoSave() { const i=projectManager.all.findIndex(x=>x.id===this.curr); if(i!==-1){ projectManager.all[i].data=this.db; await projectManager.save(); } }
         };
+        window.onload = () => lucide.createIcons();
     </script>
 </body>
 </html>
