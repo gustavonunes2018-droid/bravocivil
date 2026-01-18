@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - v62 PRO</title>
+    <title>Bravo CIVIL - V63 Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,112 +12,120 @@
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; }
         .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; }
         .page.active { display: block; }
-        
-        /* Alinhamento Planilha e Gantt */
-        .row-h { height: 48px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; }
-        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; }
+        .row-h { height: 44px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; transition: all 0.2s; }
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 2px 4px; border-radius: 4px; border: 1px solid transparent; font-size: 11px; }
         .input-cell:focus { border-color: #3b82f6; background: white; }
-        
-        .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
-        .row-group { background: #f8fafc !important; font-weight: 700; cursor: pointer; }
+        .row-group { background: #f8fafc !important; font-weight: 800; border-left: 4px solid #1e293b; }
         .row-critical { border-left: 4px solid #ef4444 !important; }
-        
-        /* Gantt & Linha de Balanço */
-        .gantt-bar { height: 12px; border-radius: 4px; background: #3b82f6; position: relative; transition: 0.3s; }
-        .bar-critical { background: #ef4444 !important; box-shadow: 0 0 8px rgba(239,68,68,0.3); }
+        .is-critical { color: #ef4444 !important; font-weight: 800; }
         .collapsed { display: none !important; }
-        
-        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; }
+        .gantt-bar { height: 14px; border-radius: 3px; background: #3b82f6; position: absolute; top: 15px; }
+        .bar-critical { background: #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        .bar-baseline { height: 4px; background: #cbd5e1; position: absolute; bottom: 8px; opacity: 0.5; border-radius: 2px; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; }
         .modal.active { display:flex; }
     </style>
 </head>
 <body>
 
-    <div id="page-editor" class="page bg-white active">
-        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center gap-4">
-                <h2 class="font-black italic uppercase text-sm">Bravo<span class="text-blue-600">CIVIL</span></h2>
-                <div class="h-6 w-px bg-slate-700"></div>
-                <button onclick="editor.openConfig()" class="text-[10px] font-black uppercase text-slate-400 hover:text-white flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Config. Datas
-                </button>
+    <div id="page-editor" class="page active bg-white">
+        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-xl">
+            <div class="flex items-center gap-6">
+                <h2 class="font-black italic uppercase text-lg tracking-tighter">Bravo<span class="text-blue-500">CIVIL</span></h2>
+                <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+                    <button onclick="editor.switch('table')" id="btn-table" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg bg-blue-600">Planejamento</button>
+                    <button onclick="editor.switch('balanco')" id="btn-balanco" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg">Linha de Balanço</button>
+                    <button onclick="editor.switch('cash')" id="btn-cash" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg">Financeiro</button>
+                </div>
             </div>
-            <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
-                <button onclick="editor.switch('table')" id="t-table" class="px-5 py-1.5 text-[10px] font-black uppercase rounded-lg bg-blue-600">Planejamento</button>
-                <button onclick="editor.switch('balanco')" id="t-balanco" class="px-5 py-1.5 text-[10px] font-black uppercase rounded-lg">Linha de Balanço</button>
-                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-1.5 text-[10px] font-black uppercase rounded-lg">Financeiro</button>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="editor.setBaseline()" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase">Fixar Baseline</button>
+            <div class="flex gap-3">
+                <button onclick="editor.setBaseline()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">Fixar Baseline</button>
+                <button onclick="editor.openConfig()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"><i data-lucide="settings" class="w-3 h-3"></i></button>
             </div>
         </header>
 
         <main class="p-4">
             <div id="v-table" class="view">
-                <div class="flex border rounded-2xl overflow-hidden shadow-sm bg-white">
-                    <div class="w-[600px] border-r shrink-0">
-                        <div class="bg-slate-50 row-h px-4 text-[9px] font-black uppercase text-slate-400">
-                            <div class="w-10">ID</div>
-                            <div class="flex-1">Atividade / Etapa</div>
-                            <div class="w-24 text-right">Custo (R$)</div>
+                <div class="flex border rounded-2xl overflow-hidden shadow-2xl bg-white">
+                    <div class="w-[750px] border-r shrink-0 overflow-hidden">
+                        <div class="bg-slate-100 row-h px-2 text-[9px] font-black uppercase text-slate-500 border-b-2">
+                            <div class="w-8 text-center">#</div>
+                            <div class="w-8"></div>
+                            <div class="flex-1">Descrição da Atividade</div>
+                            <div class="w-24 text-right px-2">Custo (R$)</div>
                             <div class="w-24 text-center">Início</div>
                             <div class="w-12 text-center">Dias</div>
                             <div class="w-12 text-center">Pred.</div>
+                            <div class="w-24 text-center">Ações</div>
                         </div>
-                        <div id="tbody"></div>
-                        <button onclick="editor.addGroup()" class="w-full py-4 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 border-t">+ Nova Etapa</button>
+                        <div id="tbody" class="overflow-y-auto max-h-[calc(100vh-180px)]"></div>
+                        <button onclick="editor.addGroup()" class="w-full py-4 bg-slate-50 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-600 hover:text-white transition-all border-t">+ Adicionar Etapa de Obra</button>
                     </div>
-                    <div class="flex-1 overflow-x-auto bg-slate-50/30">
-                        <div id="gantt-header" class="bg-slate-100/50 row-h flex border-b"></div>
-                        <div id="gantt-body"></div>
+                    <div class="flex-1 overflow-x-auto bg-slate-50/20">
+                        <div id="gantt-header" class="bg-slate-100/80 row-h border-b-2 sticky top-0 flex"></div>
+                        <div id="gantt-body" class="overflow-y-auto max-h-[calc(100vh-180px)] relative"></div>
                     </div>
                 </div>
             </div>
 
             <div id="v-balanco" class="view hidden">
-                <div class="bg-white p-8 rounded-[40px] border shadow-sm">
-                    <h3 class="font-black text-xs text-slate-400 uppercase mb-8 text-center tracking-widest">Ritmo de Produção (Linha de Balanço)</h3>
-                    <div class="h-[500px] w-full"><canvas id="balanco-chart"></canvas></div>
+                <div class="bg-white p-10 rounded-[40px] border shadow-2xl h-[70vh]">
+                    <canvas id="balanco-chart"></canvas>
                 </div>
             </div>
 
             <div id="v-cash" class="view hidden">
-                <div class="grid grid-cols-1 gap-6">
-                    <div class="bg-white p-8 rounded-[40px] border shadow-sm h-[400px]">
+                <div class="grid grid-cols-12 gap-6">
+                    <div class="col-span-8 bg-white p-8 rounded-[40px] border shadow-xl h-[500px]">
                         <canvas id="cash-chart"></canvas>
                     </div>
-                    <div id="cash-panel" class="bg-slate-900 rounded-[30px] p-8 text-white">
-                        <h4 id="cash-title" class="font-black text-blue-400 uppercase italic mb-4">Selecione um mês</h4>
-                        <div id="cash-list" class="space-y-2"></div>
+                    <div class="col-span-4 space-y-4">
+                        <div class="bg-slate-900 text-white p-6 rounded-[30px] shadow-xl">
+                            <h4 id="cash-title" class="text-blue-400 font-black uppercase text-xs mb-4 italic">Selecione um mês</h4>
+                            <div id="cash-list" class="space-y-3 max-h-[350px] overflow-y-auto"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-config" class="modal">
-        <div class="bg-white p-10 rounded-[40px] w-80 shadow-2xl">
-            <h3 class="font-black uppercase mb-6">Data de Início da Obra</h3>
-            <input type="date" id="proj-start-date" class="w-full border-2 p-4 rounded-2xl mb-6 font-bold">
-            <button onclick="editor.saveConfig()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Aplicar em Tudo</button>
-            <button onclick="editor.closeModal()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-4">Fechar</button>
+    <div id="modal-sup" class="modal">
+        <div class="bg-white p-10 rounded-[40px] w-96 shadow-2xl">
+            <h3 class="font-black uppercase text-lg mb-6 border-b pb-2">Estratégia de Compra</h3>
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 bg-blue-50 p-4 rounded-2xl">
+                    <input type="checkbox" id="sup-alert" class="w-5 h-5 accent-blue-600">
+                    <span class="text-[10px] font-black uppercase text-blue-800">Alertar Compra</span>
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Antecedência (Dias)</label>
+                    <input type="number" id="sup-lead" class="w-full border-2 p-3 rounded-xl font-bold mt-1">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Parcelamento (Vezes)</label>
+                    <input type="number" id="sup-install" class="w-full border-2 p-3 rounded-xl font-bold mt-1">
+                </div>
+                <button onclick="editor.saveSup()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg hover:bg-blue-700">Salvar Alterações</button>
+                <button onclick="editor.closeModals()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Cancelar</button>
+            </div>
         </div>
     </div>
 
     <script>
         const editor = {
             db: [
-                {uuid:'m', name:'PROJETO BRAVO', type:'master', start:'2025-01-01'},
-                {uuid:'g1', name:'INFRAESTRUTURA', type:'group', parent:'m', collapsed: false},
-                {uuid:'t1', name:'Limpeza do Terreno', type:'item', parent:'g1', cost:8000, start:'2025-01-01', duration:5},
-                {uuid:'t2', name:'Locação de Gabarito', type:'item', parent:'g1', cost:4000, duration:3, pred:['t1']}
+                {uuid:'m', name:'MASTER', type:'master', start:'2025-01-01'},
+                {uuid:'g1', name:'01. SERVIÇOS PRELIMINARES', type:'group', parent:'m', collapsed: false},
+                {uuid:'t1', name:'Tapume e Instalações', type:'item', parent:'g1', cost:15000, start:'2025-01-01', duration:10}
             ],
-            iMap: {}, uMap: {},
+            iMap: {}, uMap: {}, 
 
             recalc() {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
 
+                // Motor de Dependências e Caminho Crítico
                 this.db.forEach(t => {
                     t.isCritical = false;
                     if(t.type === 'item') {
@@ -127,112 +135,130 @@
                                 const p = this.db.find(x=>x.uuid === pid);
                                 if(p && (!maxEnd || p.end > maxEnd)) maxEnd = p.end;
                             });
-                            if(maxEnd) t.start = this.addDays(maxEnd, 1);
+                            if(maxEnd) t.start = this.addD(maxEnd, 1);
                         }
-                        if(t.start && t.duration) t.end = this.addDays(t.start, t.duration - 1);
+                        if(t.start && t.duration) t.end = this.addD(t.start, t.duration - 1);
                     }
                 });
 
-                // Caminho Crítico (simplificado pela data final)
                 const lastEnd = [...this.db].filter(x=>x.end).sort((a,b)=>b.end.localeCompare(a.end))[0]?.end;
                 this.db.forEach(t => { if(t.end === lastEnd) t.isCritical = true; });
+                for(let i=this.db.length-1; i>=0; i--) {
+                    const suc = this.db.filter(x=>x.pred?.includes(this.db[i].uuid));
+                    if(suc.some(s=>s.isCritical)) this.db[i].isCritical = true;
+                }
+
+                // Soma Custos Grupo
+                this.db.filter(g=>g.type==='group').forEach(g => {
+                    const k = this.db.filter(x=>x.parent === g.uuid);
+                    g.cost = k.reduce((acc, x) => acc + (parseFloat(x.cost)||0), 0);
+                    const ds = k.map(x=>x.start).filter(Boolean).sort(); if(ds.length) g.start = ds[0];
+                    const es = k.map(x=>x.end).filter(Boolean).sort().reverse(); if(es.length) g.end = es[0];
+                });
 
                 this.render();
             },
 
-            addDays(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
+            addD(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
 
             render() {
-                const b = document.getElementById('tbody'); b.innerHTML = '';
+                const tb = document.getElementById('tbody'); tb.innerHTML = '';
                 const gb = document.getElementById('gantt-body'); gb.innerHTML = '';
                 const gh = document.getElementById('gantt-header'); gh.innerHTML = '';
 
-                // Cabeçalho do Gantt (30 dias)
-                for(let d=1; d<=30; d++) gh.innerHTML += `<div class="w-10 shrink-0 text-center text-[8px] font-bold border-r">${d}</div>`;
+                // Header Gantt - 45 dias
+                for(let i=1; i<=45; i++) gh.innerHTML += `<div class="w-8 shrink-0 text-[8px] font-black border-r flex items-center justify-center">${i}</div>`;
 
                 this.db.forEach((t, i) => {
-                    if(t.type === 'master') return;
-                    const isG = t.type === 'group';
-                    const parentG = this.db.find(x=>x.uuid === t.parent);
-                    const isHidden = parentG && parentG.collapsed;
+                    if(t.type==='master') return;
+                    const isG = t.type==='group', p = this.db.find(x=>x.uuid===t.parent), isHidden = p?.collapsed;
 
                     // Planilha
                     const row = document.createElement('div');
-                    row.className = `row-h px-4 ${isG?'row-group':''} ${t.isCritical && !isG?'row-critical':''} ${isHidden?'collapsed':''}`;
-                    if(isG) row.onclick = () => { t.collapsed = !t.collapsed; this.render(); };
-                    
+                    row.className = `row-h ${isG?'row-group':''} ${t.isCritical && !isG?'row-critical':''} ${isHidden?'collapsed':''}`;
                     row.innerHTML = `
-                        <div class="w-10 text-[10px] opacity-30">${i+1}</div>
-                        <div class="flex-1 flex items-center gap-2">
-                            ${isG ? `<i data-lucide="${t.collapsed?'chevron-right':'chevron-down'}" class="w-3 h-3"></i>`:''}
-                            <input value="${t.name}" class="input-cell font-bold ${t.isCritical && !isG?'text-red-600':''}" onchange="editor.upd('${t.uuid}','name',this.value)">
+                        <div class="w-8 text-center opacity-30 font-black text-[9px]">${i+1}</div>
+                        <div class="w-8 flex justify-center">${isG?`<button onclick="editor.toggle('${t.uuid}')"><i data-lucide="${t.collapsed?'chevron-right':'chevron-down'}" class="w-4 h-4"></i></button>`:''}</div>
+                        <div class="flex-1"><input value="${t.name}" class="input-cell font-bold ${t.isCritical && !isG?'text-red-600':''}" onchange="editor.upd('${t.uuid}','name',this.value)"></div>
+                        <div class="w-24 px-2"><input type="number" value="${t.cost||0}" class="input-cell text-right" onchange="editor.upd('${t.uuid}','cost',this.value)" ${!isG?'':'disabled'}></div>
+                        <div class="w-24 text-center"><input type="date" value="${t.start||''}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','start',this.value)" ${t.pred?.length?'disabled':''}></div>
+                        <div class="w-12 text-center"><input type="number" value="${t.duration||0}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','duration',this.value)"></div>
+                        <div class="w-12 text-center"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" class="input-cell text-center text-blue-600 font-black" onchange="editor.updPr('${t.uuid}',this.value)"></div>
+                        <div class="w-24 flex justify-center gap-2">
+                            ${isG?`<button onclick="editor.dupl('${t.uuid}')" class="text-slate-400 hover:text-blue-500"><i data-lucide="copy" class="w-3 h-3"></i></button>`:''}
+                            ${isG?`<button onclick="editor.openSup('${t.uuid}')" class="text-slate-400 hover:text-blue-500"><i data-lucide="shopping-cart" class="w-3 h-3"></i></button>`:''}
+                            ${isG?`<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500"><i data-lucide="plus" class="w-3 h-3"></i></button>`:''}
+                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                         </div>
-                        <div class="w-24"><input type="number" value="${t.cost||0}" class="input-cell text-right" ${!isG?'':'disabled'}></div>
-                        <div class="w-24"><input type="date" value="${t.start||''}" class="input-cell text-center" ${t.pred?.length?'disabled':''}></div>
-                        <div class="w-12"><input type="number" value="${t.duration||0}" class="input-cell text-center"></div>
-                        <div class="w-12"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" class="input-cell text-center text-blue-600 font-bold"></div>
                     `;
-                    b.appendChild(row);
+                    tb.appendChild(row);
 
                     // Gantt
                     const grow = document.createElement('div');
-                    grow.className = `row-h border-b border-slate-100 relative ${isHidden?'collapsed':''}`;
-                    const margin = t.start ? (new Date(t.start+"T00:00:00").getDate() * 40) - 40 : 0;
-                    grow.innerHTML = `<div class="gantt-bar ${t.isCritical?'bar-critical':''}" style="margin-left:${margin}px; width:${(t.duration||1)*40}px"></div>`;
+                    grow.className = `row-h relative ${isHidden?'collapsed':''}`;
+                    const startPos = t.start ? (new Date(t.start+"T00:00:00").getDate() - 1) * 32 : 0;
+                    const durW = (t.duration || 1) * 32;
+                    grow.innerHTML = `<div class="gantt-bar ${isG?'h-2 mt-4 bg-slate-800':'h-3 bg-blue-500'} ${t.isCritical && !isG?'bar-critical':''}" style="left:${startPos}px; width:${durW}px"></div>`;
+                    if(t.baseStart) {
+                        const bPos = (new Date(t.baseStart+"T00:00:00").getDate() - 1) * 32;
+                        grow.innerHTML += `<div class="bar-baseline" style="left:${bPos}px; width:${durW}px"></div>`;
+                    }
                     gb.appendChild(grow);
                 });
                 lucide.createIcons();
             },
 
-            // LINHA DE BALANÇO (Gráfico de Ritmo)
-            renderBalanco() {
-                const ctx = document.getElementById('balanco-chart').getContext('2d');
-                if(window.balCh) window.balCh.destroy();
+            // FUNÇÕES DE BOTÕES
+            toggle(u) { const t=this.db.find(x=>x.uuid===u); t.collapsed = !t.collapsed; this.render(); },
+            upd(u,f,v) { this.db.find(x=>x.uuid===u)[f]=v; this.recalc(); },
+            updPr(u,v) { 
+                const t = this.db.find(x=>x.uuid===u);
+                t.pred = v.split(',').map(n => this.iMap[parseInt(n.trim())]).filter(Boolean);
+                this.recalc();
+            },
+            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', collapsed:false, cost:0}); this.recalc(); },
+            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
+            dupl(u) {
+                const g = this.db.find(x=>x.uuid===u), items = this.db.filter(x=>x.parent===u);
+                const nid = 'g'+Date.now();
+                this.db.push({...g, uuid:nid, name: g.name + " COPIA"});
+                items.forEach(it => this.db.push({...it, uuid:'t'+Math.random(), parent:nid, pred:[]}));
+                this.recalc();
+            },
+            rem(u) { this.db = this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); },
+            setBaseline() { this.db.forEach(t => t.baseStart = t.start); this.render(); alert("Baseline Fixada!"); },
 
-                const datasets = this.db.filter(t=>t.type==='item' && t.start).map((t, idx) => ({
-                    label: t.name,
-                    data: [
-                        {x: 0, y: t.start},
-                        {x: 100, y: t.end}
-                    ],
-                    borderColor: t.isCritical ? '#ef4444' : `hsl(${idx*40}, 70%, 50%)`,
-                    borderWidth: 4,
-                    pointRadius: 6
-                }));
-
-                window.balCh = new Chart(ctx, {
-                    type: 'line',
-                    data: { datasets },
-                    options: {
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Cronograma' } },
-                            x: { title: { display: true, text: 'Unidades / Pavimentos' } }
+            // DASHBOARDS E GRÁFICOS
+            renderCash() {
+                const ctx = document.getElementById('cash-chart').getContext('2d');
+                if(window.cashCh) window.cashCh.destroy();
+                const data = Array(12).fill(0), details = Array.from({length:12}, () => []);
+                this.db.filter(t=>t.type==='group' && t.start).forEach(t => {
+                    const m = new Date(t.start+"T00:00:00").getMonth();
+                    const val = parseFloat(t.cost)||0;
+                    data[m] += val; details[m].push({n: t.name, v: val});
+                });
+                window.cashCh = new Chart(ctx, {
+                    type:'bar',
+                    data: { labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"], datasets:[{label:'Desembolso', data, backgroundColor:'#3b82f6', borderRadius:8}]},
+                    options: { onClick: (e, el) => {
+                        if(el.length) {
+                            const i = el[0].index; document.getElementById('cash-title').innerText = "Detalhes de " + i;
+                            let h = ''; details[i].forEach(it => h+=`<div class="flex justify-between border-b border-slate-700 py-1"><span>${it.n}</span><b>R$ ${it.v.toLocaleString()}</b></div>`);
+                            document.getElementById('cash-list').innerHTML = h || 'Sem custos.';
                         }
-                    }
+                    }}
                 });
             },
-
-            // CONFIGURAÇÃO GLOBAL
-            openConfig() { document.getElementById('modal-config').classList.add('active'); },
-            saveConfig() {
-                const newStart = document.getElementById('proj-start-date').value;
-                if(!newStart) return;
-                this.db.forEach(t => { if(t.type==='item' && !t.pred?.length) t.start = newStart; });
-                this.closeModal(); this.recalc();
-            },
-            closeModal() { document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active')); },
 
             switch(v) {
                 document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
                 document.getElementById('v-'+v).classList.remove('hidden');
-                if(v === 'balanco') this.renderBalanco();
-                lucide.createIcons();
+                if(v==='cash') this.renderCash();
             },
-
-            upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
-            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', collapsed:false}); this.recalc(); },
-            setBaseline() { alert("Baseline fixada com sucesso!"); }
+            openSup(u) { this.currS = u; document.getElementById('modal-sup').classList.add('active'); },
+            closeModals() { document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active')); },
+            saveSup() { this.closeModals(); alert("Estratégia salva."); }
         };
 
         window.onload = () => { editor.recalc(); lucide.createIcons(); };
