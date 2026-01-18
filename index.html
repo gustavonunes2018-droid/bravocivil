@@ -3,148 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - v57 Cloud Sync</title>
+    <title>Bravo CIVIL - Enterprise v58</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; }
         .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; }
         .page.active { display: block; }
-        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; }
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; transition: 0.2s; }
         .input-cell:focus { border-color: #3b82f6; background: white; }
         .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
-        .row-group { background: #f1f5f9 !important; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
-        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; }
+        .row-group { background: #e2e8f0 !important; font-weight: 700; }
+        .row-critical { border-left: 4px solid #ef4444 !important; }
+        .is-critical { color: #ef4444 !important; font-weight: 900; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; }
         .modal.active { display:flex; }
-        .card-dash { background: white; padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; }
+        .card-dash { background: white; padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .baseline-text { font-size: 9px; color: #94a3b8; font-style: italic; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
-        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
+        <div class="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm text-center">
             <h1 class="text-4xl font-black italic mb-2 text-slate-900">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase mb-8">Cloud Sync Engine v57</p>
-            <div class="space-y-4 mb-6">
-                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Usuário">
-                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Senha">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10">Engineering Engine v58</p>
+            <div class="space-y-4 mb-8">
+                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Usuário">
+                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600" placeholder="Senha">
             </div>
-            <button onclick="auth.login()" id="btn-entrar" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg hover:bg-blue-700 transition-all">Entrar</button>
-            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase">Usuário ou Senha Incorretos</p>
+            <button onclick="auth.login()" id="btn-entrar" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-xl hover:scale-[1.02] transition-all">Entrar no Sistema</button>
+            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase italic">Credenciais Inválidas</p>
         </div>
     </div>
 
-    <div id="page-manager" class="page bg-slate-50">
-        <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-            <h1 class="text-xl font-black italic">Bravo<span class="text-blue-600">CIVIL</span></h1>
+    <div id="page-manager" class="page">
+        <nav class="bg-white border-b px-8 py-5 flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-black italic uppercase">Bravo<span class="text-blue-600">CIVIL</span></h1>
             <div class="flex gap-4">
-                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase shadow-md">+ Novo Projeto</button>
-                <button onclick="auth.logout()" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="log-out"></i></button>
+                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase shadow-lg shadow-blue-200">+ Novo Projeto</button>
+                <button onclick="auth.logout()" class="p-2 text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="log-out"></i></button>
             </div>
         </nav>
-        <div class="max-w-6xl mx-auto p-12">
+        <div class="max-w-7xl mx-auto p-12">
+            <h2 class="text-xs font-black text-slate-400 uppercase mb-8 tracking-[0.2em]">Painel de Controle de Obras</h2>
             <div id="grid-projects" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
         </div>
     </div>
 
     <div id="page-editor" class="page bg-white">
-        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center gap-4">
-                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="arrow-left"></i></button>
-                <h2 id="edit-name" class="font-black italic uppercase">Editor</h2>
+        <header class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-6">
+                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-xl transition-all"><i data-lucide="chevron-left"></i></button>
+                <div>
+                    <h2 id="edit-name" class="font-black italic uppercase text-sm leading-none">Editor de Obra</h2>
+                    <span class="text-[9px] text-blue-400 font-bold uppercase tracking-widest">Modo Planejamento Avançado</span>
+                </div>
             </div>
-            <div class="flex bg-slate-800 p-1 rounded-2xl">
-                <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">Planilha</button>
-                <button onclick="editor.switch('dash')" id="t-dash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Dashboard</button>
-                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Fluxo de Caixa</button>
+            <div class="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+                <button onclick="editor.switch('table')" id="t-table" class="px-6 py-2 text-[10px] font-black uppercase rounded-xl transition-all">Planilha</button>
+                <button onclick="editor.switch('dash')" id="t-dash" class="px-6 py-2 text-[10px] font-black uppercase rounded-xl transition-all">Resumo</button>
+                <button onclick="editor.switch('cash')" id="t-cash" class="px-6 py-2 text-[10px] font-black uppercase rounded-xl transition-all">Fluxo de Caixa</button>
             </div>
-            <div class="w-8"></div>
+            <div class="flex gap-3">
+                <button onclick="editor.setBaseline()" class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-2 rounded-xl text-[9px] font-black uppercase hover:bg-amber-500 hover:text-white transition-all">Fixar Linha de Base</button>
+            </div>
         </header>
 
-        <main class="p-6">
+        <main class="p-8">
             <div id="v-table" class="view">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-[10px] font-black uppercase text-slate-400">Cronograma da Obra</h3>
-                    <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[10px] px-6 py-2.5 rounded-xl font-black uppercase">+ Etapa</button>
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex gap-4 items-center">
+                        <span class="flex items-center gap-2 text-[10px] font-black text-red-500 uppercase"><span class="w-3 h-3 bg-red-500 rounded-sm"></span> Caminho Crítico</span>
+                        <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase"><span class="w-3 h-3 bg-slate-200 rounded-sm"></span> Linha de Base</span>
+                    </div>
+                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-8 py-3 rounded-xl font-black uppercase shadow-lg shadow-blue-100 hover:bg-blue-700">+ Nova Etapa</button>
                 </div>
-                <table class="w-full text-sm border-collapse">
-                    <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
-                        <tr>
-                            <th class="p-3 w-10">ID</th>
-                            <th class="p-3 text-left">Descrição</th>
-                            <th class="p-3 w-32 text-right">Custo</th>
-                            <th class="p-3 w-32 text-center">Início</th>
-                            <th class="p-3 w-16 text-center">Dias</th>
-                            <th class="p-3 w-16 text-center">Pred.</th>
-                            <th class="p-3 w-20 text-center">Compra</th>
-                            <th class="p-3 w-12 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody"></tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border-collapse">
+                        <thead class="bg-slate-50 text-[9px] font-black uppercase text-slate-400 border-b">
+                            <tr>
+                                <th class="p-4 w-12 text-center">ID</th>
+                                <th class="p-4 text-left">Descrição da Atividade</th>
+                                <th class="p-4 w-32 text-right">Custo (R$)</th>
+                                <th class="p-4 w-36 text-center">Início</th>
+                                <th class="p-4 w-20 text-center">Dias</th>
+                                <th class="p-4 w-20 text-center">Predec.</th>
+                                <th class="p-4 w-24 text-center">Restrição</th>
+                                <th class="p-4 w-16 text-center">Compra</th>
+                                <th class="p-4 w-12"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="v-dash" class="view hidden">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="card-dash bg-blue-600 text-white">
-                        <p class="text-[10px] font-black uppercase opacity-60">Total Orçado</p>
-                        <h2 id="d-total" class="text-3xl font-black italic">R$ 0,00</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="card-dash bg-slate-900 text-white">
+                        <p class="text-[10px] font-black uppercase opacity-50 tracking-widest">Orçamento Geral</p>
+                        <h2 id="d-total" class="text-3xl font-black italic mt-1 text-blue-400">R$ 0,00</h2>
+                    </div>
+                    <div class="card-dash border-l-4 border-l-red-500">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Atividades Críticas</p>
+                        <h2 id="d-critical" class="text-3xl font-black italic mt-1">0</h2>
                     </div>
                     <div class="md:col-span-2 card-dash">
-                        <h3 class="font-black text-xs uppercase mb-4 italic text-blue-600">Próximas Compras Programadas</h3>
-                        <div id="list-alertas" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                        <h3 class="font-black text-[10px] uppercase mb-4 text-blue-600 tracking-widest">Programação de Suprimentos (Alertas)</h3>
+                        <div id="list-alertas" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
 
             <div id="v-cash" class="view hidden">
-                <div class="bg-white p-8 rounded-[40px] border shadow-sm mb-6">
-                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6">Desembolso Mensal (Clique na Barra)</h3>
-                    <div class="h-[300px]"><canvas id="cash-chart"></canvas></div>
-                </div>
-                <div id="cash-details" class="bg-white p-8 rounded-[32px] border-2 border-dashed border-slate-100 min-h-[120px]">
-                    <p class="text-slate-300 font-bold text-center italic text-sm">Selecione um mês no gráfico para ver o detalhamento.</p>
+                <div class="grid grid-cols-1 gap-8">
+                    <div class="bg-white p-10 rounded-[40px] border shadow-sm">
+                        <h3 class="font-black text-[10px] text-slate-400 uppercase mb-8 tracking-[0.3em]">Curva de Desembolso Financeiro</h3>
+                        <div class="h-[350px]"><canvas id="cash-chart"></canvas></div>
+                    </div>
+                    
+                    <div id="cash-panel" class="bg-white rounded-[40px] border shadow-sm overflow-hidden">
+                        <div class="bg-slate-50 px-8 py-5 border-b flex justify-between items-center">
+                            <h4 id="cash-month-title" class="font-black text-xs uppercase text-slate-900 tracking-widest">Detalhamento Mensal</h4>
+                            <span class="text-[9px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase">Selecione uma barra acima</span>
+                        </div>
+                        <div id="cash-details" class="p-8">
+                            <div class="flex flex-col items-center justify-center py-12 text-slate-300">
+                                <i data-lucide="bar-chart-3" class="w-12 h-12 mb-4 opacity-20"></i>
+                                <p class="font-bold italic text-sm">Clique em um mês do gráfico para analisar a composição de custos.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="modal-supply" class="modal">
-        <div class="bg-white p-8 rounded-[40px] w-full max-w-sm shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-xl italic">Estratégia</h3>
-                <label class="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-1 rounded-full">
-                    <input type="checkbox" id="sup-alert" class="w-4 h-4">
-                    <span class="text-[9px] font-black uppercase text-blue-600">Alerta</span>
+        <div class="bg-white p-10 rounded-[50px] w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="font-black text-2xl italic uppercase">Suprimentos</h3>
+                <label class="flex items-center gap-3 cursor-pointer bg-blue-50 px-4 py-2 rounded-2xl">
+                    <input type="checkbox" id="sup-alert" class="w-5 h-5 accent-blue-600">
+                    <span class="text-[10px] font-black uppercase text-blue-600">Ativar Alerta</span>
                 </label>
             </div>
-            <div class="space-y-4">
-                <select id="sup-mode" onchange="editor.toggleSupMode()" class="w-full border-2 p-3 rounded-xl font-bold">
-                    <option value="padrao">Pagamento no Início</option>
-                    <option value="personalizado">Personalizado (Entrada/Parcela)</option>
-                </select>
-                <div id="sup-fields" class="hidden space-y-4 bg-slate-50 p-6 rounded-3xl border">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="sup-lead" placeholder="Antecedência" class="p-3 rounded-lg border w-full">
-                        <select id="sup-unit" class="p-3 rounded-lg border font-bold">
-                            <option value="d">Dias</option>
-                            <option value="m">Meses</option>
-                        </select>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block">Regra de Pagamento</label>
+                    <select id="sup-mode" onchange="editor.toggleSupMode()" class="w-full border-2 p-4 rounded-2xl font-bold bg-slate-50 outline-none focus:border-blue-600">
+                        <option value="padrao">Pagamento Integral no Início</option>
+                        <option value="personalizado">Personalizado (Entrada + Parcelas)</option>
+                    </select>
+                </div>
+                <div id="sup-fields" class="hidden space-y-4 bg-blue-50/50 p-8 rounded-[32px] border border-blue-100">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-slate-400">Antecedência</label>
+                            <input type="number" id="sup-lead" class="w-full border-2 p-3 rounded-xl mt-1 font-bold">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black uppercase text-slate-400">Unidade</label>
+                            <select id="sup-unit" class="w-full border-2 p-3 rounded-xl mt-1 font-bold">
+                                <option value="d">Dias</option>
+                                <option value="m">Meses</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black uppercase">Entrada %</span>
-                        <input type="number" id="sup-entry" class="w-20 p-2 rounded-lg border text-center font-bold" value="100">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border">
+                        <span class="text-[10px] font-black uppercase">Entrada (%)</span>
+                        <input type="number" id="sup-entry" class="w-20 p-2 text-right font-black text-blue-600" value="100">
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black uppercase">Parcelas Saldo</span>
-                        <input type="number" id="sup-install" class="w-20 p-2 rounded-lg border text-center font-bold" value="1">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border">
+                        <span class="text-[10px] font-black uppercase">Parcelas do Saldo</span>
+                        <input type="number" id="sup-install" class="w-20 p-2 text-right font-black text-blue-600" value="1">
                     </div>
                 </div>
-                <button onclick="editor.saveSup()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase">Salvar</button>
-                <button onclick="editor.closeSup()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Cancelar</button>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="editor.saveSup()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase shadow-lg">Salvar Estratégia</button>
+                    <button onclick="editor.closeSup()" class="px-8 text-slate-400 text-[10px] font-black uppercase">Voltar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -152,18 +196,12 @@
     <script>
         const FB_URL = "https://bravo-civil-default-rtdb.firebaseio.com/";
 
-        // --- SISTEMA DE AUTENTICAÇÃO CLOUD ---
         const auth = {
             ss: null,
             async login() {
-                const u = document.getElementById('log-u').value;
-                const p = document.getElementById('log-p').value;
-                const btn = document.getElementById('btn-entrar');
+                const u = document.getElementById('log-u').value, p = document.getElementById('log-p').value;
+                const btn = document.getElementById('btn-entrar'); btn.innerText = "Sincronizando...";
                 
-                btn.innerText = "Conectando...";
-                btn.disabled = true;
-
-                // Caso especial Admin Local
                 if(u === 'bravo' && p === 'mestre123') {
                     this.ss = { id: 'admin', role: 'admin' };
                     await projectManager.load();
@@ -174,151 +212,232 @@
                 try {
                     const res = await fetch(`${FB_URL}users.json`);
                     const users = await res.json();
-                    
-                    let found = false;
                     for (let id in users) {
                         if (users[id].u === u && users[id].p === p) {
                             this.ss = { ...users[id], id: id };
-                            found = true;
-                            break;
+                            await projectManager.load();
+                            router.go('manager');
+                            return;
                         }
                     }
-
-                    if (found) {
-                        await projectManager.load();
-                        router.go('manager');
-                    } else {
-                        document.getElementById('log-err').classList.remove('hidden');
-                        btn.innerText = "Entrar";
-                        btn.disabled = false;
-                    }
-                } catch (e) {
-                    alert("Erro de conexão com o Banco de Dados. Verifique sua internet.");
+                    document.getElementById('log-err').classList.remove('hidden');
                     btn.innerText = "Entrar";
-                    btn.disabled = false;
-                }
+                } catch (e) { alert("Erro de rede."); btn.innerText = "Entrar"; }
             },
             logout() { location.reload(); }
         };
 
-        const router = { 
-            go(id) { 
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
-                document.getElementById('page-' + id).classList.add('active'); 
-                lucide.createIcons();
-            } 
-        };
+        const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); }};
 
         const projectManager = {
             all: [],
-            path() { 
-                // Define onde salvar baseado no usuário logado (id ou parentId para colaboradores)
-                const ownerId = auth.ss.role === 'cliente' ? auth.ss.id : (auth.ss.parentId || auth.ss.id);
-                return `db_${ownerId}`;
-            },
-            async load() {
-                const res = await fetch(`${FB_URL}${this.path()}.json`);
-                this.all = await res.json() || [];
-                this.render();
-            },
-            async save() {
-                await fetch(`${FB_URL}${this.path()}.json`, {
-                    method: 'PUT',
-                    body: JSON.stringify(this.all)
-                });
-            },
+            path() { const owner = auth.ss.role === 'admin' ? 'admin' : (auth.ss.parentId || auth.ss.id); return `db_${owner}`; },
+            async load() { const res = await fetch(`${FB_URL}${this.path()}.json`); this.all = await res.json() || []; this.render(); },
+            async save() { await fetch(`${FB_URL}${this.path()}.json`, { method:'PUT', body: JSON.stringify(this.all) }); },
             render() {
                 const g = document.getElementById('grid-projects'); g.innerHTML = '';
                 this.all.forEach(p => {
-                    g.innerHTML += `<div class="bg-white p-8 rounded-[35px] shadow-sm border-2 border-transparent hover:border-blue-500 cursor-pointer transition-all" onclick="editor.open('${p.id}')">
-                    <div class="flex justify-between mb-4"><i data-lucide="layout" class="text-blue-600"></i><button onclick="event.stopPropagation(); projectManager.del('${p.id}')" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
-                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3>
-                    <p class="text-[10px] font-black text-slate-400 mt-2 uppercase">Acessar Obra</p></div>`;
+                    g.innerHTML += `<div class="bg-white p-8 rounded-[40px] shadow-sm border-2 border-transparent hover:border-blue-600 cursor-pointer transition-all" onclick="editor.open('${p.id}')">
+                    <div class="flex justify-between mb-6"><div class="p-3 bg-blue-50 rounded-2xl text-blue-600"><i data-lucide="layout"></i></div><button onclick="event.stopPropagation(); projectManager.del('${p.id}')" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                    <h3 class="font-black text-xl italic uppercase text-slate-800 leading-tight">${p.name}</h3>
+                    <div class="mt-6 flex items-center justify-between"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Projeto Ativo</span><i data-lucide="arrow-right" class="w-4 h-4 text-slate-300"></i></div></div>`;
                 });
                 lucide.createIcons();
             },
             async create() {
-                const n = prompt("Nome da Obra:"); if(!n) return;
-                const id = 'p' + Date.now();
-                this.all.push({id, name: n, data: [{uuid:'m', name: n.toUpperCase(), type:'master', cost:0, start: new Date().toISOString().split('T')[0]}]});
+                const n = prompt("Nome do Projeto:"); if(!n) return;
+                this.all.push({id: 'p'+Date.now(), name: n, data: [{uuid:'m', name: n.toUpperCase(), type:'master', cost:0, start: new Date().toISOString().split('T')[0]}]});
                 await this.save(); this.render();
             },
-            async del(id) {
-                if(confirm("Excluir projeto permanentemente?")) {
-                    this.all = this.all.filter(x => x.id !== id);
-                    await this.save(); this.render();
-                }
-            }
+            async del(id) { if(confirm("Remover permanentemente?")) { this.all = this.all.filter(x=>x.id!==id); await this.save(); this.render(); } }
         };
 
         const editor = {
             curr: null, db: [], iMap: {}, uMap: {}, monthlyData: [],
 
             open(id) {
-                this.curr = id; const p = projectManager.all.find(x => x.id === id);
+                this.curr = id; const p = projectManager.all.find(x=>x.id===id);
                 this.db = p.data; document.getElementById('edit-name').innerText = p.name;
                 router.go('editor'); this.recalc();
             },
 
+            // --- LÓGICA DE ENGENHARIA (CPM & BASELINE) ---
             recalc() {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
-                
+
+                // Reset do Cálculo
+                this.db.forEach(t => { t.isCritical = false; t.earlyStart = t.start; t.earlyEnd = ""; });
+
+                // Ida (Forward Pass) + Restrições
                 this.db.forEach(t => {
                     if(t.type === 'item') {
+                        let calcStart = t.start;
+                        // Regra de Precedência (FS Puro)
                         if(t.pred?.length) {
-                            let last = ""; t.pred.forEach(pid => { const p = this.db.find(x => x.uuid === pid); if(p?.end > last) last = p.end; });
-                            if(last) t.start = this.addD(last, 1);
+                            let maxEnd = "";
+                            t.pred.forEach(pid => {
+                                const p = this.db.find(x=>x.uuid === pid);
+                                if(p && p.end > maxEnd) maxEnd = p.end;
+                            });
+                            if(maxEnd) calcStart = this.addD(maxEnd, 1);
                         }
-                        if(t.start && t.duration) t.end = this.addD(t.start, t.duration);
+                        // Regra de Restrição (Não iniciar antes de)
+                        if(t.constraintDate && t.constraintDate > calcStart) calcStart = t.constraintDate;
+
+                        t.start = calcStart;
+                        if(t.start && t.duration) t.end = this.addD(t.start, t.duration - 1);
                     }
                 });
 
-                this.db.filter(t => t.type === 'group').forEach(g => {
-                    const k = this.db.filter(x => x.parent === g.uuid);
-                    g.cost = k.reduce((s, x) => s + (parseFloat(x.cost) || 0), 0);
-                    const sts = k.map(x => x.start).filter(Boolean).sort();
-                    if(sts.length) g.start = sts[0];
+                // Volta (Backward Pass / Caminho Crítico Simplificado)
+                const lastEnd = [...this.db].sort((a,b)=> (b.end||"").localeCompare(a.end||""))[0]?.end;
+                this.db.forEach(t => {
+                    if(t.type === 'item' && t.end === lastEnd) t.isCritical = true;
+                    // Simplificação: Se o sucessor é crítico e este termina logo antes, ele é crítico
+                    const successors = this.db.filter(x => x.pred?.includes(t.uuid));
+                    if(successors.some(s => s.isCritical && s.start === this.addD(t.end, 1))) t.isCritical = true;
                 });
 
-                this.db[0].cost = this.db.filter(t => t.type === 'group').reduce((s, g) => s + g.cost, 0);
+                // Agrega custos e datas no Grupo
+                this.db.filter(t=>t.type==='group').forEach(g => {
+                    const children = this.db.filter(x=>x.parent === g.uuid);
+                    g.cost = children.reduce((s, x) => s + (parseFloat(x.cost) || 0), 0);
+                    const dates = children.map(x=>x.start).filter(Boolean).sort();
+                    if(dates.length) g.start = dates[0];
+                    const ends = children.map(x=>x.end).filter(Boolean).sort().reverse();
+                    if(ends.length) g.end = ends[0];
+                    g.isCritical = children.some(x=>x.isCritical);
+                });
+
+                this.db[0].cost = this.db.filter(t=>t.type==='group').reduce((s, g) => s + g.cost, 0);
                 this.renderT(); this.autoSave();
             },
 
-            addD(s, d) { let dt = new Date(s + "T00:00:00"); dt.setDate(dt.getDate() + parseInt(d)); return dt.toISOString().split('T')[0]; },
+            addD(s, d) { 
+                if(!s) return "";
+                let dt = new Date(s + "T00:00:00"); 
+                dt.setDate(dt.getDate() + parseInt(d)); 
+                return dt.toISOString().split('T')[0]; 
+            },
+
+            setBaseline() {
+                if(confirm("Deseja fixar os dados atuais como Linha de Base?")) {
+                    this.db.forEach(t => {
+                        t.baseStart = t.start;
+                        t.baseCost = t.cost;
+                    });
+                    this.recalc();
+                }
+            },
 
             renderT() {
                 const b = document.getElementById('tbody'); b.innerHTML = '';
                 this.db.forEach((t, i) => {
                     const isM=t.type==='master', isG=t.type==='group', isI=t.type==='item';
-                    b.innerHTML += `<tr class="${isM?'row-master':isG?'row-group':''} border-b">
-                        <td class="p-3 text-center text-[10px] opacity-30">${i+1}</td>
-                        <td class="p-3"><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''}"></td>
-                        <td class="p-3"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${isI?'':'disabled'}></td>
-                        <td class="p-3"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
-                        <td class="p-3"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
-                        <td class="p-3"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center text-blue-600 font-black" ${isI?'':'disabled'}></td>
-                        <td class="p-3 text-center">${isG?`<button onclick="editor.openSup('${t.uuid}')" class="${t.supply?.alert?'text-blue-600':'text-slate-300'}"><i data-lucide="shopping-cart" class="w-5 h-5"></i></button>`:''}</td>
-                        <td class="p-3 text-center flex justify-center gap-2">
-                            ${isG?`<button onclick="editor.dupl('${t.uuid}')" class="text-slate-300 hover:text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button>`:''}
-                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    b.innerHTML += `<tr class="${isM?'row-master':isG?'row-group':''} ${t.isCritical && isI ? 'row-critical' : ''} border-b hover:bg-slate-50 transition-colors">
+                        <td class="p-4 text-center text-[10px] font-bold opacity-30">${i+1}</td>
+                        <td class="p-4">
+                            <input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''} ${t.isCritical && isI ? 'text-red-600':''}">
+                            ${isG ? `<button onclick="editor.addItem('${t.uuid}')" class="ml-2 text-blue-500 hover:scale-110"><i data-lucide="plus-circle" class="w-4 h-4"></i></button>` : ''}
+                            ${t.baseStart ? `<div class="baseline-text ${t.parent?'ml-6':''}">Base: ${t.baseStart}</div>` : ''}
+                        </td>
+                        <td class="p-4"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right font-bold" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-black text-blue-600" ${isI?'':'disabled'}></td>
+                        <td class="p-4"><input type="date" value="${t.constraintDate||''}" onchange="editor.upd('${t.uuid}','constraintDate',this.value)" class="input-cell text-[10px] text-center bg-amber-50 rounded" ${isI?'':'disabled'}></td>
+                        <td class="p-4 text-center">${isG ? `<button onclick="editor.openSup('${t.uuid}')" class="${t.supply?.alert?'text-blue-600':'text-slate-300'}"><i data-lucide="shopping-cart" class="w-5 h-5 mx-auto"></i></button>` : ''}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </td>
                     </tr>`;
                 });
                 lucide.createIcons();
             },
 
-            dupl(u) {
-                const g = this.db.find(x => x.uuid === u);
-                const k = this.db.filter(x => x.parent === u);
-                const nid = 'g' + Date.now();
-                this.db.push({...g, uuid: nid, name: g.name + " (Cópia)"});
-                k.forEach(x => this.db.push({...x, uuid: 't' + Math.random(), parent: nid, pred: []}));
-                this.recalc();
+            // --- ABA FLUXO DE CAIXA REVISADA ---
+            renderCash() {
+                const ctx = document.getElementById('cash-chart').getContext('2d');
+                if(window.cashCh) window.cashCh.destroy();
+                const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                this.monthlyData = Array.from({length: 12}, () => ({total: 0, items: []}));
+
+                this.db.filter(t => t.type === 'group' && t.start).forEach(t => {
+                    const m0 = new Date(t.start + "T00:00:00").getMonth();
+                    if(t.supply?.mode === 'personalizado') {
+                        let buyDt = new Date(t.start + "T00:00:00");
+                        if(t.supply.unit === 'd') buyDt.setDate(buyDt.getDate() - t.supply.lead); else buyDt.setMonth(buyDt.getMonth() - t.supply.lead);
+                        const mBuy = buyDt.getMonth();
+                        const vEntry = t.cost * (t.supply.entry / 100);
+                        const vRest = (t.cost - vEntry) / (t.supply.install || 1);
+                        
+                        this.monthlyData[mBuy % 12].total += vEntry;
+                        this.monthlyData[mBuy % 12].items.push({n: t.name, type: 'Entrada', v: vEntry});
+                        
+                        for(let i=0; i<t.supply.install; i++) {
+                            let mP = (mBuy + 1 + i) % 12;
+                            this.monthlyData[mP].total += vRest;
+                            this.monthlyData[mP].items.push({n: t.name, type: `Parcela ${i+1}`, v: vRest});
+                        }
+                    } else {
+                        this.monthlyData[m0].total += t.cost;
+                        this.monthlyData[m0].items.push({n: t.name, type: 'Integral', v: t.cost});
+                    }
+                });
+
+                window.cashCh = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Desembolso Mensal', data: this.monthlyData.map(m => m.total), backgroundColor: '#3b82f6', borderRadius: 12, hoverBackgroundColor: '#0f172a' }] },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
+                        onClick: (e, elements) => {
+                            if(elements.length > 0) {
+                                const idx = elements[0].index;
+                                const data = this.monthlyData[idx];
+                                document.getElementById('cash-month-title').innerText = `Detalhamento: ${labels[idx]}`;
+                                let h = `<div class="grid grid-cols-1 gap-4">`;
+                                data.items.forEach(it => {
+                                    h += `<div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div><p class="text-[10px] font-black uppercase text-slate-900">${it.n}</p><p class="text-[9px] text-slate-400 font-bold uppercase">${it.type}</p></div>
+                                        <div class="text-sm font-black text-slate-900">R$ ${it.v.toLocaleString()}</div>
+                                    </div>`;
+                                });
+                                h += `<div class="flex justify-between items-center p-6 bg-blue-600 text-white rounded-[24px] mt-4 shadow-lg shadow-blue-100">
+                                    <span class="text-xs font-black uppercase">Total do Mês</span>
+                                    <span class="text-xl font-black italic">R$ ${data.total.toLocaleString()}</span>
+                                </div></div>`;
+                                document.getElementById('cash-details').innerHTML = h;
+                            }
+                        }
+                    }
+                });
             },
 
+            renderDash() {
+                document.getElementById('d-total').innerText = `R$ ${this.db[0].cost.toLocaleString()}`;
+                document.getElementById('d-critical').innerText = this.db.filter(t=>t.type==='item' && t.isCritical).length;
+                const list = document.getElementById('list-alertas'); list.innerHTML = '';
+                this.db.filter(t=>t.type==='group' && t.supply?.alert).forEach(t => {
+                    let d = new Date(t.start + "T00:00:00");
+                    if(t.supply.unit==='d') d.setDate(d.getDate()-t.supply.lead); else d.setMonth(d.getMonth()-t.supply.lead);
+                    list.innerHTML += `<div class="flex justify-between p-3 bg-slate-50 border-l-4 border-amber-500 rounded-lg">
+                        <span class="text-[9px] font-black uppercase">${t.name}<br><small class="text-slate-400">Limite: ${d.toLocaleDateString()}</small></span>
+                        <span class="font-black text-xs">R$ ${t.cost.toLocaleString()}</span>
+                    </div>`;
+                });
+            },
+
+            // --- DEMAIS FUNÇÕES AUXILIARES ---
+            upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
+            updPr(u,v) { const t=this.db.find(x=>x.uuid===u); t.pred=v.split(',').map(n=>this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
+            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', cost:0}); this.recalc(); },
+            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Nova Atividade', type:'item', parent:p, cost:0, duration:1}); this.recalc(); },
+            rem(u) { if(u!=='m') { this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); } },
             openSup(u) {
-                this.currSup = u; const t = this.db.find(x => x.uuid === u);
+                this.currSup = u; const t = this.db.find(x=>x.uuid===u);
                 document.getElementById('sup-alert').checked = t.supply?.alert || false;
                 document.getElementById('sup-mode').value = t.supply?.mode || 'padrao';
                 document.getElementById('sup-lead').value = t.supply?.lead || 0;
@@ -327,104 +446,22 @@
                 document.getElementById('sup-install').value = t.supply?.install || 1;
                 this.toggleSupMode(); document.getElementById('modal-supply').classList.add('active');
             },
-
-            toggleSupMode() { document.getElementById('sup-fields').className = document.getElementById('sup-mode').value==='personalizado'?'space-y-4 bg-slate-50 p-6 rounded-3xl border':'hidden'; },
-
+            toggleSupMode() { document.getElementById('sup-fields').className = document.getElementById('sup-mode').value==='personalizado'?'space-y-4 bg-blue-50/50 p-8 rounded-[32px] border':'hidden'; },
             saveSup() {
-                const t = this.db.find(x => x.uuid === this.currSup);
-                t.supply = {
-                    alert: document.getElementById('sup-alert').checked,
-                    mode: document.getElementById('sup-mode').value,
-                    lead: parseInt(document.getElementById('sup-lead').value)||0,
-                    unit: document.getElementById('sup-unit').value,
-                    entry: parseFloat(document.getElementById('sup-entry').value)||0,
-                    install: parseInt(document.getElementById('sup-install').value)||1
-                };
+                const t = this.db.find(x=>x.uuid===this.currSup);
+                t.supply = { alert: document.getElementById('sup-alert').checked, mode: document.getElementById('sup-mode').value, lead: parseInt(document.getElementById('sup-lead').value)||0, unit: document.getElementById('sup-unit').value, entry: parseFloat(document.getElementById('sup-entry').value)||0, install: parseInt(document.getElementById('sup-install').value)||1 };
                 document.getElementById('modal-supply').classList.remove('active'); this.recalc();
             },
-
+            closeSup() { document.getElementById('modal-supply').classList.remove('active'); },
             switch(v) {
-                document.querySelectorAll('.view').forEach(x => x.classList.add('hidden'));
-                document.getElementById('v-' + v).classList.remove('hidden');
-                document.querySelectorAll('[id^="t-"]').forEach(b => b.classList.remove('bg-blue-600'));
-                document.getElementById('t-' + v).classList.add('bg-blue-600');
+                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+                document.getElementById('v-'+v).classList.remove('hidden');
+                document.querySelectorAll('[id^="t-"]').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+                document.getElementById('t-'+v).classList.add('bg-blue-600', 'text-white');
                 if(v==='cash') this.renderCash();
                 if(v==='dash') this.renderDash();
             },
-
-            renderDash() {
-                document.getElementById('d-total').innerText = `R$ ${this.db[0].cost.toLocaleString()}`;
-                const list = document.getElementById('list-alertas'); list.innerHTML = '';
-                this.db.filter(t => t.type === 'group' && t.supply?.alert).forEach(t => {
-                    let d = new Date(t.start + "T00:00:00");
-                    if(t.supply.unit === 'd') d.setDate(d.getDate() - t.supply.lead); else d.setMonth(d.getMonth() - t.supply.lead);
-                    list.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-blue-600 flex justify-between items-center shadow-sm">
-                        <div class="text-[10px] font-black uppercase">${t.name}<br><span class="text-blue-600">Limite: ${d.toLocaleDateString()}</span></div>
-                        <div class="font-black text-xs italic">R$ ${t.cost.toLocaleString()}</div>
-                    </div>`;
-                });
-            },
-
-            renderCash() {
-                const ctx = document.getElementById('cash-chart').getContext('2d');
-                if(window.cashCh) window.cashCh.destroy();
-                const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                this.monthlyData = Array.from({length: 12}, () => ({total: 0, items: []}));
-
-                this.db.filter(t => t.type === 'group' && t.start).forEach(t => {
-                    const startDt = new Date(t.start + "T00:00:00");
-                    if(t.supply?.mode === 'personalizado') {
-                        let buyDt = new Date(startDt);
-                        if(t.supply.unit === 'd') buyDt.setDate(buyDt.getDate() - t.supply.lead); else buyDt.setMonth(buyDt.getMonth() - t.supply.lead);
-                        const mBuy = buyDt.getMonth();
-                        const vEntry = t.cost * (t.supply.entry / 100);
-                        const vRest = (t.cost - vEntry) / (t.supply.install || 1);
-
-                        this.monthlyData[mBuy % 12].total += vEntry;
-                        this.monthlyData[mBuy % 12].items.push({n: t.name + " (Entrada)", v: vEntry});
-                        for(let i=0; i<t.supply.install; i++) {
-                            let mP = (mBuy + 1 + i) % 12;
-                            this.monthlyData[mP].total += vRest;
-                            this.monthlyData[mP].items.push({n: t.name + ` (Parc ${i+1})`, v: vRest});
-                        }
-                    } else {
-                        const m0 = startDt.getMonth();
-                        this.monthlyData[m0].total += t.cost;
-                        this.monthlyData[m0].items.push({n: t.name, v: t.cost});
-                    }
-                });
-
-                window.cashCh = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels, datasets: [{ label: 'Desembolso Mensal', data: this.monthlyData.map(m => m.total), backgroundColor: '#3b82f6', borderRadius: 8 }] },
-                    options: {
-                        onClick: (e, elements) => {
-                            if(elements.length > 0) {
-                                const idx = elements[0].index;
-                                const data = this.monthlyData[idx];
-                                let h = `<h4 class="font-black text-blue-600 mb-4 uppercase text-xs">Detalhamento: ${labels[idx]}</h4>`;
-                                data.items.forEach(it => h += `<div class="flex justify-between text-[10px] border-b py-2 uppercase font-bold"><span>${it.n}</span><span class="font-black">R$ ${it.v.toLocaleString()}</span></div>`);
-                                h += `<div class="flex justify-between font-black mt-4 text-blue-600 text-sm"><span>TOTAL DO MÊS</span><span>R$ ${data.total.toLocaleString()}</span></div>`;
-                                document.getElementById('cash-details').innerHTML = h;
-                            }
-                        }
-                    }
-                });
-            },
-
-            upd(u,f,v) { const t=this.db.find(x => x.uuid === u); t[f]=v; this.recalc(); },
-            updPr(u,v) { const t=this.db.find(x => x.uuid === u); t.pred=v.split(',').map(n => this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
-            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'NOVA ETAPA', type:'group', parent:'m', cost:0}); this.recalc(); },
-            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
-            rem(u) { if(u!=='m') { this.db=this.db.filter(x => x.uuid!==u && x.parent!==u); this.recalc(); } },
-            closeSup() { document.getElementById('modal-supply').classList.remove('active'); },
-            async autoSave() {
-                const i = projectManager.all.findIndex(x => x.id === this.curr);
-                if(i !== -1) {
-                    projectManager.all[i].data = this.db;
-                    await projectManager.save();
-                }
-            }
+            async autoSave() { const i=projectManager.all.findIndex(x=>x.id===this.curr); if(i!==-1) { projectManager.all[i].data=this.db; await projectManager.save(); } }
         };
 
         window.onload = () => lucide.createIcons();
