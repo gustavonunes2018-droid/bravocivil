@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - Engine v56</title>
+    <title>Bravo CIVIL - v57 Cloud Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -27,19 +27,23 @@
     <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
         <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
             <h1 class="text-4xl font-black italic mb-2 text-slate-900">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase mb-8">Engineering Engine v56</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-8">Cloud Sync Engine v57</p>
             <div class="space-y-4 mb-6">
-                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Usuário (admin)">
-                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Senha (123)">
+                <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Usuário">
+                <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Senha">
             </div>
-            <button onclick="auth.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg">Entrar</button>
+            <button onclick="auth.login()" id="btn-entrar" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase shadow-lg hover:bg-blue-700 transition-all">Entrar</button>
+            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase">Usuário ou Senha Incorretos</p>
         </div>
     </div>
 
     <div id="page-manager" class="page bg-slate-50">
         <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10">
             <h1 class="text-xl font-black italic">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase">+ Novo Projeto</button>
+            <div class="flex gap-4">
+                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase shadow-md">+ Novo Projeto</button>
+                <button onclick="auth.logout()" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="log-out"></i></button>
+            </div>
         </nav>
         <div class="max-w-6xl mx-auto p-12">
             <div id="grid-projects" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
@@ -55,15 +59,16 @@
             <div class="flex bg-slate-800 p-1 rounded-2xl">
                 <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">Planilha</button>
                 <button onclick="editor.switch('dash')" id="t-dash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Dashboard</button>
-                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Fluxo Caixa</button>
+                <button onclick="editor.switch('cash')" id="t-cash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Fluxo de Caixa</button>
             </div>
             <div class="w-8"></div>
         </header>
 
         <main class="p-6">
             <div id="v-table" class="view">
-                <div class="flex justify-end mb-4">
-                    <button onclick="editor.addGroup()" class="bg-blue-600 text-white text-[10px] px-6 py-2 rounded-xl font-black uppercase">+ Etapa</button>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black uppercase text-slate-400">Cronograma da Obra</h3>
+                    <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[10px] px-6 py-2.5 rounded-xl font-black uppercase">+ Etapa</button>
                 </div>
                 <table class="w-full text-sm border-collapse">
                     <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
@@ -75,7 +80,7 @@
                             <th class="p-3 w-16 text-center">Dias</th>
                             <th class="p-3 w-16 text-center">Pred.</th>
                             <th class="p-3 w-20 text-center">Compra</th>
-                            <th class="p-3 w-10"></th>
+                            <th class="p-3 w-12 text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tbody"></tbody>
@@ -89,19 +94,19 @@
                         <h2 id="d-total" class="text-3xl font-black italic">R$ 0,00</h2>
                     </div>
                     <div class="md:col-span-2 card-dash">
-                        <h3 class="font-black text-xs uppercase mb-4 italic text-blue-600">Alertas de Compra (Próximos)</h3>
-                        <div id="list-alertas" class="space-y-2"></div>
+                        <h3 class="font-black text-xs uppercase mb-4 italic text-blue-600">Próximas Compras Programadas</h3>
+                        <div id="list-alertas" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                     </div>
                 </div>
             </div>
 
             <div id="v-cash" class="view hidden">
                 <div class="bg-white p-8 rounded-[40px] border shadow-sm mb-6">
-                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6 tracking-widest">Gráfico de Desembolso (Clique na Barra)</h3>
+                    <h3 class="font-black text-xs text-slate-400 uppercase mb-6">Desembolso Mensal (Clique na Barra)</h3>
                     <div class="h-[300px]"><canvas id="cash-chart"></canvas></div>
                 </div>
-                <div id="cash-details" class="bg-slate-50 p-8 rounded-[32px] border-2 border-dashed border-slate-200 min-h-[100px]">
-                    <p class="text-slate-400 font-bold text-center italic text-sm">Clique em um mês para detalhar os itens.</p>
+                <div id="cash-details" class="bg-white p-8 rounded-[32px] border-2 border-dashed border-slate-100 min-h-[120px]">
+                    <p class="text-slate-300 font-bold text-center italic text-sm">Selecione um mês no gráfico para ver o detalhamento.</p>
                 </div>
             </div>
         </main>
@@ -118,8 +123,8 @@
             </div>
             <div class="space-y-4">
                 <select id="sup-mode" onchange="editor.toggleSupMode()" class="w-full border-2 p-3 rounded-xl font-bold">
-                    <option value="padrao">No Início</option>
-                    <option value="personalizado">Antecipado/Parcelado</option>
+                    <option value="padrao">Pagamento no Início</option>
+                    <option value="personalizado">Personalizado (Entrada/Parcela)</option>
                 </select>
                 <div id="sup-fields" class="hidden space-y-4 bg-slate-50 p-6 rounded-3xl border">
                     <div class="grid grid-cols-2 gap-3">
@@ -135,46 +140,114 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black uppercase">Parcelas Saldo</span>
-                        <input type="number" id="sup-install" class="w-20 p-2 rounded-lg border text-center font-bold" value="1" min="1">
+                        <input type="number" id="sup-install" class="w-20 p-2 rounded-lg border text-center font-bold" value="1">
                     </div>
                 </div>
                 <button onclick="editor.saveSup()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase">Salvar</button>
-                <button onclick="editor.closeSup()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Fechar</button>
+                <button onclick="editor.closeSup()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Cancelar</button>
             </div>
         </div>
     </div>
 
     <script>
+        const FB_URL = "https://bravo-civil-default-rtdb.firebaseio.com/";
+
+        // --- SISTEMA DE AUTENTICAÇÃO CLOUD ---
         const auth = {
             ss: null,
-            login() {
-                const u = document.getElementById('log-u').value, p = document.getElementById('log-p').value;
-                if(u === 'admin' && p === '123') {
-                    this.ss = {id: 'admin'};
-                    projectManager.load();
+            async login() {
+                const u = document.getElementById('log-u').value;
+                const p = document.getElementById('log-p').value;
+                const btn = document.getElementById('btn-entrar');
+                
+                btn.innerText = "Conectando...";
+                btn.disabled = true;
+
+                // Caso especial Admin Local
+                if(u === 'bravo' && p === 'mestre123') {
+                    this.ss = { id: 'admin', role: 'admin' };
+                    await projectManager.load();
                     router.go('manager');
-                } else { alert("Tente admin / 123"); }
-            }
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`${FB_URL}users.json`);
+                    const users = await res.json();
+                    
+                    let found = false;
+                    for (let id in users) {
+                        if (users[id].u === u && users[id].p === p) {
+                            this.ss = { ...users[id], id: id };
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found) {
+                        await projectManager.load();
+                        router.go('manager');
+                    } else {
+                        document.getElementById('log-err').classList.remove('hidden');
+                        btn.innerText = "Entrar";
+                        btn.disabled = false;
+                    }
+                } catch (e) {
+                    alert("Erro de conexão com o Banco de Dados. Verifique sua internet.");
+                    btn.innerText = "Entrar";
+                    btn.disabled = false;
+                }
+            },
+            logout() { location.reload(); }
         };
 
-        const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); }};
+        const router = { 
+            go(id) { 
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
+                document.getElementById('page-' + id).classList.add('active'); 
+                lucide.createIcons();
+            } 
+        };
 
         const projectManager = {
-            all: JSON.parse(localStorage.getItem('bravo_v56')) || [],
-            load() { this.render(); },
-            save() { localStorage.setItem('bravo_v56', JSON.stringify(this.all)); },
+            all: [],
+            path() { 
+                // Define onde salvar baseado no usuário logado (id ou parentId para colaboradores)
+                const ownerId = auth.ss.role === 'cliente' ? auth.ss.id : (auth.ss.parentId || auth.ss.id);
+                return `db_${ownerId}`;
+            },
+            async load() {
+                const res = await fetch(`${FB_URL}${this.path()}.json`);
+                this.all = await res.json() || [];
+                this.render();
+            },
+            async save() {
+                await fetch(`${FB_URL}${this.path()}.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(this.all)
+                });
+            },
             render() {
                 const g = document.getElementById('grid-projects'); g.innerHTML = '';
                 this.all.forEach(p => {
-                    g.innerHTML += `<div class="bg-white p-8 rounded-[35px] shadow-sm border-2 border-transparent hover:border-blue-500 cursor-pointer" onclick="editor.open('${p.id}')">
-                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3><p class="text-[10px] font-black text-slate-400 mt-2 uppercase">Acessar Projeto</p></div>`;
+                    g.innerHTML += `<div class="bg-white p-8 rounded-[35px] shadow-sm border-2 border-transparent hover:border-blue-500 cursor-pointer transition-all" onclick="editor.open('${p.id}')">
+                    <div class="flex justify-between mb-4"><i data-lucide="layout" class="text-blue-600"></i><button onclick="event.stopPropagation(); projectManager.del('${p.id}')" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                    <h3 class="font-black text-xl italic uppercase">${p.name}</h3>
+                    <p class="text-[10px] font-black text-slate-400 mt-2 uppercase">Acessar Obra</p></div>`;
                 });
+                lucide.createIcons();
             },
-            create() {
-                const n = prompt("Nome:"); if(!n) return;
+            async create() {
+                const n = prompt("Nome da Obra:"); if(!n) return;
                 const id = 'p' + Date.now();
                 this.all.push({id, name: n, data: [{uuid:'m', name: n.toUpperCase(), type:'master', cost:0, start: new Date().toISOString().split('T')[0]}]});
-                this.save(); this.render();
+                await this.save(); this.render();
+            },
+            async del(id) {
+                if(confirm("Excluir projeto permanentemente?")) {
+                    this.all = this.all.filter(x => x.id !== id);
+                    await this.save(); this.render();
+                }
             }
         };
 
@@ -182,7 +255,7 @@
             curr: null, db: [], iMap: {}, uMap: {}, monthlyData: [],
 
             open(id) {
-                this.curr = id; const p = projectManager.all.find(x=>x.id===id);
+                this.curr = id; const p = projectManager.all.find(x => x.id === id);
                 this.db = p.data; document.getElementById('edit-name').innerText = p.name;
                 router.go('editor'); this.recalc();
             },
@@ -190,47 +263,62 @@
             recalc() {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
+                
                 this.db.forEach(t => {
                     if(t.type === 'item') {
                         if(t.pred?.length) {
-                            let last = ""; t.pred.forEach(pid => { const p = this.db.find(x=>x.uuid===pid); if(p?.end > last) last = p.end; });
+                            let last = ""; t.pred.forEach(pid => { const p = this.db.find(x => x.uuid === pid); if(p?.end > last) last = p.end; });
                             if(last) t.start = this.addD(last, 1);
                         }
                         if(t.start && t.duration) t.end = this.addD(t.start, t.duration);
                     }
                 });
-                this.db.filter(t=>t.type==='group').forEach(g => {
-                    const k = this.db.filter(x=>x.parent===g.uuid);
-                    g.cost = k.reduce((s, x) => s + (parseFloat(x.cost)||0), 0);
-                    const sts = k.map(x=>x.start).filter(Boolean).sort();
+
+                this.db.filter(t => t.type === 'group').forEach(g => {
+                    const k = this.db.filter(x => x.parent === g.uuid);
+                    g.cost = k.reduce((s, x) => s + (parseFloat(x.cost) || 0), 0);
+                    const sts = k.map(x => x.start).filter(Boolean).sort();
                     if(sts.length) g.start = sts[0];
                 });
-                this.db[0].cost = this.db.filter(t=>t.type==='group').reduce((s,g)=>s+g.cost,0);
+
+                this.db[0].cost = this.db.filter(t => t.type === 'group').reduce((s, g) => s + g.cost, 0);
                 this.renderT(); this.autoSave();
             },
 
-            addD(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
+            addD(s, d) { let dt = new Date(s + "T00:00:00"); dt.setDate(dt.getDate() + parseInt(d)); return dt.toISOString().split('T')[0]; },
 
             renderT() {
                 const b = document.getElementById('tbody'); b.innerHTML = '';
                 this.db.forEach((t, i) => {
                     const isM=t.type==='master', isG=t.type==='group', isI=t.type==='item';
                     b.innerHTML += `<tr class="${isM?'row-master':isG?'row-group':''} border-b">
-                        <td class="p-2 text-center text-[10px] opacity-30">${i+1}</td>
-                        <td class="p-2"><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''}"></td>
-                        <td><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${isI?'':'disabled'}></td>
-                        <td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
-                        <td><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
-                        <td><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center text-blue-600 font-bold" ${isI?'':'disabled'}></td>
-                        <td class="text-center">${isG?`<button onclick="editor.openSup('${t.uuid}')" class="${t.supply?.alert?'text-blue-600':'text-slate-300'}"><i data-lucide="shopping-cart" class="w-4 h-4"></i></button>`:''}</td>
-                        <td><button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button></td>
+                        <td class="p-3 text-center text-[10px] opacity-30">${i+1}</td>
+                        <td class="p-3"><input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''}"></td>
+                        <td class="p-3"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${isI?'':'disabled'}></td>
+                        <td class="p-3"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-3"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isI?'':'disabled'}></td>
+                        <td class="p-3"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center text-blue-600 font-black" ${isI?'':'disabled'}></td>
+                        <td class="p-3 text-center">${isG?`<button onclick="editor.openSup('${t.uuid}')" class="${t.supply?.alert?'text-blue-600':'text-slate-300'}"><i data-lucide="shopping-cart" class="w-5 h-5"></i></button>`:''}</td>
+                        <td class="p-3 text-center flex justify-center gap-2">
+                            ${isG?`<button onclick="editor.dupl('${t.uuid}')" class="text-slate-300 hover:text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button>`:''}
+                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-200 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </td>
                     </tr>`;
                 });
                 lucide.createIcons();
             },
 
+            dupl(u) {
+                const g = this.db.find(x => x.uuid === u);
+                const k = this.db.filter(x => x.parent === u);
+                const nid = 'g' + Date.now();
+                this.db.push({...g, uuid: nid, name: g.name + " (Cópia)"});
+                k.forEach(x => this.db.push({...x, uuid: 't' + Math.random(), parent: nid, pred: []}));
+                this.recalc();
+            },
+
             openSup(u) {
-                this.currSup = u; const t = this.db.find(x=>x.uuid===u);
+                this.currSup = u; const t = this.db.find(x => x.uuid === u);
                 document.getElementById('sup-alert').checked = t.supply?.alert || false;
                 document.getElementById('sup-mode').value = t.supply?.mode || 'padrao';
                 document.getElementById('sup-lead').value = t.supply?.lead || 0;
@@ -241,9 +329,9 @@
             },
 
             toggleSupMode() { document.getElementById('sup-fields').className = document.getElementById('sup-mode').value==='personalizado'?'space-y-4 bg-slate-50 p-6 rounded-3xl border':'hidden'; },
-            
+
             saveSup() {
-                const t = this.db.find(x=>x.uuid===this.currSup);
+                const t = this.db.find(x => x.uuid === this.currSup);
                 t.supply = {
                     alert: document.getElementById('sup-alert').checked,
                     mode: document.getElementById('sup-mode').value,
@@ -256,8 +344,10 @@
             },
 
             switch(v) {
-                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
-                document.getElementById('v-'+v).classList.remove('hidden');
+                document.querySelectorAll('.view').forEach(x => x.classList.add('hidden'));
+                document.getElementById('v-' + v).classList.remove('hidden');
+                document.querySelectorAll('[id^="t-"]').forEach(b => b.classList.remove('bg-blue-600'));
+                document.getElementById('t-' + v).classList.add('bg-blue-600');
                 if(v==='cash') this.renderCash();
                 if(v==='dash') this.renderDash();
             },
@@ -265,12 +355,12 @@
             renderDash() {
                 document.getElementById('d-total').innerText = `R$ ${this.db[0].cost.toLocaleString()}`;
                 const list = document.getElementById('list-alertas'); list.innerHTML = '';
-                this.db.filter(t=>t.type==='group' && t.supply?.alert).forEach(t => {
+                this.db.filter(t => t.type === 'group' && t.supply?.alert).forEach(t => {
                     let d = new Date(t.start + "T00:00:00");
-                    if(t.supply.unit==='d') d.setDate(d.getDate()-t.supply.lead); else d.setMonth(d.getMonth()-t.supply.lead);
-                    list.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl border-l-4 border-blue-600 flex justify-between">
-                        <span class="text-[10px] font-black uppercase">${t.name} <br> <small class="text-slate-400">Limite: ${d.toLocaleDateString()}</small></span>
-                        <span class="font-black text-blue-600 italic">R$ ${t.cost.toLocaleString()}</span>
+                    if(t.supply.unit === 'd') d.setDate(d.getDate() - t.supply.lead); else d.setMonth(d.getMonth() - t.supply.lead);
+                    list.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-blue-600 flex justify-between items-center shadow-sm">
+                        <div class="text-[10px] font-black uppercase">${t.name}<br><span class="text-blue-600">Limite: ${d.toLocaleDateString()}</span></div>
+                        <div class="font-black text-xs italic">R$ ${t.cost.toLocaleString()}</div>
                     </div>`;
                 });
             },
@@ -279,40 +369,42 @@
                 const ctx = document.getElementById('cash-chart').getContext('2d');
                 if(window.cashCh) window.cashCh.destroy();
                 const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                this.monthlyData = Array.from({length:12}, () => ({total:0, items:[]}));
+                this.monthlyData = Array.from({length: 12}, () => ({total: 0, items: []}));
 
-                this.db.filter(t=>t.type==='group' && t.start).forEach(t => {
-                    const m0 = new Date(t.start+"T00:00:00").getMonth();
-                    if(t.supply?.mode==='personalizado') {
-                        let buyDt = new Date(t.start+"T00:00:00");
-                        if(t.supply.unit==='d') buyDt.setDate(buyDt.getDate()-t.supply.lead); else buyDt.setMonth(buyDt.getMonth()-t.supply.lead);
+                this.db.filter(t => t.type === 'group' && t.start).forEach(t => {
+                    const startDt = new Date(t.start + "T00:00:00");
+                    if(t.supply?.mode === 'personalizado') {
+                        let buyDt = new Date(startDt);
+                        if(t.supply.unit === 'd') buyDt.setDate(buyDt.getDate() - t.supply.lead); else buyDt.setMonth(buyDt.getMonth() - t.supply.lead);
                         const mBuy = buyDt.getMonth();
-                        const vEntry = t.cost * (t.supply.entry/100);
-                        const vRest = (t.cost - vEntry) / (t.supply.install||1);
-                        this.monthlyData[mBuy].total += vEntry;
-                        this.monthlyData[mBuy].items.push({n: t.name + " (Entrada)", v: vEntry});
+                        const vEntry = t.cost * (t.supply.entry / 100);
+                        const vRest = (t.cost - vEntry) / (t.supply.install || 1);
+
+                        this.monthlyData[mBuy % 12].total += vEntry;
+                        this.monthlyData[mBuy % 12].items.push({n: t.name + " (Entrada)", v: vEntry});
                         for(let i=0; i<t.supply.install; i++) {
-                            let mP = (mBuy+1+i)%12;
+                            let mP = (mBuy + 1 + i) % 12;
                             this.monthlyData[mP].total += vRest;
                             this.monthlyData[mP].items.push({n: t.name + ` (Parc ${i+1})`, v: vRest});
                         }
                     } else {
+                        const m0 = startDt.getMonth();
                         this.monthlyData[m0].total += t.cost;
                         this.monthlyData[m0].items.push({n: t.name, v: t.cost});
                     }
                 });
 
                 window.cashCh = new Chart(ctx, {
-                    type:'bar',
-                    data: { labels, datasets:[{label:'Desembolso', data:this.monthlyData.map(m=>m.total), backgroundColor:'#3b82f6'}]},
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Desembolso Mensal', data: this.monthlyData.map(m => m.total), backgroundColor: '#3b82f6', borderRadius: 8 }] },
                     options: {
                         onClick: (e, elements) => {
                             if(elements.length > 0) {
                                 const idx = elements[0].index;
                                 const data = this.monthlyData[idx];
-                                let h = `<h4 class="font-black text-blue-600 mb-2 uppercase text-xs">Itens de ${labels[idx]}</h4>`;
-                                data.items.forEach(it => h += `<div class="flex justify-between text-[10px] border-b py-1"><span>${it.n}</span><b>R$ ${it.v.toLocaleString()}</b></div>`);
-                                h += `<div class="flex justify-between font-black mt-2"><span>TOTAL</span><span>R$ ${data.total.toLocaleString()}</span></div>`;
+                                let h = `<h4 class="font-black text-blue-600 mb-4 uppercase text-xs">Detalhamento: ${labels[idx]}</h4>`;
+                                data.items.forEach(it => h += `<div class="flex justify-between text-[10px] border-b py-2 uppercase font-bold"><span>${it.n}</span><span class="font-black">R$ ${it.v.toLocaleString()}</span></div>`);
+                                h += `<div class="flex justify-between font-black mt-4 text-blue-600 text-sm"><span>TOTAL DO MÊS</span><span>R$ ${data.total.toLocaleString()}</span></div>`;
                                 document.getElementById('cash-details').innerHTML = h;
                             }
                         }
@@ -320,14 +412,22 @@
                 });
             },
 
-            upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
-            updPr(u,v) { const t=this.db.find(x=>x.uuid===u); t.pred=v.split(',').map(n=>this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
-            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'ETAPA', type:'group', parent:'m', cost:0}); this.recalc(); },
-            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Item', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
-            rem(u) { if(u!=='m') { this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); } },
+            upd(u,f,v) { const t=this.db.find(x => x.uuid === u); t[f]=v; this.recalc(); },
+            updPr(u,v) { const t=this.db.find(x => x.uuid === u); t.pred=v.split(',').map(n => this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
+            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'NOVA ETAPA', type:'group', parent:'m', cost:0}); this.recalc(); },
+            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
+            rem(u) { if(u!=='m') { this.db=this.db.filter(x => x.uuid!==u && x.parent!==u); this.recalc(); } },
             closeSup() { document.getElementById('modal-supply').classList.remove('active'); },
-            autoSave() { const i=projectManager.all.findIndex(x=>x.id===this.curr); projectManager.all[i].data=this.db; projectManager.save(); }
+            async autoSave() {
+                const i = projectManager.all.findIndex(x => x.id === this.curr);
+                if(i !== -1) {
+                    projectManager.all[i].data = this.db;
+                    await projectManager.save();
+                }
+            }
         };
+
+        window.onload = () => lucide.createIcons();
     </script>
 </body>
 </html>
