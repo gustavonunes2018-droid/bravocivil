@@ -1,267 +1,220 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - V63 Ultimate</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; }
-        .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; }
-        .page.active { display: block; }
-        .row-h { height: 44px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; transition: all 0.2s; }
-        .input-cell { background: transparent; width: 100%; outline: none; padding: 2px 4px; border-radius: 4px; border: 1px solid transparent; font-size: 11px; }
-        .input-cell:focus { border-color: #3b82f6; background: white; }
-        .row-group { background: #f8fafc !important; font-weight: 800; border-left: 4px solid #1e293b; }
-        .row-critical { border-left: 4px solid #ef4444 !important; }
-        .is-critical { color: #ef4444 !important; font-weight: 800; }
-        .collapsed { display: none !important; }
-        .gantt-bar { height: 14px; border-radius: 3px; background: #3b82f6; position: absolute; top: 15px; }
-        .bar-critical { background: #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
-        .bar-baseline { height: 4px; background: #cbd5e1; position: absolute; bottom: 8px; opacity: 0.5; border-radius: 2px; }
-        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; }
-        .modal.active { display:flex; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bravo CIVIL - Enterprise Full Engine v54</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.page { display:none; width:100vw; height:100vh; position:absolute; }
+.page.active { display:block; }
+
+.input-cell {
+    background: transparent;
+    width: 100%;
+    outline: none;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+.input-cell:focus {
+    border-color: #3b82f6;
+    background: white;
+}
+
+.row-master { background:#0f172a !important; color:white; font-weight:900; }
+.row-group { background:#f1f5f9 !important; font-weight:700; }
+
+#gantt-box {
+    min-height: 700px;
+}
+
+.modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.6);
+    backdrop-filter:blur(4px);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+}
+.modal.active { display:flex; }
+</style>
 </head>
+
 <body>
 
-    <div id="page-editor" class="page active bg-white">
-        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-xl">
-            <div class="flex items-center gap-6">
-                <h2 class="font-black italic uppercase text-lg tracking-tighter">Bravo<span class="text-blue-500">CIVIL</span></h2>
-                <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
-                    <button onclick="editor.switch('table')" id="btn-table" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg bg-blue-600">Planejamento</button>
-                    <button onclick="editor.switch('balanco')" id="btn-balanco" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg">Linha de Balanço</button>
-                    <button onclick="editor.switch('cash')" id="btn-cash" class="px-4 py-1.5 text-[10px] font-black uppercase rounded-lg">Financeiro</button>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="editor.setBaseline()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">Fixar Baseline</button>
-                <button onclick="editor.openConfig()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"><i data-lucide="settings" class="w-3 h-3"></i></button>
-            </div>
-        </header>
+<!-- ===================== LOGIN ===================== -->
+<div id="page-login" class="page active flex items-center justify-center bg-slate-900">
+    <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
+        <h1 class="text-4xl font-black italic mb-2">Bravo<span class="text-blue-600">CIVIL</span></h1>
+        <p class="text-[9px] font-bold text-slate-400 uppercase mb-8">Full Engineering Suite</p>
 
-        <main class="p-4">
-            <div id="v-table" class="view">
-                <div class="flex border rounded-2xl overflow-hidden shadow-2xl bg-white">
-                    <div class="w-[750px] border-r shrink-0 overflow-hidden">
-                        <div class="bg-slate-100 row-h px-2 text-[9px] font-black uppercase text-slate-500 border-b-2">
-                            <div class="w-8 text-center">#</div>
-                            <div class="w-8"></div>
-                            <div class="flex-1">Descrição da Atividade</div>
-                            <div class="w-24 text-right px-2">Custo (R$)</div>
-                            <div class="w-24 text-center">Início</div>
-                            <div class="w-12 text-center">Dias</div>
-                            <div class="w-12 text-center">Pred.</div>
-                            <div class="w-24 text-center">Ações</div>
-                        </div>
-                        <div id="tbody" class="overflow-y-auto max-h-[calc(100vh-180px)]"></div>
-                        <button onclick="editor.addGroup()" class="w-full py-4 bg-slate-50 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-600 hover:text-white transition-all border-t">+ Adicionar Etapa de Obra</button>
-                    </div>
-                    <div class="flex-1 overflow-x-auto bg-slate-50/20">
-                        <div id="gantt-header" class="bg-slate-100/80 row-h border-b-2 sticky top-0 flex"></div>
-                        <div id="gantt-body" class="overflow-y-auto max-h-[calc(100vh-180px)] relative"></div>
-                    </div>
-                </div>
-            </div>
+        <input id="log-u" class="w-full border-2 p-4 rounded-2xl mb-4" placeholder="Usuário">
+        <input id="log-p" type="password" class="w-full border-2 p-4 rounded-2xl mb-6" placeholder="Senha">
 
-            <div id="v-balanco" class="view hidden">
-                <div class="bg-white p-10 rounded-[40px] border shadow-2xl h-[70vh]">
-                    <canvas id="balanco-chart"></canvas>
-                </div>
-            </div>
+        <button onclick="auth.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase">
+            Entrar
+        </button>
+        <p id="log-err" class="hidden text-red-500 text-[10px] font-bold mt-4">Acesso Negado</p>
+    </div>
+</div>
 
-            <div id="v-cash" class="view hidden">
-                <div class="grid grid-cols-12 gap-6">
-                    <div class="col-span-8 bg-white p-8 rounded-[40px] border shadow-xl h-[500px]">
-                        <canvas id="cash-chart"></canvas>
-                    </div>
-                    <div class="col-span-4 space-y-4">
-                        <div class="bg-slate-900 text-white p-6 rounded-[30px] shadow-xl">
-                            <h4 id="cash-title" class="text-blue-400 font-black uppercase text-xs mb-4 italic">Selecione um mês</h4>
-                            <div id="cash-list" class="space-y-3 max-h-[350px] overflow-y-auto"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+<!-- ===================== EDITOR ===================== -->
+<div id="page-editor" class="page bg-white">
+
+<header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-4">
+        <h2 id="edit-name" class="font-black italic uppercase">Planejamento</h2>
     </div>
 
-    <div id="modal-sup" class="modal">
-        <div class="bg-white p-10 rounded-[40px] w-96 shadow-2xl">
-            <h3 class="font-black uppercase text-lg mb-6 border-b pb-2">Estratégia de Compra</h3>
-            <div class="space-y-4">
-                <div class="flex items-center gap-3 bg-blue-50 p-4 rounded-2xl">
-                    <input type="checkbox" id="sup-alert" class="w-5 h-5 accent-blue-600">
-                    <span class="text-[10px] font-black uppercase text-blue-800">Alertar Compra</span>
-                </div>
-                <div>
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Antecedência (Dias)</label>
-                    <input type="number" id="sup-lead" class="w-full border-2 p-3 rounded-xl font-bold mt-1">
-                </div>
-                <div>
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Parcelamento (Vezes)</label>
-                    <input type="number" id="sup-install" class="w-full border-2 p-3 rounded-xl font-bold mt-1">
-                </div>
-                <button onclick="editor.saveSup()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase shadow-lg hover:bg-blue-700">Salvar Alterações</button>
-                <button onclick="editor.closeModals()" class="w-full text-slate-400 text-[10px] font-black uppercase mt-2">Cancelar</button>
-            </div>
-        </div>
+    <div class="flex bg-slate-800 p-1 rounded-2xl">
+        <button onclick="editor.switch('planning')" id="t-planning"
+            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">
+            Planejamento
+        </button>
+        <button onclick="editor.switch('lob')" id="t-lob"
+            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">
+            LOB
+        </button>
+        <button onclick="editor.switch('dash')" id="t-dash"
+            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">
+            Dashboard
+        </button>
+    </div>
+</header>
+
+<main class="p-4 h-[calc(100vh-64px)] overflow-hidden">
+
+<!-- ===================== PLANILHA + GANTT ===================== -->
+<div id="v-planning" class="view h-full">
+
+<div class="flex h-full gap-4">
+
+<!-- PLANILHA -->
+<div class="w-[45%] overflow-auto border rounded-xl bg-white">
+    <div class="flex justify-between p-4 border-b">
+        <button onclick="editor.addGroup()" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase">
+            + Etapa
+        </button>
     </div>
 
-    <script>
-        const editor = {
-            db: [
-                {uuid:'m', name:'MASTER', type:'master', start:'2025-01-01'},
-                {uuid:'g1', name:'01. SERVIÇOS PRELIMINARES', type:'group', parent:'m', collapsed: false},
-                {uuid:'t1', name:'Tapume e Instalações', type:'item', parent:'g1', cost:15000, start:'2025-01-01', duration:10}
-            ],
-            iMap: {}, uMap: {}, 
+    <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400">
+            <tr>
+                <th class="p-3">ID</th>
+                <th class="p-3 text-left">Descrição</th>
+                <th class="p-3">Custo</th>
+                <th class="p-3">%</th>
+                <th class="p-3">Início</th>
+                <th class="p-3">Dias</th>
+                <th class="p-3">Fim</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+</div>
 
-            recalc() {
-                this.iMap = {}; this.uMap = {};
-                this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
+<!-- GANTT -->
+<div class="w-[55%] border rounded-xl bg-white overflow-auto">
+    <div id="gantt-box" class="p-4"></div>
+</div>
 
-                // Motor de Dependências e Caminho Crítico
-                this.db.forEach(t => {
-                    t.isCritical = false;
-                    if(t.type === 'item') {
-                        if(t.pred?.length) {
-                            let maxEnd = "";
-                            t.pred.forEach(pid => {
-                                const p = this.db.find(x=>x.uuid === pid);
-                                if(p && (!maxEnd || p.end > maxEnd)) maxEnd = p.end;
-                            });
-                            if(maxEnd) t.start = this.addD(maxEnd, 1);
-                        }
-                        if(t.start && t.duration) t.end = this.addD(t.start, t.duration - 1);
-                    }
-                });
+</div>
+</div>
 
-                const lastEnd = [...this.db].filter(x=>x.end).sort((a,b)=>b.end.localeCompare(a.end))[0]?.end;
-                this.db.forEach(t => { if(t.end === lastEnd) t.isCritical = true; });
-                for(let i=this.db.length-1; i>=0; i--) {
-                    const suc = this.db.filter(x=>x.pred?.includes(this.db[i].uuid));
-                    if(suc.some(s=>s.isCritical)) this.db[i].isCritical = true;
-                }
+<!-- ===================== OUTRAS VIEWS ===================== -->
+<div id="v-lob" class="view hidden h-full">
+    <canvas id="lob-chart"></canvas>
+</div>
 
-                // Soma Custos Grupo
-                this.db.filter(g=>g.type==='group').forEach(g => {
-                    const k = this.db.filter(x=>x.parent === g.uuid);
-                    g.cost = k.reduce((acc, x) => acc + (parseFloat(x.cost)||0), 0);
-                    const ds = k.map(x=>x.start).filter(Boolean).sort(); if(ds.length) g.start = ds[0];
-                    const es = k.map(x=>x.end).filter(Boolean).sort().reverse(); if(es.length) g.end = es[0];
-                });
+<div id="v-dash" class="view hidden h-full">
+    <div id="dash-kpi" class="grid grid-cols-4 gap-6 mb-8"></div>
+    <canvas id="scurve"></canvas>
+</div>
 
-                this.render();
-            },
+</main>
+</div>
 
-            addD(s, d) { let dt = new Date(s+"T00:00:00"); dt.setDate(dt.getDate()+parseInt(d)); return dt.toISOString().split('T')[0]; },
+<!-- ===================== SCRIPT ===================== -->
+<script>
+const editor = {
+    db: [
+        {uuid:'m', name:'OBRA', type:'master'},
+        {uuid:'g1', name:'ETAPA 1', type:'group', parent:'m'},
+        {uuid:'t1', name:'Fundação', type:'item', parent:'g1', start:'2026-01-01', duration:10, progress:20}
+    ],
 
-            render() {
-                const tb = document.getElementById('tbody'); tb.innerHTML = '';
-                const gb = document.getElementById('gantt-body'); gb.innerHTML = '';
-                const gh = document.getElementById('gantt-header'); gh.innerHTML = '';
+    switch(v) {
+        document.querySelectorAll('.view').forEach(x => x.classList.add('hidden'));
+        document.getElementById('v-'+v).classList.remove('hidden');
+        if(v === 'planning') this.renderG();
+    },
 
-                // Header Gantt - 45 dias
-                for(let i=1; i<=45; i++) gh.innerHTML += `<div class="w-8 shrink-0 text-[8px] font-black border-r flex items-center justify-center">${i}</div>`;
+    addGroup() {
+        this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m'});
+        this.renderT(); this.renderG();
+    },
 
-                this.db.forEach((t, i) => {
-                    if(t.type==='master') return;
-                    const isG = t.type==='group', p = this.db.find(x=>x.uuid===t.parent), isHidden = p?.collapsed;
+    renderT() {
+        const b = document.getElementById('tbody');
+        b.innerHTML = '';
+        this.db.forEach((t,i)=>{
+            if(t.type==='master') return;
+            b.innerHTML += `
+            <tr class="${t.type==='group'?'row-group':''}">
+                <td class="p-2 text-center">${i}</td>
+                <td class="p-2"><input class="input-cell font-bold" value="${t.name}"></td>
+                <td class="p-2 text-right">${t.cost||0}</td>
+                <td class="p-2 text-center">${t.progress||0}</td>
+                <td class="p-2 text-center">${t.start||''}</td>
+                <td class="p-2 text-center">${t.duration||''}</td>
+                <td class="p-2 text-center">${t.end||''}</td>
+            </tr>`;
+        });
+    },
 
-                    // Planilha
-                    const row = document.createElement('div');
-                    row.className = `row-h ${isG?'row-group':''} ${t.isCritical && !isG?'row-critical':''} ${isHidden?'collapsed':''}`;
-                    row.innerHTML = `
-                        <div class="w-8 text-center opacity-30 font-black text-[9px]">${i+1}</div>
-                        <div class="w-8 flex justify-center">${isG?`<button onclick="editor.toggle('${t.uuid}')"><i data-lucide="${t.collapsed?'chevron-right':'chevron-down'}" class="w-4 h-4"></i></button>`:''}</div>
-                        <div class="flex-1"><input value="${t.name}" class="input-cell font-bold ${t.isCritical && !isG?'text-red-600':''}" onchange="editor.upd('${t.uuid}','name',this.value)"></div>
-                        <div class="w-24 px-2"><input type="number" value="${t.cost||0}" class="input-cell text-right" onchange="editor.upd('${t.uuid}','cost',this.value)" ${!isG?'':'disabled'}></div>
-                        <div class="w-24 text-center"><input type="date" value="${t.start||''}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','start',this.value)" ${t.pred?.length?'disabled':''}></div>
-                        <div class="w-12 text-center"><input type="number" value="${t.duration||0}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','duration',this.value)"></div>
-                        <div class="w-12 text-center"><input value="${(t.pred||[]).map(u=>this.uMap[u]).join(',')}" class="input-cell text-center text-blue-600 font-black" onchange="editor.updPr('${t.uuid}',this.value)"></div>
-                        <div class="w-24 flex justify-center gap-2">
-                            ${isG?`<button onclick="editor.dupl('${t.uuid}')" class="text-slate-400 hover:text-blue-500"><i data-lucide="copy" class="w-3 h-3"></i></button>`:''}
-                            ${isG?`<button onclick="editor.openSup('${t.uuid}')" class="text-slate-400 hover:text-blue-500"><i data-lucide="shopping-cart" class="w-3 h-3"></i></button>`:''}
-                            ${isG?`<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500"><i data-lucide="plus" class="w-3 h-3"></i></button>`:''}
-                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                        </div>
-                    `;
-                    tb.appendChild(row);
+    renderG() {
+        const tasks = this.db.filter(t=>t.start).map(t=>({
+            id:t.uuid,
+            name:t.name,
+            start:t.start,
+            end:this.addDays(t.start,t.duration||1),
+            progress:t.progress||0
+        }));
+        document.getElementById('gantt-box').innerHTML = '';
+        if(tasks.length) new Gantt('#gantt-box', tasks, {readonly:true});
+    },
 
-                    // Gantt
-                    const grow = document.createElement('div');
-                    grow.className = `row-h relative ${isHidden?'collapsed':''}`;
-                    const startPos = t.start ? (new Date(t.start+"T00:00:00").getDate() - 1) * 32 : 0;
-                    const durW = (t.duration || 1) * 32;
-                    grow.innerHTML = `<div class="gantt-bar ${isG?'h-2 mt-4 bg-slate-800':'h-3 bg-blue-500'} ${t.isCritical && !isG?'bar-critical':''}" style="left:${startPos}px; width:${durW}px"></div>`;
-                    if(t.baseStart) {
-                        const bPos = (new Date(t.baseStart+"T00:00:00").getDate() - 1) * 32;
-                        grow.innerHTML += `<div class="bar-baseline" style="left:${bPos}px; width:${durW}px"></div>`;
-                    }
-                    gb.appendChild(grow);
-                });
-                lucide.createIcons();
-            },
+    addDays(d,n) {
+        const x=new Date(d); x.setDate(x.getDate()+n);
+        return x.toISOString().split('T')[0];
+    }
+};
 
-            // FUNÇÕES DE BOTÕES
-            toggle(u) { const t=this.db.find(x=>x.uuid===u); t.collapsed = !t.collapsed; this.render(); },
-            upd(u,f,v) { this.db.find(x=>x.uuid===u)[f]=v; this.recalc(); },
-            updPr(u,v) { 
-                const t = this.db.find(x=>x.uuid===u);
-                t.pred = v.split(',').map(n => this.iMap[parseInt(n.trim())]).filter(Boolean);
-                this.recalc();
-            },
-            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m', collapsed:false, cost:0}); this.recalc(); },
-            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, duration:5}); this.recalc(); },
-            dupl(u) {
-                const g = this.db.find(x=>x.uuid===u), items = this.db.filter(x=>x.parent===u);
-                const nid = 'g'+Date.now();
-                this.db.push({...g, uuid:nid, name: g.name + " COPIA"});
-                items.forEach(it => this.db.push({...it, uuid:'t'+Math.random(), parent:nid, pred:[]}));
-                this.recalc();
-            },
-            rem(u) { this.db = this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); },
-            setBaseline() { this.db.forEach(t => t.baseStart = t.start); this.render(); alert("Baseline Fixada!"); },
+window.onload = () => {
+    editor.renderT();
+    editor.renderG();
+    lucide.createIcons();
+};
+</script>
 
-            // DASHBOARDS E GRÁFICOS
-            renderCash() {
-                const ctx = document.getElementById('cash-chart').getContext('2d');
-                if(window.cashCh) window.cashCh.destroy();
-                const data = Array(12).fill(0), details = Array.from({length:12}, () => []);
-                this.db.filter(t=>t.type==='group' && t.start).forEach(t => {
-                    const m = new Date(t.start+"T00:00:00").getMonth();
-                    const val = parseFloat(t.cost)||0;
-                    data[m] += val; details[m].push({n: t.name, v: val});
-                });
-                window.cashCh = new Chart(ctx, {
-                    type:'bar',
-                    data: { labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"], datasets:[{label:'Desembolso', data, backgroundColor:'#3b82f6', borderRadius:8}]},
-                    options: { onClick: (e, el) => {
-                        if(el.length) {
-                            const i = el[0].index; document.getElementById('cash-title').innerText = "Detalhes de " + i;
-                            let h = ''; details[i].forEach(it => h+=`<div class="flex justify-between border-b border-slate-700 py-1"><span>${it.n}</span><b>R$ ${it.v.toLocaleString()}</b></div>`);
-                            document.getElementById('cash-list').innerHTML = h || 'Sem custos.';
-                        }
-                    }}
-                });
-            },
-
-            switch(v) {
-                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
-                document.getElementById('v-'+v).classList.remove('hidden');
-                if(v==='cash') this.renderCash();
-            },
-            openSup(u) { this.currS = u; document.getElementById('modal-sup').classList.add('active'); },
-            closeModals() { document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active')); },
-            saveSup() { this.closeModals(); alert("Estratégia salva."); }
-        };
-
-        window.onload = () => { editor.recalc(); lucide.createIcons(); };
-    </script>
 </body>
 </html>
