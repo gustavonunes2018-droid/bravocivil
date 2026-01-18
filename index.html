@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - Enterprise Full Engine v48</title>
+    <title>Bravo CIVIL - Enterprise RT v49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,10 +16,11 @@
         .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; }
         .page.active { display: block; }
         .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; }
-        .input-cell:focus { border-color: #3b82f6; background: white; color: black; }
+        .input-cell:focus { border-color: #3b82f6; background: white; color: black; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
         .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
         .row-group { background: #f1f5f9 !important; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
-        .gantt .bar-group { fill: #1e293b; }
+        /* Esconder setas do input number */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body>
@@ -27,31 +28,35 @@
     <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
         <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
             <h1 class="text-4xl font-black italic mb-2">Bravo<span class="text-blue-600">CIVIL</span></h1>
-            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-8">Full Engineering Suite</p>
-            <div class="space-y-4 mb-6 text-left">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-8 uppercase">Acesso Corporativo</p>
+            <div class="space-y-4 mb-6">
                 <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Usuário">
                 <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl outline-none" placeholder="Senha">
             </div>
             <button onclick="auth.login()" id="btn-login" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition-all uppercase">Entrar</button>
-            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase italic text-center">Acesso Negado</p>
+            <p id="log-err" class="text-red-500 text-[10px] font-bold mt-4 hidden uppercase text-center italic">Credenciais Inválidas</p>
         </div>
     </div>
 
     <div id="page-admin" class="page bg-slate-50">
         <nav class="bg-white border-b p-6 flex justify-between items-center shadow-sm">
-            <h1 class="text-xl font-black italic">Bravo<span class="text-blue-600">MASTER</span></h1>
-            <button onclick="auth.logout()" class="text-slate-400 font-black text-xs uppercase hover:text-red-500">Sair</button>
+            <h1 id="admin-title" class="text-xl font-black italic">Bravo<span class="text-blue-600">ADMIN</span></h1>
+            <div class="flex gap-4">
+                <button id="btn-back-manager" onclick="router.go('manager')" class="hidden text-xs font-bold uppercase text-blue-600">Voltar para Projetos</button>
+                <button onclick="auth.logout()" class="text-slate-400 font-black text-xs uppercase hover:text-red-500">Sair</button>
+            </div>
         </nav>
         <div class="max-w-4xl mx-auto p-12">
             <div class="bg-white p-8 rounded-[32px] shadow-sm mb-8 border">
-                <h2 class="text-xs font-black text-slate-400 uppercase mb-6">Cadastrar Cliente (Empresa)</h2>
+                <h2 id="create-user-title" class="text-xs font-black text-slate-400 uppercase mb-6 tracking-widest">Cadastrar Usuário</h2>
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="new-cli-u" class="bg-slate-50 p-4 rounded-2xl outline-none border" placeholder="Usuário">
-                    <input type="password" id="new-cli-p" class="bg-slate-50 p-4 rounded-2xl outline-none border" placeholder="Senha">
+                    <input type="text" id="new-u" class="bg-slate-50 p-4 rounded-2xl outline-none border" placeholder="Usuário">
+                    <input type="password" id="new-p" class="bg-slate-50 p-4 rounded-2xl outline-none border" placeholder="Senha">
                 </div>
-                <button onclick="auth.createAccount('cliente')" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl uppercase">Criar Empresa</button>
+                <button onclick="auth.createAccount()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl uppercase tracking-tighter">Confirmar Cadastro</button>
             </div>
-            <div id="list-clients" class="grid grid-cols-1 gap-3"></div>
+            <h2 class="text-xs font-black text-slate-400 uppercase mb-4 ml-2">Usuários Gerenciados</h2>
+            <div id="list-users" class="grid grid-cols-1 gap-3"></div>
         </div>
     </div>
 
@@ -62,8 +67,8 @@
                 <span id="badge-user" class="text-[9px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase italic">Ativo</span>
             </div>
             <div class="flex gap-3">
-                <button id="btn-colab-link" onclick="auth.modalColab()" class="hidden text-[10px] font-bold text-slate-500 uppercase px-4 border rounded-xl hover:bg-white">+ Colaborador</button>
-                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase">+ Novo Projeto</button>
+                <button id="btn-manage-team" onclick="auth.openTeamManager()" class="hidden text-[10px] font-bold text-slate-500 uppercase px-4 border rounded-xl hover:bg-white italic">Gerenciar Equipe</button>
+                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-blue-200">+ NOVO PROJETO</button>
                 <button onclick="auth.logout()" class="p-2 text-slate-300 hover:text-red-500"><i data-lucide="log-out"></i></button>
             </div>
         </nav>
@@ -77,30 +82,22 @@
             <div class="flex items-center gap-4">
                 <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="arrow-left"></i></button>
                 <h2 id="edit-name" class="font-black italic">Editor</h2>
-                <button onclick="editor.openConfig()" class="p-2 text-slate-500 hover:text-white"><i data-lucide="calendar"></i></button>
             </div>
             <div class="flex bg-slate-800 p-1 rounded-2xl">
                 <button onclick="editor.switch('table')" id="t-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">Planilha</button>
                 <button onclick="editor.switch('gantt')" id="t-gantt" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Gantt</button>
-                <button onclick="editor.switch('lob')" id="t-lob" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">LOB</button>
                 <button onclick="editor.switch('dash')" id="t-dash" class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">Dash</button>
             </div>
             <button onclick="window.print()" class="bg-slate-700 px-4 py-2 rounded-xl text-[10px] font-bold uppercase">PDF</button>
         </header>
 
-        <main class="p-6 h-[calc(100vh-64px)] overflow-y-auto">
+        <main class="p-6">
             <div id="v-table" class="view">
-                <div class="flex justify-between mb-4">
-                    <div class="flex gap-2">
-                        <button onclick="editor.toggleAll(false)" class="text-[10px] font-bold px-4 py-2 bg-slate-100 rounded-lg">RECOLHER</button>
-                        <button onclick="editor.toggleAll(true)" class="text-[10px] font-bold px-4 py-2 bg-slate-100 rounded-lg">EXPANDIR</button>
-                    </div>
-                    <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[10px] px-6 py-2.5 rounded-xl font-black uppercase">+ Etapa</button>
-                </div>
-                <table class="w-full text-sm">
+                <div class="flex justify-end mb-4"><button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[10px] px-6 py-2.5 rounded-xl font-black">+ ETAPA</button></div>
+                <table class="w-full text-sm" id="main-table">
                     <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
                         <tr>
-                            <th class="p-4 text-center">ID</th>
+                            <th class="p-4 w-12 italic">#</th>
                             <th class="p-4 text-left">Descrição</th>
                             <th class="p-4 w-32 text-right">Custo</th>
                             <th class="p-4 w-16 text-center">%</th>
@@ -108,121 +105,147 @@
                             <th class="p-4 w-16 text-center">Dias</th>
                             <th class="p-4 w-32 text-center">Fim</th>
                             <th class="p-4 w-16 text-center">Pred.</th>
-                            <th class="p-4 w-24 text-center">Ações</th>
+                            <th class="p-4 w-16 text-center">Excluir</th>
                         </tr>
                     </thead>
                     <tbody id="tbody"></tbody>
                 </table>
             </div>
-            <div id="v-gantt" class="view hidden h-full"><div id="gantt-box"></div></div>
-            <div id="v-lob" class="view hidden h-[500px]"><canvas id="lob-chart"></canvas></div>
+            <div id="v-gantt" class="view hidden"><div id="gantt-box"></div></div>
             <div id="v-dash" class="view hidden">
                 <div id="dash-kpi" class="grid grid-cols-4 gap-6 mb-8"></div>
                 <div class="grid grid-cols-2 gap-6">
-                    <div class="bg-white p-8 border rounded-[32px] h-[400px]"><canvas id="scurve"></canvas></div>
-                    <div class="bg-slate-900 p-8 rounded-[32px] text-white overflow-auto h-[400px]" id="dash-logs"></div>
+                    <div class="bg-white p-8 border rounded-[32px] h-[350px]"><canvas id="scurve"></canvas></div>
+                    <div class="bg-slate-900 p-8 rounded-[32px] text-white overflow-auto h-[350px]" id="dash-logs"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[100] flex items-center justify-center">
-        <div class="bg-white p-8 rounded-[32px] w-80 shadow-2xl">
-            <h3 class="font-black mb-6 uppercase text-xs tracking-widest text-slate-400 text-center">Calendário de Obra</h3>
-            <label class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-2 cursor-pointer">
-                <input type="checkbox" id="cfg-sat" class="w-5 h-5"> <span class="font-bold">Sábados Úteis</span>
-            </label>
-            <label class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-6 cursor-pointer">
-                <input type="checkbox" id="cfg-sun" class="w-5 h-5"> <span class="font-bold">Domingos Úteis</span>
-            </label>
-            <button onclick="editor.saveConfig()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Aplicar</button>
-        </div>
-    </div>
-
-    <div id="m-colab" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[100] flex items-center justify-center">
-        <div class="bg-white p-8 rounded-[32px] w-96 shadow-2xl">
-            <h3 class="font-black mb-6 uppercase text-xs tracking-widest text-slate-400">Novo Acesso Equipe</h3>
-            <input type="text" id="new-col-u" class="w-full bg-slate-50 p-4 rounded-2xl outline-none mb-4 border" placeholder="Usuário">
-            <input type="password" id="new-col-p" class="w-full bg-slate-50 p-4 rounded-2xl outline-none mb-6 border" placeholder="Senha">
-            <button onclick="auth.createAccount('colaborador')" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase">Criar Colaborador</button>
-            <button onclick="document.getElementById('m-colab').classList.add('hidden')" class="w-full text-slate-400 text-[10px] font-black uppercase mt-4">Cancelar</button>
-        </div>
-    </div>
-
     <script>
         const FB = "https://bravo-civil-default-rtdb.firebaseio.com/";
 
-        // --- SISTEMA DE AUTENTICAÇÃO ---
+        // --- AUTH & PERSISTENCE ---
         const auth = {
-            ss: null,
+            ss: JSON.parse(localStorage.getItem('bravo_ss')),
+
             async login() {
                 const u = document.getElementById('log-u').value;
                 const p = document.getElementById('log-p').value;
-                const btn = document.getElementById('btn-login');
-                btn.innerText = "ENTRANDO...";
-
+                
                 if(u === 'bravo' && p === 'mestre123') {
-                    this.ss = { id: 'admin', role: 'admin' };
-                    await this.loadClients();
-                    return router.go('admin');
+                    this.setSession({ id: 'admin', role: 'admin' });
+                    return this.init();
                 }
 
-                try {
-                    const res = await fetch(`${FB}users.json`);
-                    const data = await res.json() || {};
-                    let f = false;
-                    for(let id in data) {
-                        if(data[id].u === u && data[id].p === p) {
-                            this.ss = { ...data[id], id: id };
-                            document.getElementById('badge-user').innerText = data[id].role;
-                            if(data[id].role === 'cliente') document.getElementById('btn-colab-link').classList.remove('hidden');
-                            await projectManager.load();
-                            router.go('manager'); f = true; break;
-                        }
-                    }
-                    if(!f) { document.getElementById('log-err').classList.remove('hidden'); btn.innerText = "ENTRAR"; }
-                } catch(e) { alert("Erro de Conexão"); btn.innerText = "ENTRAR"; }
-            },
-            async createAccount(role) {
-                const u = document.getElementById(role==='cliente'?'new-cli-u':'new-col-u').value;
-                const p = document.getElementById(role==='cliente'?'new-cli-p':'new-col-p').value;
-                if(!u || !p) return;
-                await fetch(`${FB}users.json`, { method:'POST', body:JSON.stringify({u,p,role, parentId: role==='cliente'?null:this.ss.id}) });
-                alert("Criado com Sucesso!"); location.reload();
-            },
-            async loadClients() {
                 const res = await fetch(`${FB}users.json`);
                 const data = await res.json() || {};
-                const list = document.getElementById('list-clients'); list.innerHTML = '';
                 for(let id in data) {
-                    if(data[id].role === 'cliente') {
+                    if(data[id].u === u && data[id].p === p) {
+                        this.setSession({ ...data[id], id: id });
+                        return this.init();
+                    }
+                }
+                document.getElementById('log-err').classList.remove('hidden');
+            },
+
+            setSession(obj) {
+                this.ss = obj;
+                localStorage.setItem('bravo_ss', JSON.stringify(obj));
+            },
+
+            async init() {
+                if(!this.ss) return router.go('login');
+                
+                if(this.ss.role === 'admin') {
+                    document.getElementById('admin-title').innerHTML = 'Bravo<span class="text-blue-600">MASTER</span>';
+                    document.getElementById('create-user-title').innerText = 'Cadastrar Nova Empresa (Cliente)';
+                    document.getElementById('btn-back-manager').classList.add('hidden');
+                    await this.loadUsers();
+                    router.go('admin');
+                } else {
+                    document.getElementById('badge-user').innerText = this.ss.role;
+                    if(this.ss.role === 'cliente') document.getElementById('btn-manage-team').classList.remove('hidden');
+                    await projectManager.startSync();
+                    router.go('manager');
+                }
+            },
+
+            async createAccount() {
+                const u = document.getElementById('new-u').value;
+                const p = document.getElementById('new-p').value;
+                if(!u || !p) return;
+                
+                const role = this.ss.role === 'admin' ? 'cliente' : 'colaborador';
+                const parentId = this.ss.role === 'admin' ? null : this.ss.id;
+
+                await fetch(`${FB}users.json`, { method:'POST', body:JSON.stringify({u,p,role,parentId}) });
+                alert("Cadastro realizado!");
+                await this.loadUsers();
+                document.getElementById('new-u').value = ''; document.getElementById('new-p').value = '';
+            },
+
+            async loadUsers() {
+                const res = await fetch(`${FB}users.json`);
+                const data = await res.json() || {};
+                const list = document.getElementById('list-users'); list.innerHTML = '';
+                for(let id in data) {
+                    // Mestre vê clientes, Cliente vê seus colaboradores
+                    const canSee = (this.ss.role === 'admin' && data[id].role === 'cliente') || 
+                                   (this.ss.role === 'cliente' && data[id].parentId === this.ss.id);
+                    
+                    if(canSee) {
                         list.innerHTML += `<div class="bg-white p-4 rounded-2xl flex justify-between items-center border">
-                        <div class="font-black text-slate-800">${data[id].u} <span class="text-[10px] text-slate-400 ml-2">Pass: ${data[id].p}</span></div>
+                        <div class="font-black text-slate-800">${data[id].u} <span class="text-[10px] text-slate-400 ml-2 font-bold uppercase tracking-widest">Senha: ${data[id].p}</span></div>
                         <button onclick="auth.delUser('${id}')" class="text-red-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
                     }
                 }
                 lucide.createIcons();
             },
-            async delUser(id) { if(confirm("Excluir cliente?")) { await fetch(`${FB}users/${id}.json`, {method:'DELETE'}); this.loadClients(); } },
-            modalColab() { document.getElementById('m-colab').classList.remove('hidden'); },
-            logout() { location.reload(); }
+
+            async delUser(id) { if(confirm("Excluir usuário?")) { await fetch(`${FB}users/${id}.json`, {method:'DELETE'}); this.loadUsers(); } },
+            openTeamManager() {
+                document.getElementById('admin-title').innerHTML = 'Bravo<span class="text-blue-600">EQUIPE</span>';
+                document.getElementById('create-user-title').innerText = 'Cadastrar Novo Colaborador';
+                document.getElementById('btn-back-manager').classList.remove('hidden');
+                this.loadUsers();
+                router.go('admin');
+            },
+            logout() { localStorage.clear(); location.reload(); }
         };
 
         const router = {
             go(id) {
                 document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
                 document.getElementById('page-'+id).classList.add('active');
-                if(id==='manager') projectManager.render();
+                if(id === 'manager') projectManager.render();
                 lucide.createIcons();
             }
         };
 
-        // --- GESTÃO DE PROJETOS ---
+        // --- REAL-TIME PROJECT ENGINE ---
         const projectManager = {
             all: [],
-            path() { const own = auth.ss.role==='cliente'?auth.ss.id:auth.ss.parentId; return `db_${own}`; },
-            async load() { const r = await fetch(`${FB}${this.path()}.json`); this.all = await r.json() || []; },
+            path() { 
+                const own = auth.ss.role === 'cliente' ? auth.ss.id : auth.ss.parentId;
+                return `db_${own}`; 
+            },
+
+            async startSync() {
+                // Simulação de WebSocket usando long-polling para atualização em tempo real
+                setInterval(async () => {
+                    const r = await fetch(`${FB}${this.path()}.json`);
+                    const data = await r.json() || [];
+                    if(JSON.stringify(data) !== JSON.stringify(this.all)) {
+                        this.all = data;
+                        if(document.getElementById('page-manager').classList.contains('active')) this.render();
+                        if(document.getElementById('page-editor').classList.contains('active')) editor.syncFromDB();
+                    }
+                }, 3000); // Sincroniza a cada 3 segundos
+            },
+
             async save() { await fetch(`${FB}${this.path()}.json`, { method:'PUT', body:JSON.stringify(this.all)}); },
+
             render() {
                 const g = document.getElementById('grid-projects'); g.innerHTML = '';
                 this.all.forEach(p => {
@@ -232,40 +255,34 @@
                 });
                 lucide.createIcons();
             },
+
             async create() {
                 const n = prompt("Nome da Obra:"); if(!n) return;
-                this.all.push({ id:'p'+Date.now(), name:n, progress:0, cfg:{sat:false, sun:false}, data:[{uuid:'m', name:n.toUpperCase(), type:'master', progress:0, cost:0, start:new Date().toISOString().split('T')[0]}] });
+                this.all.push({ id:'p'+Date.now(), name:n, progress:0, data:[{uuid:'m', name:n.toUpperCase(), type:'master', progress:0, cost:0, start:new Date().toISOString().split('T')[0]}] });
                 await this.save(); this.render();
             },
-            async del(id) { if(confirm("Excluir obra?")) { this.all = this.all.filter(x=>x.id!==id); await this.save(); this.render(); } }
+            async del(id) { if(confirm("Apagar obra?")) { this.all = this.all.filter(x=>x.id!==id); await this.save(); this.render(); } }
         };
 
-        // --- MOTOR DE ENGENHARIA (RESTAURADO) ---
+        // --- EDITOR ENGINE & KEYBOARD NAV ---
         const editor = {
-            curr: null, db: [], cfg: {}, colap: new Set(), uMap: {}, iMap: {},
+            currId: null, db: [], uMap: {}, iMap: {},
 
             open(id) {
-                this.curr = id;
-                const p = projectManager.all.find(x=>x.id===id);
-                this.db = p.data; this.cfg = p.cfg || {sat:false, sun:false};
-                document.getElementById('edit-name').innerText = p.name;
+                this.currId = id;
+                this.syncFromDB();
                 router.go('editor');
-                this.recalc();
             },
 
-            addWorkDays(start, days) {
-                if(!start || days === 0) return start;
-                let d = new Date(start + "T00:00:00");
-                let count = 0;
-                while(count < days) {
-                    d.setDate(d.getDate()+1);
-                    const wd = d.getDay();
-                    if(!((wd===0 && !this.cfg.sun) || (wd===6 && !this.cfg.sat))) count++;
-                }
-                return d.toISOString().split('T')[0];
+            syncFromDB() {
+                const p = projectManager.all.find(x=>x.id === this.currId);
+                if(!p) return;
+                this.db = p.data;
+                document.getElementById('edit-name').innerText = p.name;
+                this.recalc(false); // Recalcula sem salvar (evita loop)
             },
 
-            recalc() {
+            recalc(shouldSave = true) {
                 this.iMap = {}; this.uMap = {};
                 this.db.forEach((t, i) => { this.iMap[i+1] = t.uuid; this.uMap[t.uuid] = i+1; });
 
@@ -274,151 +291,92 @@
                         if(t.pred?.length) {
                             let last = "";
                             t.pred.forEach(pid => { const p = this.db.find(x=>x.uuid===pid); if(p?.end > last) last = p.end; });
-                            if(last) t.start = this.addWorkDays(last, 1);
+                            if(last) t.start = this.addDays(last, 1);
                         }
-                        if(t.start && t.duration) t.end = this.addWorkDays(t.start, t.duration);
+                        if(t.start && t.duration) t.end = this.addDays(t.start, t.duration);
                     }
                 });
 
-                this.db.filter(t => t.type === 'group').forEach(g => {
-                    const k = this.db.filter(x => x.parent === g.uuid);
-                    if(k.length) {
-                        g.cost = k.reduce((s, x) => s + (parseFloat(x.cost) || 0), 0);
-                        g.progress = Math.round(k.reduce((s, x) => s + (parseFloat(x.progress) || 0), 0) / k.length);
-                        const sts = k.map(x=>x.start).filter(Boolean).sort();
-                        const eds = k.map(x=>x.end).filter(Boolean).sort().reverse();
-                        if(sts.length) g.start = sts[0]; if(eds.length) g.end = eds[0];
-                    }
-                });
-
+                // Cálculos de Master/Group...
                 const m = this.db.find(x => x.type === 'master');
-                const gs = this.db.filter(x => x.type === 'group');
-                if(m && gs.length) {
-                    m.cost = gs.reduce((s,g) => s + (g.cost || 0), 0);
-                    m.progress = Math.round(gs.reduce((s,g) => s + (g.progress || 0), 0) / gs.length);
-                    m.start = gs.map(g=>g.start).filter(Boolean).sort()[0];
-                    m.end = gs.map(g=>g.end).filter(Boolean).sort().reverse()[0];
+                const items = this.db.filter(t => t.type === 'item');
+                if(m) {
+                    m.progress = items.length ? Math.round(items.reduce((s,x)=>s+(parseFloat(x.progress)||0),0)/items.length) : 0;
+                    m.cost = items.reduce((s,x)=>s+(parseFloat(x.cost)||0),0);
                 }
-                this.renderT(); this.autoSave();
+
+                this.renderT();
+                if(shouldSave) this.autoSave();
+            },
+
+            addDays(start, days) {
+                let d = new Date(start + "T00:00:00");
+                d.setDate(d.getDate() + parseInt(days));
+                return d.toISOString().split('T')[0];
             },
 
             renderT() {
                 const b = document.getElementById('tbody'); b.innerHTML = '';
-                let vIdx = 0;
                 this.db.forEach((t, i) => {
-                    if(t.parent && this.colap.has(t.parent)) return;
-                    const isM = t.type === 'master', isG = t.type === 'group';
+                    const isM = t.type === 'master';
                     const pr = (t.pred || []).map(u => this.uMap[u]).join(',');
                     b.innerHTML += `
-                    <tr class="${isM?'row-master':isG?'row-group':''} border-b">
-                        <td class="p-3 text-center text-[10px] font-black opacity-30">${i+1}</td>
-                        <td class="p-3 flex items-center gap-2">
-                            ${isG ? `<button onclick="editor.tog('${t.uuid}')"><i data-lucide="${this.colap.has(t.uuid)?'chevron-right':'chevron-down'}" class="w-4 h-4"></i></button>` : ''}
-                            <input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''}">
-                            ${isG ? `<button onclick="editor.addItem('${t.uuid}')" class="text-blue-600"><i data-lucide="plus" class="w-3 h-3"></i></button>` : ''}
-                        </td>
-                        <td class="p-3"><input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${!isM && !isG?'':'disabled'}></td>
-                        <td class="p-3"><input type="number" value="${t.progress||0}" onchange="editor.upd('${t.uuid}','progress',this.value)" class="input-cell text-center font-black" ${t.type==='item'?'':'disabled'}></td>
-                        <td class="p-3"><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${t.type==='item'?'':'disabled'}></td>
-                        <td class="p-3"><input type="number" value="${t.duration||0}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${t.type==='item'?'':'disabled'}></td>
-                        <td class="p-3 text-center text-xs font-bold text-slate-500">${t.end?t.end.split('-').reverse().join('/'):'-'}</td>
-                        <td class="p-3"><input value="${pr}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center font-black text-blue-600" ${t.type==='item'?'':'disabled'}></td>
-                        <td class="p-3 flex justify-center gap-2">
-                            ${isG ? `<button onclick="editor.dupl('${t.uuid}')" class="text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button>` : ''}
-                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </td>
+                    <tr class="${isM?'row-master':'row-group'} border-b" data-idx="${i}">
+                        <td class="p-3 text-center text-[10px] opacity-30">${i+1}</td>
+                        <td><input value="${t.name}" class="input-cell font-bold" onchange="editor.upd('${t.uuid}','name',this.value)" data-col="0"></td>
+                        <td><input type="number" value="${t.cost||0}" class="input-cell text-right" onchange="editor.upd('${t.uuid}','cost',this.value)" data-col="1" ${isM?'disabled':''}></td>
+                        <td><input type="number" value="${t.progress||0}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','progress',this.value)" data-col="2" ${isM?'disabled':''}></td>
+                        <td><input type="date" value="${t.start||''}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','start',this.value)" data-col="3" ${isM?'disabled':''}></td>
+                        <td><input type="number" value="${t.duration||0}" class="input-cell text-center" onchange="editor.upd('${t.uuid}','duration',this.value)" data-col="4" ${isM?'disabled':''}></td>
+                        <td class="text-center text-xs opacity-50">${t.end||'-'}</td>
+                        <td><input value="${pr}" class="input-cell text-center font-black text-blue-600" onchange="editor.updPr('${t.uuid}',this.value)" data-col="5" ${isM?'disabled':''}></td>
+                        <td class="text-center"><button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                     </tr>`;
-                    vIdx++;
                 });
                 lucide.createIcons();
+                this.attachKeyEvents();
+            },
+
+            attachKeyEvents() {
+                const inputs = document.querySelectorAll('.input-cell');
+                inputs.forEach(inp => {
+                    inp.onkeydown = (e) => {
+                        const row = parseInt(inp.closest('tr').dataset.idx);
+                        const col = parseInt(inp.dataset.col);
+                        let target;
+
+                        if (e.key === "ArrowDown") target = document.querySelector(`tr[data-idx="${row+1}"] input[data-col="${col}"]`);
+                        if (e.key === "ArrowUp") target = document.querySelector(`tr[data-idx="${row-1}"] input[data-col="${col}"]`);
+                        if (e.key === "ArrowRight" && inp.selectionEnd === inp.value.length) target = document.querySelector(`tr[data-idx="${row}"] input[data-col="${col+1}"]`);
+                        if (e.key === "ArrowLeft" && inp.selectionStart === 0) target = document.querySelector(`tr[data-idx="${row}"] input[data-col="${col-1}"]`);
+                        if (e.key === "Enter") target = document.querySelector(`tr[data-idx="${row+1}"] input[data-col="${col}"]`);
+
+                        if (target) { e.preventDefault(); target.focus(); target.select(); }
+                    };
+                });
             },
 
             upd(u,f,v) { const t=this.db.find(x=>x.uuid===u); t[f]=v; this.recalc(); },
             updPr(u,v) { const t=this.db.find(x=>x.uuid===u); t.pred=v.split(',').map(n=>this.iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
-            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'NOVA ETAPA', type:'group', parent:'m', cost:0, progress:0}); this.recalc(); },
-            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, progress:0, duration:5, pred:[]}); this.colap.delete(p); this.recalc(); },
-            dupl(u) {
-                const g=this.db.find(x=>x.uuid===u), k=this.db.filter(x=>x.parent===u), nid='g'+Date.now();
-                this.db.push({...g, uuid:nid, name:g.name+" (Cópia)", progress:0});
-                k.forEach(x=>this.db.push({...x, uuid:'t'+Math.random(), parent:nid, progress:0, pred:[]}));
-                this.recalc();
-            },
-            rem(u) { if(u!=='m') { this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); } },
-            tog(u) { this.colap.has(u)?this.colap.delete(u):this.colap.add(u); this.renderT(); },
-            toggleAll(ex) { if(ex) this.colap.clear(); else this.db.filter(t=>t.type==='group').forEach(g=>this.colap.add(g.uuid)); this.renderT(); },
-
-            switch(v) {
-                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
-                document.getElementById('v-'+v).classList.remove('hidden');
-                document.querySelectorAll('[id^="t-"]').forEach(b=>b.classList.remove('bg-blue-600'));
-                document.getElementById('t-'+v).classList.add('bg-blue-600');
-                if(v==='gantt') this.renderG();
-                if(v==='lob') setTimeout(()=>this.renderL(),100);
-                if(v==='dash') this.renderD();
-            },
-
-            renderG() {
-                const ts = this.db.filter(t=>t.start && t.end).map(t=>({
-                    id:t.uuid, name:t.name, start:t.start, end:t.end, progress:t.progress,
-                    dependencies:(t.pred||[]).join(','), custom_class:t.type==='group'?'bar-group':''
-                }));
-                if(ts.length) new Gantt("#gantt-box", ts, { language:'ptBr', readonly:true });
-            },
-
-            renderL() {
-                const c = document.getElementById('lob-chart').getContext('2d');
-                if(window.lCh) window.lCh.destroy();
-                const items = this.db.filter(t=>t.type==='item');
-                const lbs = [...new Set(items.map(i=>i.name))];
-                window.lCh = new Chart(c, {
-                    type:'line',
-                    data: { datasets: this.db.filter(t=>t.type==='group').map((g,i)=>({
-                        label:g.name, data:items.filter(k=>k.parent===g.uuid && k.start).map(k=>({x:k.start, y:lbs.indexOf(k.name)+1})),
-                        borderColor:`hsl(${i*60},70%,50%)`, tension:0
-                    }))},
-                    options:{ responsive:true, maintainAspectRatio:false, scales:{x:{type:'time'}, y:{ticks:{callback:v=>lbs[v-1]}}} }
-                });
-            },
-
-            renderD() {
-                const m = this.db.find(x=>x.type==='master');
-                const items = this.db.filter(t=>t.type==='item');
-                const done = items.reduce((s,t)=>s+((t.cost||0)*(t.progress/100)),0);
-                document.getElementById('dash-kpi').innerHTML = `
-                    <div class="bg-white p-6 rounded-3xl border"><p class="text-[9px] font-black text-slate-400 uppercase">Físico</p><h2 class="text-4xl font-black text-blue-600">${m.progress}%</h2></div>
-                    <div class="bg-white p-6 rounded-3xl border"><p class="text-[9px] font-black text-slate-400 uppercase">Orçado</p><h2 class="text-xl font-black">R$ ${m.cost.toLocaleString()}</h2></div>
-                    <div class="bg-white p-6 rounded-3xl border"><p class="text-[9px] font-black text-slate-400 uppercase">Realizado</p><h2 class="text-xl font-black text-emerald-500">R$ ${done.toLocaleString()}</h2></div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border text-white"><p class="text-[9px] font-black text-slate-500 uppercase">Saldo</p><h2 class="text-xl font-black">R$ ${(m.cost-done).toLocaleString()}</h2></div>
-                `;
-                const c = document.getElementById('scurve').getContext('2d');
-                if(window.sCh) window.sCh.destroy();
-                window.sCh = new Chart(c, { type:'line', data:{labels:['Início','Atual','Fim'], datasets:[{label:'Curva S', data:[0, done, m.cost], borderColor:'#3b82f6', fill:true, backgroundColor:'rgba(59,130,246,0.1)'}]} });
-                
-                const logs = document.getElementById('dash-logs'); logs.innerHTML = '<h3 class="text-xs font-black text-slate-500 mb-4 uppercase italic">Relatório de Alertas</h3>';
-                items.filter(t=>t.progress<100 && new Date(t.end)<new Date()).forEach(t=>{
-                    logs.innerHTML += `<div class="p-3 bg-red-500/10 border-l-4 border-red-500 text-[11px] text-red-200 mb-2"><b>CRÍTICO:</b> ${t.name} deveria ter finalizado em ${t.end}</div>`;
-                });
-            },
-
+            addGroup() { this.db.push({uuid:'t'+Date.now(), name:'Nova Atividade', type:'item', cost:0, progress:0, duration:5}); this.recalc(); },
+            rem(u) { if(u!=='m') { this.db=this.db.filter(x=>x.uuid!==u); this.recalc(); } },
+            
             autoSave() {
-                const idx = projectManager.all.findIndex(x=>x.id===this.curr);
+                const idx = projectManager.all.findIndex(x=>x.id===this.currId);
                 if(idx!==-1) {
                     projectManager.all[idx].data = this.db;
-                    projectManager.all[idx].cfg = this.cfg;
                     projectManager.all[idx].progress = this.db.find(x=>x.type==='master').progress;
                     projectManager.save();
                 }
             },
-            openConfig() { document.getElementById('modal-config').classList.remove('hidden'); },
-            saveConfig() { 
-                this.cfg.sat = document.getElementById('cfg-sat').checked;
-                this.cfg.sun = document.getElementById('cfg-sun').checked;
-                document.getElementById('modal-config').classList.add('hidden');
-                this.recalc();
+
+            switch(v) {
+                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+                document.getElementById('v-'+v).classList.remove('hidden');
             }
         };
 
-        window.onload = () => lucide.createIcons();
+        window.onload = () => auth.init();
     </script>
 </body>
 </html>
