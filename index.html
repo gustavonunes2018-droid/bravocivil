@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivisPRO - v37.0 Stability Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden; }
+        .page { display: none; width: 100vw; height: 100vh; overflow-y: auto; position: absolute; top: 0; left: 0; }
+        .page.active { display: block; }
+        .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
+        .row-group { background: #e2e8f0 !important; color: #1e293b !important; font-weight: 700; }
+        .row-critical { border-left: 4px solid #ef4444 !important; background: #fff1f2; }
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; border-radius: 4px; border: 1px solid transparent; }
+        .input-cell:focus { border-color: #3b82f6; background: white; color: #000; }
+        .hidden-row { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <h1 class="text-3xl font-black italic mb-6 text-slate-800">Civis<span class="text-blue-600">PRO</span></h1>
+            <input type="text" id="user" value="admin" class="w-full border-2 border-slate-100 p-4 rounded-xl mb-4 outline-none focus:border-blue-500" placeholder="Usuário">
+            <input type="password" id="pass" value="123" class="w-full border-2 border-slate-100 p-4 rounded-xl mb-6 outline-none focus:border-blue-500" placeholder="Senha">
+            <button onclick="router.login()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="page-manager" class="page bg-slate-50">
+        <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+            <h1 class="text-xl font-black italic">Civis<span class="text-blue-600">PRO</span></h1>
+            <div class="flex gap-4">
+                <button onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700">
+                    <i data-lucide="plus" class="w-4 h-4"></i> NOVO PROJETO
+                </button>
+                <button onclick="router.logout()" class="text-slate-400 hover:text-red-500"><i data-lucide="log-out"></i></button>
+            </div>
+        </nav>
+        <div class="max-w-6xl mx-auto p-8">
+            <h2 class="text-2xl font-black mb-6 text-slate-800 uppercase tracking-tight">Painel de Empreendimentos</h2>
+            <div id="project-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+    </div>
+
+    <div id="page-editor" class="page bg-white">
+        <header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-4">
+                <button onclick="router.go('manager')" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="arrow-left"></i></button>
+                <h2 id="edit-project-name" class="font-black">Projeto</h2>
+                <button onclick="editor.openConfig()" class="p-2 text-slate-500 hover:text-white"><i data-lucide="calendar"></i></button>
+            </div>
+            <div class="flex bg-slate-800 p-1 rounded-xl">
+                <button onclick="editor.switch('table')" id="tab-table" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg bg-blue-600">Planilha</button>
+                <button onclick="editor.switch('gantt')" id="tab-gantt" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg hover:bg-slate-700">Gantt</button>
+                <button onclick="editor.switch('lob')" id="tab-lob" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg hover:bg-slate-700">LOB</button>
+                <button onclick="editor.switch('dash')" id="tab-dash" class="px-5 py-2 text-[10px] font-black uppercase rounded-lg hover:bg-slate-700">Dash</button>
+            </div>
+            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-bold uppercase transition">Imprimir</button>
+        </header>
+
+        <main class="p-6 h-[calc(100vh-64px)]">
+            <div id="view-table" class="editor-view">
+                <div class="flex justify-between mb-4">
+                    <div class="flex gap-2">
+                        <button onclick="editor.toggleAll(false)" class="bg-slate-100 text-[10px] px-3 py-1 rounded font-bold uppercase hover:bg-slate-200">Recolher</button>
+                        <button onclick="editor.toggleAll(true)" class="bg-slate-100 text-[10px] px-3 py-1 rounded font-bold uppercase hover:bg-slate-200">Expandir</button>
+                    </div>
+                    <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[10px] px-5 py-2 rounded-lg font-black hover:bg-slate-800">+ GRUPO</button>
+                </div>
+                <div class="border rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-500 border-b">
+                            <tr>
+                                <th class="p-4 w-12">ID</th>
+                                <th class="p-4 text-left">Descrição</th>
+                                <th class="p-4 w-28 text-right">Custo</th>
+                                <th class="p-4 w-16 text-center">%</th>
+                                <th class="p-4 w-32 text-center">Início</th>
+                                <th class="p-4 w-16 text-center">Dias</th>
+                                <th class="p-4 w-32 text-center">Fim</th>
+                                <th class="p-4 w-16 text-center">Pred.</th>
+                                <th class="p-4 w-10 text-center">CR</th>
+                                <th class="p-4 w-20 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="view-gantt" class="editor-view hidden h-[600px]"><div id="gantt-chart"></div></div>
+            <div id="view-lob" class="editor-view hidden h-[500px]"><canvas id="lob-canvas"></canvas></div>
+            <div id="view-dash" class="editor-view hidden">
+                <div id="dash-kpis" class="grid grid-cols-4 gap-6 mb-8"></div>
+                <div class="h-[400px] bg-white border p-6 rounded-3xl"><canvas id="scurve-canvas"></canvas></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-config" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center">
+        <div class="bg-white p-8 rounded-3xl w-80 shadow-2xl">
+            <h3 class="font-black mb-4 uppercase text-sm">Calendário</h3>
+            <label class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-2 cursor-pointer">
+                <input type="checkbox" id="cfg-sat" class="w-5 h-5 accent-blue-600"> <span>Trabalhar Sábados</span>
+            </label>
+            <label class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-6 cursor-pointer">
+                <input type="checkbox" id="cfg-sun" class="w-5 h-5 accent-blue-600"> <span>Trabalhar Domingos</span>
+            </label>
+            <button onclick="editor.saveConfig()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">APLICAR</button>
+        </div>
+    </div>
+
+    <script>
+        const router = {
+            go(id) { 
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-'+id).classList.add('active');
+                if(id === 'manager') projectManager.render();
+                lucide.createIcons();
+            },
+            login() { router.go('manager'); },
+            logout() { router.go('login'); }
+        };
+
+        const projectManager = {
+            projects: JSON.parse(localStorage.getItem('civis_v37')) || [],
+            save() { localStorage.setItem('civis_v37', JSON.stringify(this.projects)); },
+            render() {
+                const grid = document.getElementById('project-grid');
+                grid.innerHTML = '';
+                this.projects.forEach(p => {
+                    grid.innerHTML += `
+                    <div class="bg-white p-8 rounded-3xl border-2 border-transparent hover:border-blue-500 shadow-sm transition-all group cursor-pointer" onclick="editor.open('${p.id}')">
+                        <div class="flex justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><i data-lucide="layout"></i></div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100">
+                                <button onclick="event.stopPropagation(); projectManager.duplicate('${p.id}')" class="text-slate-400 hover:text-blue-600"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                <button onclick="event.stopPropagation(); projectManager.delete('${p.id}')" class="text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <h3 class="font-black text-xl mb-1">${p.name}</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${p.progress}% Concluído</p>
+                    </div>`;
+                });
+                lucide.createIcons();
+            },
+            create() {
+                const n = prompt("Nome do Projeto:"); if(!n) return;
+                this.projects.push({ id: 'p'+Date.now(), name: n, progress: 0, config: {sat:false, sun:false}, data: [{uuid:'m', name:n.toUpperCase(), type:'master', progress:0, cost:0, start:new Date().toISOString().split('T')[0]}] });
+                this.save(); this.render();
+            },
+            duplicate(id) {
+                const p = JSON.parse(JSON.stringify(this.projects.find(x => x.id === id)));
+                p.id = 'p'+Date.now(); p.name += " (v2)";
+                this.projects.push(p); this.save(); this.render();
+            },
+            delete(id) { if(confirm("Excluir?")) { this.projects = this.projects.filter(x => x.id !== id); this.save(); this.render(); } }
+        };
+
+        const editor = {
+            currId: null, db: [], cfg: {}, collapsed: new Set(), uuidMap: {}, indexMap: {},
+
+            open(id) {
+                this.currId = id;
+                const p = projectManager.projects.find(x => x.id === id);
+                this.db = p.data; this.cfg = p.config || {sat:false, sun:false};
+                document.getElementById('edit-project-name').innerText = p.name;
+                router.go('editor');
+                this.recalc();
+            },
+
+            // --- ITEM 3: CORRIGIDO ---
+            handleEnter(e, rowIdx, colIdx) {
+                if(e.key === "Enter") {
+                    e.preventDefault();
+                    // Seleciona todas as linhas visíveis do corpo da tabela
+                    const rows = document.querySelectorAll('#table-body tr:not(.hidden-row)');
+                    const nextRow = rows[rowIdx + 1];
+                    if(nextRow) {
+                        const inputs = nextRow.querySelectorAll('input:not([disabled])');
+                        // Tenta achar o input na mesma posição da coluna
+                        if(inputs[colIdx]) inputs[colIdx].focus();
+                        else if(inputs[0]) inputs[0].focus(); // Se não achar na coluna, vai pro primeiro da linha
+                    }
+                }
+            },
+
+            addWorkDays(dateStr, days) {
+                if(!dateStr || days === 0) return dateStr;
+                let d = new Date(dateStr + "T00:00:00");
+                let added = 0;
+                while(added < days) {
+                    d.setDate(d.getDate() + 1);
+                    const day = d.getDay();
+                    if(!((day === 0 && !this.cfg.sun) || (day === 6 && !this.cfg.sat))) added++;
+                }
+                return d.toISOString().split('T')[0];
+            },
+
+            recalc() {
+                this.indexMap = {}; this.uuidMap = {};
+                this.db.forEach((t, i) => { this.indexMap[i+1] = t.uuid; this.uuidMap[t.uuid] = i+1; });
+
+                this.db.forEach(t => {
+                    if(t.type === 'item') {
+                        if(t.pred?.length) {
+                            let last = "";
+                            t.pred.forEach(pid => { const p = this.db.find(x => x.uuid === pid); if(p?.end > last) last = p.end; });
+                            if(last) t.start = this.addWorkDays(last, 1);
+                        }
+                        if(t.start && t.duration) t.end = this.addWorkDays(t.start, t.duration);
+                    }
+                });
+
+                // Rollups
+                this.db.filter(t => t.type === 'group').forEach(g => {
+                    const kids = this.db.filter(k => k.parent === g.uuid);
+                    if(kids.length) {
+                        g.cost = kids.reduce((s, k) => s + (parseFloat(k.cost) || 0), 0);
+                        g.progress = Math.round(kids.reduce((s, k) => s + (parseFloat(k.progress) || 0), 0) / kids.length);
+                        const sts = kids.map(k => k.start).filter(Boolean).sort();
+                        const eds = kids.map(k => k.end).filter(Boolean).sort().reverse();
+                        if(sts.length) g.start = sts[0]; if(eds.length) g.end = eds[0];
+                    }
+                });
+
+                const master = this.db.find(x => x.type === 'master');
+                const groups = this.db.filter(x => x.type === 'group');
+                if(master && groups.length) {
+                    master.cost = groups.reduce((s, g) => s + (g.cost || 0), 0);
+                    master.progress = Math.round(groups.reduce((s, g) => s + (g.progress || 0), 0) / groups.length);
+                    master.start = groups.map(g => g.start).filter(Boolean).sort()[0];
+                    master.end = groups.map(g => g.end).filter(Boolean).sort().reverse()[0];
+                }
+
+                this.renderTable();
+                this.autoSave();
+            },
+
+            renderTable() {
+                const tbody = document.getElementById('table-body');
+                tbody.innerHTML = '';
+                let visibleIdx = 0;
+
+                this.db.forEach((t, i) => {
+                    const isM = t.type === 'master', isG = t.type === 'group';
+                    const isHidden = t.parent && this.collapsed.has(t.parent);
+                    const predVal = (t.pred || []).map(u => this.uuidMap[u]).join(',');
+                    
+                    if(isHidden) return;
+
+                    tbody.innerHTML += `
+                    <tr class="${isM?'row-master':isG?'row-group':''} border-b">
+                        <td class="p-3 text-center text-[10px] font-bold opacity-30">${i+1}</td>
+                        <td class="p-3 flex items-center gap-2">
+                            ${isG ? `<button onclick="editor.toggle('${t.uuid}')"><i data-lucide="${this.collapsed.has(t.uuid)?'chevron-right':'chevron-down'}" class="w-4 h-4"></i></button>` : ''}
+                            <input value="${t.name}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 0)" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${t.parent?'ml-6':''}">
+                            ${isG ? `<button onclick="editor.addItem('${t.uuid}')" class="text-blue-600"><i data-lucide="plus" class="w-3 h-3"></i></button>` : ''}
+                        </td>
+                        <td class="p-3"><input type="number" value="${t.cost||0}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 1)" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right" ${!isM && !isG?'':'disabled'}></td>
+                        <td class="p-3"><input type="number" value="${t.progress||0}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 2)" onchange="editor.upd('${t.uuid}','progress',this.value)" class="input-cell text-center" ${t.type==='item'?'':'disabled'}></td>
+                        <td class="p-3"><input type="date" value="${t.start||''}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 3)" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${t.type==='item'?'':'disabled'}></td>
+                        <td class="p-3"><input type="number" value="${t.duration||0}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 4)" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${t.type==='item'?'':'disabled'}></td>
+                        <td class="p-3 text-center text-xs font-bold">${t.end?t.end.split('-').reverse().join('/'):'-'}</td>
+                        <td class="p-3"><input value="${predVal}" onkeydown="editor.handleEnter(event, ${visibleIdx}, 5)" onchange="editor.updPred('${t.uuid}',this.value)" class="input-cell text-center font-bold text-blue-600" ${t.type==='item'?'':'disabled'}></td>
+                        <td class="p-3 text-center">${t.isCritical?'<i data-lucide="zap" class="text-red-500 w-4 h-4 mx-auto"></i>':''}</td>
+                        <td class="p-3 text-center flex justify-center gap-2">
+                             ${isG ? `<button onclick="editor.duplicateGroup('${t.uuid}')" class="text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button>` : ''}
+                             <button onclick="editor.remove('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>`;
+                    visibleIdx++;
+                });
+                lucide.createIcons();
+            },
+
+            upd(uuid, f, v) { const t = this.db.find(x => x.uuid === uuid); t[f] = v; this.recalc(); },
+            updPred(uuid, v) { 
+                const t = this.db.find(x => x.uuid === uuid);
+                t.pred = v.split(',').map(n => this.indexMap[parseInt(n.trim())]).filter(Boolean);
+                this.recalc();
+            },
+            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'GRUPO', type:'group', parent:'m', cost:0, progress:0}); this.recalc(); },
+            addItem(p) { this.db.push({uuid:'t'+Date.now(), name:'Atividade', type:'item', parent:p, cost:0, progress:0, duration:5, pred:[]}); this.collapsed.delete(p); this.recalc(); },
+            duplicateGroup(uuid) {
+                const group = this.db.find(x => x.uuid === uuid);
+                const kids = this.db.filter(x => x.parent === uuid);
+                const newGId = 'g'+Date.now();
+                this.db.push({...group, uuid: newGId, name: group.name + " (v2)", progress: 0});
+                kids.forEach(k => this.db.push({...k, uuid: 't'+Math.random(), parent: newGId, progress: 0, pred: []}));
+                this.recalc();
+            },
+            remove(u) { if(u!=='m') { this.db = this.db.filter(x => x.uuid !== u && x.parent !== u); this.recalc(); } },
+            toggle(uuid) { this.collapsed.has(uuid) ? this.collapsed.delete(uuid) : this.collapsed.add(uuid); this.renderTable(); },
+            toggleAll(expand) {
+                if(expand) this.collapsed.clear();
+                else this.db.filter(t => t.type === 'group').forEach(g => this.collapsed.add(g.uuid));
+                this.renderTable();
+            },
+
+            switch(view) {
+                document.querySelectorAll('.editor-view').forEach(v => v.classList.add('hidden'));
+                document.getElementById('view-'+view).classList.remove('hidden');
+                document.querySelectorAll('[id^="tab-"]').forEach(b => b.classList.remove('bg-blue-600'));
+                document.getElementById('tab-'+view).classList.add('bg-blue-600');
+                if(view === 'gantt') this.renderGantt();
+                if(view === 'lob') setTimeout(() => this.renderLOB(), 100);
+                if(view === 'dash') this.renderDash();
+            },
+
+            renderDash() {
+                const m = this.db.find(x => x.type === 'master');
+                document.getElementById('dash-kpis').innerHTML = `
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Progresso Obra</p>
+                        <h2 class="text-4xl font-black text-blue-600">${m.progress}%</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Custo Total</p>
+                        <h2 class="text-3xl font-black text-slate-800">R$ ${m.cost.toLocaleString()}</h2>
+                    </div>
+                `;
+            },
+
+            renderLOB() {
+                const ctx = document.getElementById('lob-canvas').getContext('2d');
+                if(window.lobChart) window.lobChart.destroy();
+                const items = this.db.filter(t => t.type === 'item');
+                const uniqueNames = [...new Set(items.map(i => i.name))];
+                window.lobChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: this.db.filter(t => t.type === 'group').map((g, idx) => ({
+                            label: g.name, data: items.filter(i => i.parent === g.uuid && i.start).map(i => ({ x: i.start, y: uniqueNames.indexOf(i.name) + 1 })),
+                            borderColor: `hsl(${idx * 45}, 70%, 50%)`, tension: 0, fill: false
+                        }))
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time' } } }
+                });
+            },
+
+            renderGantt() {
+                const tasks = this.db.filter(t => t.start && t.end).map(t => ({
+                    id: t.uuid, name: t.name, start: t.start, end: t.end, progress: t.progress, 
+                    dependencies: (t.pred || []).join(','),
+                    custom_class: t.type === 'group' ? 'bar-group' : ''
+                }));
+                if(tasks.length) new Gantt("#gantt-chart", tasks, { language: 'ptBr', readonly: true });
+            },
+
+            autoSave() {
+                const idx = projectManager.projects.findIndex(x => x.id === this.currId);
+                if(idx !== -1) {
+                    projectManager.projects[idx].data = this.db;
+                    projectManager.projects[idx].config = this.cfg;
+                    const m = this.db.find(x => x.type === 'master');
+                    projectManager.projects[idx].progress = m ? m.progress : 0;
+                    projectManager.save();
+                }
+            },
+
+            openConfig() { document.getElementById('modal-config').classList.remove('hidden'); document.getElementById('cfg-sat').checked = this.cfg.sat; document.getElementById('cfg-sun').checked = this.cfg.sun; },
+            saveConfig() { this.cfg.sat = document.getElementById('cfg-sat').checked; this.cfg.sun = document.getElementById('cfg-sun').checked; document.getElementById('modal-config').classList.add('hidden'); this.recalc(); }
+        };
+
+        window.onload = () => router.go('login');
+    </script>
+</body>
+</html>
