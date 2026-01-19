@@ -1,220 +1,489 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bravo CIVIL - Enterprise Full Engine v54</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bravo CIVIL - v81 Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.28.0/dist/date-fns.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        :root { --row-h: 38px; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; margin: 0; }
+        .page { display: none; width: 100vw; height: 100vh; position: absolute; background: #f1f5f9; }
+        .page.active { display: block; }
+        
+        .master-scroll-container { display: flex; height: calc(100vh - 64px); overflow-y: auto; background: white; align-items: flex-start; }
+        #wrapper-table { width: 45%; border-right: 1px solid #e2e8f0; position: sticky; left: 0; background: white; z-index: 20; flex-shrink: 0; }
+        #wrapper-gantt { width: 55%; overflow-x: auto; background: #fff; flex-grow: 1; }
+        
+        tr { height: var(--row-h); max-height: var(--row-h); box-sizing: border-box; }
+        .gantt .grid-row { height: var(--row-h) !important; }
+        .gantt .bar-container { height: var(--row-h) !important; padding: 5px 0 !important; }
+        .gantt .lower-header { height: 36px !important; }
+        .gantt-container { margin-top: 36px; }
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-
-body {
-    font-family: 'Inter', sans-serif;
-    background: #f8fafc;
-    overflow: hidden;
-}
-
-.page { display:none; width:100vw; height:100vh; position:absolute; }
-.page.active { display:block; }
-
-.input-cell {
-    background: transparent;
-    width: 100%;
-    outline: none;
-    padding: 4px;
-    border-radius: 4px;
-    border: 1px solid transparent;
-}
-.input-cell:focus {
-    border-color: #3b82f6;
-    background: white;
-}
-
-.row-master { background:#0f172a !important; color:white; font-weight:900; }
-.row-group { background:#f1f5f9 !important; font-weight:700; }
-
-#gantt-box {
-    min-height: 700px;
-}
-
-.modal {
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(15,23,42,.6);
-    backdrop-filter:blur(4px);
-    z-index:100;
-    align-items:center;
-    justify-content:center;
-}
-.modal.active { display:flex; }
-</style>
+        .row-master { background: #0f172a !important; color: white !important; font-weight: 800; }
+        .row-group { background: #f8fafc !important; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; font-size: 10px; border: 1px solid transparent; height: 28px; }
+        .input-cell:focus:not(:disabled) { border-color: #3b82f6; background: #fff; border-radius: 4px; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; }
+        .modal.active { display:flex; }
+        .view-btn.active { background-color: #3b82f6; color: white; }
+        .bar-critical .bar { fill: #ef4444 !important; }
+        .crit-text { color: #ef4444 !important; font-weight: 900; }
+    </style>
 </head>
-
 <body>
 
-<!-- ===================== LOGIN ===================== -->
-<div id="page-login" class="page active flex items-center justify-center bg-slate-900">
-    <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
-        <h1 class="text-4xl font-black italic mb-2">Bravo<span class="text-blue-600">CIVIL</span></h1>
-        <p class="text-[9px] font-bold text-slate-400 uppercase mb-8">Full Engineering Suite</p>
-
-        <input id="log-u" class="w-full border-2 p-4 rounded-2xl mb-4" placeholder="Usuário">
-        <input id="log-p" type="password" class="w-full border-2 p-4 rounded-2xl mb-6" placeholder="Senha">
-
-        <button onclick="auth.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase">
-            Entrar
-        </button>
-        <p id="log-err" class="hidden text-red-500 text-[10px] font-bold mt-4">Acesso Negado</p>
-    </div>
-</div>
-
-<!-- ===================== EDITOR ===================== -->
-<div id="page-editor" class="page bg-white">
-
-<header class="bg-slate-900 text-white px-6 py-3 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-        <h2 id="edit-name" class="font-black italic uppercase">Planejamento</h2>
+    <div id="page-login" class="page active flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm text-center">
+            <h1 class="text-4xl font-black italic mb-2">Bravo<span class="text-blue-600">CIVIL</span></h1>
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-8">v81 Ultimate Engine</p>
+            <input type="text" id="log-u" class="w-full border-2 p-4 rounded-2xl mb-4" placeholder="Usuário">
+            <input type="password" id="log-p" class="w-full border-2 p-4 rounded-2xl mb-6" placeholder="Senha">
+            <button onclick="auth.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase">Entrar</button>
+        </div>
     </div>
 
-    <div class="flex bg-slate-800 p-1 rounded-2xl">
-        <button onclick="editor.switch('planning')" id="t-planning"
-            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl bg-blue-600">
-            Planejamento
-        </button>
-        <button onclick="editor.switch('lob')" id="t-lob"
-            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">
-            LOB
-        </button>
-        <button onclick="editor.switch('dash')" id="t-dash"
-            class="px-5 py-2 text-[10px] font-black uppercase rounded-xl">
-            Dashboard
-        </button>
-    </div>
-</header>
-
-<main class="p-4 h-[calc(100vh-64px)] overflow-hidden">
-
-<!-- ===================== PLANILHA + GANTT ===================== -->
-<div id="v-planning" class="view h-full">
-
-<div class="flex h-full gap-4">
-
-<!-- PLANILHA -->
-<div class="w-[45%] overflow-auto border rounded-xl bg-white">
-    <div class="flex justify-between p-4 border-b">
-        <button onclick="editor.addGroup()" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase">
-            + Etapa
-        </button>
+    <div id="page-manager" class="page">
+        <nav class="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm">
+            <h1 class="text-xl font-black italic uppercase text-slate-800">Bravo<span class="text-blue-600">CIVIL</span></h1>
+            <div class="flex items-center gap-3">
+                <button id="btn-users" onclick="userManager.open()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs uppercase">Usuários</button>
+                <button id="btn-new-proj" onclick="projectManager.create()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-black text-xs uppercase">+ Novo Projeto</button>
+                <button onclick="location.reload()" class="text-slate-400 p-2"><i data-lucide="log-out"></i></button>
+            </div>
+        </nav>
+        <div id="grid-projects" class="max-w-6xl mx-auto p-12 grid grid-cols-1 md:grid-cols-3 gap-8"></div>
     </div>
 
-    <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400">
-            <tr>
-                <th class="p-3">ID</th>
-                <th class="p-3 text-left">Descrição</th>
-                <th class="p-3">Custo</th>
-                <th class="p-3">%</th>
-                <th class="p-3">Início</th>
-                <th class="p-3">Dias</th>
-                <th class="p-3">Fim</th>
-            </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-    </table>
-</div>
+    <div id="page-editor" class="page">
+        <header class="h-16 bg-slate-900 text-white px-6 flex justify-between items-center z-50 relative">
+            <div class="flex items-center gap-4">
+                <button onclick="editor.close()" class="p-2 hover:bg-slate-800 rounded-lg"><i data-lucide="chevron-left"></i></button>
+                <h2 id="edit-name" class="font-black italic uppercase text-xs">Projeto</h2>
+            </div>
+            <div class="flex bg-slate-800 p-1 rounded-xl">
+                <button onclick="editor.switchView('main')" id="btn-v-main" class="view-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg active">Planilha</button>
+                <button onclick="editor.switchView('dash')" id="btn-v-dash" class="view-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg">Dashboard</button>
+                <button onclick="editor.switchView('lob')" id="btn-v-lob" class="view-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg">LOB</button>
+                <button onclick="editor.switchView('cash')" id="btn-v-cash" class="view-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg">Financeiro</button>
+            </div>
+            <div class="flex gap-2">
+                <select id="gantt-scale" onchange="editor.changeScale(this.value)" class="bg-slate-800 text-[10px] font-bold px-3 rounded-lg text-white border-none">
+                    <option value="Day">Dias</option><option value="Week">Semanas</option><option value="Month">Meses</option>
+                </select>
+                <button onclick="editor.openConfig()" class="p-2 bg-slate-800 rounded-lg text-slate-400"><i data-lucide="calendar" class="w-4"></i></button>
+            </div>
+        </header>
 
-<!-- GANTT -->
-<div class="w-[55%] border rounded-xl bg-white overflow-auto">
-    <div id="gantt-box" class="p-4"></div>
-</div>
+        <main id="editor-content" class="bg-white">
+            <div id="v-main" class="view master-scroll-container">
+                <div id="wrapper-table">
+                    <div class="p-2 bg-slate-50 border-b flex justify-between items-center h-[36px]">
+                        <div class="flex gap-1">
+                            <button onclick="editor.toggleAll(false)" class="text-[9px] font-black border bg-white px-2 py-1 rounded">Recolher</button>
+                            <button onclick="editor.toggleAll(true)" class="text-[9px] font-black border bg-white px-2 py-1 rounded">Expandir</button>
+                        </div>
+                        <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[9px] px-3 py-1 rounded font-black uppercase">+ Etapa</button>
+                    </div>
+                    <table class="w-full border-collapse">
+                        <thead class="bg-slate-50 text-[9px] font-black uppercase text-slate-400 border-b sticky top-0 z-30 h-[36px]">
+                            <tr>
+                                <th class="p-2 w-8">#</th>
+                                <th class="p-2 text-left">Tarefa</th>
+                                <th class="p-2 w-24 text-center">Início</th>
+                                <th class="p-2 w-8 text-center">D.</th>
+                                <th class="p-2 w-24 text-center">Término</th>
+                                <th class="p-2 w-8 text-center">%</th>
+                                <th class="p-2 w-24 text-right">Custo</th>
+                                <th class="p-2 w-8 text-center">Pr.</th>
+                                <th class="p-2 w-8 text-center">S.</th>
+                                <th class="p-2 w-16 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+                <div id="wrapper-gantt"><div id="gantt-box"></div></div>
+            </div>
 
-</div>
-</div>
+            <div id="v-dash" class="view hidden p-10 bg-white h-full overflow-y-auto">
+                <div id="dash-kpi" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8"></div>
+                <div id="dash-chrono" class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
+                    <div class="border p-8 rounded-[40px] bg-slate-50"><canvas id="scurve-chart"></canvas></div>
+                    <div class="border p-8 rounded-[40px] bg-slate-50"><canvas id="pie-chart"></canvas></div>
+                </div>
+            </div>
 
-<!-- ===================== OUTRAS VIEWS ===================== -->
-<div id="v-lob" class="view hidden h-full">
-    <canvas id="lob-chart"></canvas>
-</div>
+            <div id="v-cash" class="view hidden p-10 bg-white h-full overflow-y-auto">
+                <div class="max-w-5xl mx-auto">
+                    <div class="h-80 mb-10"><canvas id="cash-chart"></canvas></div>
+                    <div id="cash-detail-panel" class="hidden"><div id="cash-table-box"></div></div>
+                </div>
+            </div>
 
-<div id="v-dash" class="view hidden h-full">
-    <div id="dash-kpi" class="grid grid-cols-4 gap-6 mb-8"></div>
-    <canvas id="scurve"></canvas>
-</div>
+            <div id="v-lob" class="view hidden p-10 bg-white h-full">
+                <div class="h-[500px] border p-6 rounded-[32px]"><canvas id="lob-chart"></canvas></div>
+            </div>
+        </main>
+    </div>
 
-</main>
-</div>
+    <div id="modal-users" class="modal">
+        <div class="bg-white p-8 rounded-[40px] w-96 shadow-2xl">
+            <h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Gerenciar Equipe (Máx 5)</h3>
+            <div id="user-list" class="space-y-2 mb-6 max-h-48 overflow-y-auto"></div>
+            <div id="user-form" class="space-y-2 border-t pt-4">
+                <input type="text" id="nu-u" placeholder="Novo Usuário" class="w-full border p-2 rounded-lg text-xs">
+                <input type="text" id="nu-p" placeholder="Senha" class="w-full border p-2 rounded-lg text-xs">
+                <button onclick="userManager.add()" class="w-full bg-slate-900 text-white py-2 rounded-xl font-black text-[10px] uppercase">Adicionar Colaborador</button>
+            </div>
+            <button onclick="document.getElementById('modal-users').classList.remove('active')" class="w-full mt-4 text-slate-400 text-[10px] font-bold uppercase">Fechar</button>
+        </div>
+    </div>
 
-<!-- ===================== SCRIPT ===================== -->
-<script>
-const editor = {
-    db: [
-        {uuid:'m', name:'OBRA', type:'master'},
-        {uuid:'g1', name:'ETAPA 1', type:'group', parent:'m'},
-        {uuid:'t1', name:'Fundação', type:'item', parent:'g1', start:'2026-01-01', duration:10, progress:20}
-    ],
+    <div id="modal-config" class="modal">
+        <div class="bg-white p-8 rounded-[40px] w-96 shadow-2xl">
+            <h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Calendário</h3>
+            <div class="space-y-4 mb-6">
+                <label class="flex items-center gap-3 text-xs font-bold"><input type="checkbox" id="cfg-sat"> Sábado Útil</label>
+                <label class="flex items-center gap-3 text-xs font-bold"><input type="checkbox" id="cfg-sun"> Domingo Útil</label>
+            </div>
+            <div class="border-t pt-4">
+                <p class="text-[9px] font-black uppercase text-slate-400 mb-2">Feriados e Férias</p>
+                <div id="holiday-list" class="max-h-32 overflow-y-auto mb-2 space-y-1"></div>
+                <div class="flex gap-1">
+                    <input type="date" id="new-holiday" class="flex-grow border p-2 rounded-lg text-xs">
+                    <button onclick="editor.addHoliday()" class="bg-slate-900 text-white px-3 rounded-lg">+</button>
+                </div>
+            </div>
+            <button onclick="editor.saveConfig()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs">Salvar</button>
+        </div>
+    </div>
 
-    switch(v) {
-        document.querySelectorAll('.view').forEach(x => x.classList.add('hidden'));
-        document.getElementById('v-'+v).classList.remove('hidden');
-        if(v === 'planning') this.renderG();
-    },
+    <div id="modal-supply" class="modal">
+        <div class="bg-white p-8 rounded-[40px] w-80 shadow-2xl">
+            <h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Plano de Compras</h3>
+            <select id="sup-mode" onchange="editor.toggleSupFields()" class="w-full border-2 p-3 rounded-xl mb-4 font-bold text-sm">
+                <option value="padrao">Linear (Início ao Fim)</option>
+                <option value="personalizado">Personalizado</option>
+            </select>
+            <div id="sup-fields" class="hidden space-y-3 p-4 bg-slate-50 rounded-2xl">
+                <div class="grid grid-cols-2 gap-2"><input type="number" id="sup-lead" placeholder="Lead Time" class="p-2 border rounded text-xs"><select id="sup-unit" class="text-xs border rounded"><option value="d">Dias</option><option value="m">Meses</option></select></div>
+                <div class="grid grid-cols-2 gap-2"><input type="number" id="sup-entry" placeholder="% Entrada" class="p-2 border rounded text-xs"><input type="number" id="sup-install" placeholder="Parcelas" class="p-2 border rounded text-xs"></div>
+            </div>
+            <button onclick="editor.saveSup()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs">Salvar</button>
+        </div>
+    </div>
 
-    addGroup() {
-        this.db.push({uuid:'g'+Date.now(), name:'Nova Etapa', type:'group', parent:'m'});
-        this.renderT(); this.renderG();
-    },
+    <script>
+        const FB = "https://bravo-civil-default-rtdb.firebaseio.com/";
+        const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-    renderT() {
-        const b = document.getElementById('tbody');
-        b.innerHTML = '';
-        this.db.forEach((t,i)=>{
-            if(t.type==='master') return;
-            b.innerHTML += `
-            <tr class="${t.type==='group'?'row-group':''}">
-                <td class="p-2 text-center">${i}</td>
-                <td class="p-2"><input class="input-cell font-bold" value="${t.name}"></td>
-                <td class="p-2 text-right">${t.cost||0}</td>
-                <td class="p-2 text-center">${t.progress||0}</td>
-                <td class="p-2 text-center">${t.start||''}</td>
-                <td class="p-2 text-center">${t.duration||''}</td>
-                <td class="p-2 text-center">${t.end||''}</td>
-            </tr>`;
-        });
-    },
+        const auth = {
+            ss: null,
+            async login() {
+                const u = document.getElementById('log-u').value, p = document.getElementById('log-p').value;
+                const r = await fetch(`${FB}users.json`); const d = await r.json() || {};
+                for(let id in d) { 
+                    if(d[id].u === u && d[id].p === p) { 
+                        this.ss = { ...d[id], id }; 
+                        if(this.ss.role === 'COLABORADOR') {
+                            document.getElementById('btn-new-proj').style.display = 'none';
+                            document.getElementById('btn-users').style.display = 'none';
+                        }
+                        await projectManager.load(); 
+                        projectManager.startSync();
+                        router.go('manager'); return; 
+                    } 
+                }
+                alert('Acesso negado.');
+            }
+        };
 
-    renderG() {
-        const tasks = this.db.filter(t=>t.start).map(t=>({
-            id:t.uuid,
-            name:t.name,
-            start:t.start,
-            end:this.addDays(t.start,t.duration||1),
-            progress:t.progress||0
-        }));
-        document.getElementById('gantt-box').innerHTML = '';
-        if(tasks.length) new Gantt('#gantt-box', tasks, {readonly:true});
-    },
+        const userManager = {
+            async open() {
+                document.getElementById('modal-users').classList.add('active');
+                this.render();
+            },
+            async render() {
+                const r = await fetch(`${FB}users.json`); const d = await r.json() || {};
+                const list = document.getElementById('user-list'); list.innerHTML = '';
+                let count = 0;
+                for(let id in d) {
+                    if(d[id].owner === auth.ss.id) {
+                        count++;
+                        list.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg text-[10px] font-bold">
+                            <span>${d[id].u}</span>
+                            <button onclick="userManager.del('${id}')" class="text-red-500 font-black">REMOVER</button>
+                        </div>`;
+                    }
+                }
+                document.getElementById('user-form').style.display = count >= 5 ? 'none' : 'block';
+            },
+            async add() {
+                const u = document.getElementById('nu-u').value, p = document.getElementById('nu-p').value;
+                if(!u || !p) return;
+                const newUser = { u, p, role: 'COLABORADOR', owner: auth.ss.id };
+                const nid = 'u' + Date.now();
+                await fetch(`${FB}users/${nid}.json`, { method:'PUT', body:JSON.stringify(newUser)});
+                document.getElementById('nu-u').value = ''; document.getElementById('nu-p').value = '';
+                this.render();
+            },
+            async del(id) {
+                await fetch(`${FB}users/${id}.json`, { method:'DELETE' });
+                this.render();
+            }
+        };
 
-    addDays(d,n) {
-        const x=new Date(d); x.setDate(x.getDate()+n);
-        return x.toISOString().split('T')[0];
-    }
-};
+        const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); } };
 
-window.onload = () => {
-    editor.renderT();
-    editor.renderG();
-    lucide.createIcons();
-};
-</script>
+        const projectManager = {
+            all: [],
+            syncInterval: null,
+            path() { return (auth.ss.role === 'COLABORADOR') ? `db_${auth.ss.owner}` : `db_${auth.ss.id}`; },
+            async load() { 
+                const r = await fetch(`${FB}${this.path()}.json`); 
+                const data = await r.json() || []; 
+                if(JSON.stringify(data) !== JSON.stringify(this.all)) {
+                    this.all = data;
+                    this.render();
+                    if(editor.curr) {
+                        const active = this.all.find(x => x.id === editor.curr);
+                        if(active) { editor.db = active.data; editor.cfg = active.cfg; editor.recalc(false); }
+                    }
+                }
+            },
+            startSync() { if(!this.syncInterval) this.syncInterval = setInterval(() => this.load(), 3000); },
+            async save() { await fetch(`${FB}${this.path()}.json`, { method:'PUT', body:JSON.stringify(this.all)}); },
+            render() {
+                const g = document.getElementById('grid-projects'); g.innerHTML = '';
+                this.all.forEach(p => { g.innerHTML += `<div onclick="editor.open('${p.id}')" class="bg-white p-8 rounded-[32px] border shadow-sm cursor-pointer hover:border-blue-500 transition-all"><h3 class="font-black italic uppercase text-slate-700">${p.name}</h3><div class="mt-4"><span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded">${p.progress}% CONCLUÍDO</span></div></div>`; });
+            },
+            create() {
+                const n = prompt("Nome da Obra:"); if(!n) return;
+                this.all.push({ id:'p'+Date.now(), name:n, progress:0, cfg:{sat:false, sun:false, holidays:[]}, data:[{uuid:'m', name:n.toUpperCase(), type:'master', cost:0, progress:0, start:new Date().toISOString().split('T')[0]}] });
+                this.save(); this.render();
+            }
+        };
 
+        const editor = {
+            curr: null, db: [], cfg: {}, colap: new Set(), criticalIds: new Set(), charts: {}, ganttScale: 'Day',
+
+            open(id) {
+                this.curr = id; const p = projectManager.all.find(x=>x.id===id);
+                this.db = p.data; this.cfg = p.cfg || {sat:false, sun:false, holidays:[]};
+                document.getElementById('edit-name').innerText = p.name;
+                router.go('editor'); this.recalc();
+            },
+
+            close() { this.curr = null; router.go('manager'); },
+
+            isWorkDay(date) {
+                const d = new Date(date + "T00:00:00");
+                if (d.getDay() === 0 && !this.cfg.sun) return false;
+                if (d.getDay() === 6 && !this.cfg.sat) return false;
+                if (this.cfg.holidays?.includes(date)) return false;
+                return true;
+            },
+
+            addWorkDays(start, days) {
+                let d = new Date(start + "T00:00:00");
+                let count = 0;
+                while(count < (parseInt(days) - 1)) {
+                    d.setDate(d.getDate() + 1);
+                    if (this.isWorkDay(d.toISOString().split('T')[0])) count++;
+                }
+                return d.toISOString().split('T')[0];
+            },
+
+            recalc(shouldSave = true) {
+                const iMap = {}, uMap = {};
+                this.db.forEach((t, i) => { iMap[i+1] = t.uuid; uMap[t.uuid] = i+1; });
+                this.db.forEach(t => {
+                    if(t.type === 'item') {
+                        if(t.pred?.length) {
+                            let lastEnd = ""; 
+                            t.pred.forEach(pid => { const p = this.db.find(x=>x.uuid===pid); if(p?.end > lastEnd) lastEnd = p.end; });
+                            if(lastEnd) {
+                                let d = new Date(lastEnd + "T00:00:00"); d.setDate(d.getDate() + 1);
+                                while(!this.isWorkDay(d.toISOString().split('T')[0])) d.setDate(d.getDate() + 1);
+                                t.start = d.toISOString().split('T')[0];
+                            }
+                        }
+                        if(t.start && t.duration) t.end = this.addWorkDays(t.start, t.duration);
+                    }
+                });
+                this.db.filter(t=>t.type==='group').forEach(g => {
+                    const ch = this.db.filter(x=>x.parent===g.uuid);
+                    if(ch.length) {
+                        g.start = ch.map(c=>c.start).filter(Boolean).sort()[0];
+                        g.end = ch.map(c=>c.end).filter(Boolean).sort().reverse()[0];
+                        g.cost = ch.reduce((s,c)=>s+(parseFloat(c.cost)||0),0);
+                        g.progress = Math.round(ch.reduce((s,c)=>s+(parseFloat(c.progress)||0),0)/ch.length || 0);
+                    }
+                });
+                this.criticalIds.clear();
+                const m = this.db.find(x=>x.type==='master');
+                if(m && m.end) {
+                    this.db.forEach(t => {
+                        if(t.end === m.end) this.criticalIds.add(t.uuid);
+                        const suc = this.db.filter(x => x.pred?.includes(t.uuid));
+                        suc.forEach(s => {
+                            if(this.criticalIds.has(s.uuid)) {
+                                let n = new Date(t.end + "T00:00:00"); n.setDate(n.getDate()+1);
+                                while(!this.isWorkDay(n.toISOString().split('T')[0])) n.setDate(n.getDate()+1);
+                                if(n.toISOString().split('T')[0] === s.start) this.criticalIds.add(t.uuid);
+                            }
+                        });
+                    });
+                }
+                this.renderT(uMap, iMap); this.renderG(); if(shouldSave) this.autoSave();
+            },
+
+            renderT(uMap, iMap) {
+                const b = document.getElementById('tbody'); b.innerHTML = '';
+                this.db.forEach((t, i) => {
+                    if(t.parent && this.colap.has(t.parent)) return;
+                    const isI = t.type==='item', isM = t.type==='master', isG = t.type==='group';
+                    const isCrit = this.criticalIds.has(t.uuid);
+                    const sColor = t.sup?.mode === 'personalizado' ? 'text-blue-600' : 'text-slate-200';
+                    b.innerHTML += `<tr class="${isM?'row-master':isG?'row-group':''}">
+                        <td class="text-center text-[9px] font-bold opacity-30">${i+1}</td>
+                        <td class="flex items-center gap-2">
+                            ${isG?`<button onclick="editor.tog('${t.uuid}')"><i data-lucide="${this.colap.has(t.uuid)?'chevron-right':'chevron-down'}" class="w-3"></i></button>`:''}
+                            <input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold ${isCrit?'crit-text':''}">
+                        </td>
+                        <td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${!isI?'disabled':''}></td>
+                        <td><input type="number" value="${t.duration||1}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${!isI?'disabled':''}></td>
+                        <td class="text-center text-[9px] font-bold text-slate-400 uppercase">${t.end || '-'}</td>
+                        <td><input type="number" value="${t.progress||0}" onchange="editor.upd('${t.uuid}','progress',this.value)" class="input-cell text-center font-black"></td>
+                        <td class="text-right p-2 font-bold">${isI?`<input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right">`:fmt(t.cost)}</td>
+                        <td><input value="${(t.pred||[]).map(u=>uMap[u]||'').join(',')}" onchange="editor.updPr('${t.uuid}',this.value, iMap)" class="input-cell text-center"></td>
+                        <td class="text-center">${isG?`<button onclick="editor.openSup('${t.uuid}')" class="${sColor}"><i data-lucide="shopping-cart" class="w-3.5"></i></button>`:'-'}</td>
+                        <td class="flex gap-1 justify-center p-2">
+                            ${isG?`<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500"><i data-lucide="plus-circle" class="w-3.5"></i></button>`:''}
+                            ${isG?`<button onclick="editor.dupl('${t.uuid}')" class="text-slate-400"><i data-lucide="copy" class="w-3.5"></i></button>`:''}
+                            <button onclick="editor.rem('${t.uuid}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                lucide.createIcons();
+            },
+
+            dupl(u) {
+                const g = this.db.find(x=>x.uuid===u), items = this.db.filter(x=>x.parent===u), nid = 'g'+Date.now();
+                this.db.push({...g, uuid:nid, name:g.name+" (Cópia)", progress:0});
+                items.forEach(it => this.db.push({...it, uuid:'t'+Math.random(), parent:nid, progress:0, pred:[]}));
+                this.recalc();
+            },
+
+            renderCash() {
+                const flux = {}, detail = {};
+                this.db.filter(t=>t.type==='group' && t.start && t.end).forEach(t => {
+                    const process = (date, val) => {
+                        const k = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+                        flux[k] = (flux[k]||0) + val;
+                        if(!detail[k]) detail[k] = [];
+                        detail[k].push({ name: t.name, val });
+                    };
+                    if(t.sup?.mode === 'personalizado') {
+                        let d = new Date(t.start + "T00:00:00");
+                        if(t.sup.unit==='d') d.setDate(d.getDate() - t.sup.lead); else d.setMonth(d.getMonth() - t.sup.lead);
+                        const entry = t.cost * (t.sup.entry/100), rest = (t.cost - entry) / (t.sup.install || 1);
+                        process(new Date(d), entry);
+                        for(let i=1; i < (t.sup.install || 1); i++) { d.setMonth(d.getMonth()+1); process(new Date(d), rest); }
+                    } else {
+                        let dStart = new Date(t.start + "T00:00:00"), dEnd = new Date(t.end + "T00:00:00");
+                        let months = []; let curr = new Date(dStart.getFullYear(), dStart.getMonth(), 1);
+                        while(curr <= dEnd) { months.push(new Date(curr)); curr.setMonth(curr.getMonth() + 1); }
+                        const valPerMonth = t.cost / (months.length || 1);
+                        months.forEach(m => process(m, valPerMonth));
+                    }
+                });
+                const sorted = Object.keys(flux).sort();
+                if(this.charts.cash) this.charts.cash.destroy();
+                this.charts.cash = new Chart(document.getElementById('cash-chart').getContext('2d'), { 
+                    type: 'bar', 
+                    data: { labels: sorted, datasets: [{ label: 'R$', data: sorted.map(k=>flux[k]), backgroundColor: '#3b82f6', borderRadius: 8 }] },
+                    options: { onClick: (e, el) => { if(el.length > 0) this.showCashDetail(sorted[el[0].index], detail[sorted[el[0].index]]); } }
+                });
+            },
+
+            renderG() {
+                const ts = this.db.filter(t=>t.start && t.end && (!t.parent || !this.colap.has(t.parent))).map(t=>({ 
+                    id:t.uuid, name:t.name, start:t.start, end:t.end, progress:t.progress, 
+                    dependencies:(t.pred||[]).join(','), 
+                    custom_class: this.criticalIds.has(t.uuid) ? 'bar-critical' : (t.type==='group'?'bar-group':'') 
+                }));
+                document.getElementById('gantt-box').innerHTML = '';
+                if(ts.length) {
+                    new Gantt("#gantt-box", ts, { 
+                        view_mode: this.ganttScale, language: 'ptBr', bar_height: 25, row_height: 38, header_height: 36
+                    });
+                }
+            },
+
+            showCashDetail(month, items) {
+                const panel = document.getElementById('cash-detail-panel');
+                panel.classList.remove('hidden');
+                let h = `<table class="w-full text-[11px] bg-white mt-4 rounded-xl border"><tbody>`;
+                items.forEach(it => h += `<tr class="border-t"><td class="p-3 font-bold">${it.name}</td><td class="p-3 text-right font-black text-blue-600">${fmt(it.val)}</td></tr>`);
+                document.getElementById('cash-table-box').innerHTML = h + `</tbody></table>`;
+            },
+
+            renderDash() {
+                const m = this.db.find(x=>x.type==='master'); if(!m) return;
+                const gs = this.db.filter(t=>t.type==='group'), items = this.db.filter(t=>t.type==='item'), now = new Date();
+                const atrasadas = items.filter(t => new Date(t.end) < now && t.progress < 100).length;
+                const diasRestantes = Math.ceil((new Date(m.end) - now) / (1000*60*60*24));
+                document.getElementById('dash-kpi').innerHTML = `
+                    <div class="bg-blue-600 text-white p-8 rounded-[40px] shadow-xl"><p class="text-[10px] font-bold uppercase opacity-60">Conclusão</p><h2 class="text-5xl font-black">${m.progress}%</h2></div>
+                    <div class="bg-white p-8 rounded-[40px] border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Orçado</p><h2 class="text-2xl font-black">${fmt(m.cost)}</h2></div>
+                    <div class="bg-white p-8 rounded-[40px] border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Investido</p><h2 class="text-2xl font-black">${fmt(m.cost * (m.progress/100))}</h2></div>
+                    <div class="bg-white p-8 rounded-[40px] border shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Etapas</p><h2 class="text-2xl font-black">${gs.length}</h2></div>`;
+                document.getElementById('dash-chrono').innerHTML = `
+                    <div class="bg-slate-900 text-white p-6 rounded-[32px]"><p class="text-[9px] font-bold uppercase opacity-50">Dias Restantes</p><h2 class="text-2xl font-black">${diasRestantes > 0 ? diasRestantes : 0}</h2></div>
+                    <div class="bg-white p-6 rounded-[32px] border"><p class="text-[9px] font-bold text-slate-400 uppercase">Tarefas em Atraso</p><h2 class="text-2xl font-black text-red-500">${atrasadas}</h2></div>
+                    <div class="bg-white p-6 rounded-[32px] border"><p class="text-[9px] font-black text-slate-400 uppercase">Críticas</p><h2 class="text-2xl font-black text-red-500">${this.criticalIds.size}</h2></div>
+                    <div class="bg-white p-6 rounded-[32px] border"><p class="text-[9px] font-black text-slate-400 uppercase">Desvio</p><h2 class="text-2xl font-black">${atrasadas > 0 ? '+'+Math.round((atrasadas/items.length)*100)+'%' : '0%'}</h2></div>`;
+                if(this.charts.sc) this.charts.sc.destroy();
+                this.charts.sc = new Chart(document.getElementById('scurve-chart'), { type:'line', data:{ labels:gs.map(g=>g.name), datasets:[{label:'%', data:gs.map(g=>g.progress), borderColor:'#3b82f6', tension:0.4}] } });
+                if(this.charts.pi) this.charts.pi.destroy();
+                this.charts.pi = new Chart(document.getElementById('pie-chart'), { type:'doughnut', data:{ labels:gs.map(g=>g.name), datasets:[{data:gs.map(g=>g.cost), backgroundColor:['#0f172a','#3b82f6','#10b981','#f59e0b','#ef4444']}] } });
+            },
+
+            renderLOB() {
+                if(this.charts.lob) this.charts.lob.destroy();
+                const ds = this.db.filter(t=>t.type==='group').map((g, i) => ({ label: g.name, data: this.db.filter(x=>x.parent===g.uuid).map((it, j) => ({ x: it.start, y: j+1 })), borderColor: `hsl(${i*60}, 70%, 50%)`, tension:0.1 }));
+                this.charts.lob = new Chart(document.getElementById('lob-chart'), { type: 'line', data: { datasets: ds }, options: { scales: { x: { type: 'time' } } } });
+            },
+
+            openConfig() { document.getElementById('modal-config').classList.add('active'); this.renderHolidays(); },
+            addHoliday() { const d = document.getElementById('new-holiday').value; if(d) { (this.cfg.holidays = this.cfg.holidays || []).push(d); this.renderHolidays(); } },
+            renderHolidays() { document.getElementById('holiday-list').innerHTML = (this.cfg.holidays || []).map(h => `<div class="bg-slate-100 p-1 rounded text-[10px] flex justify-between"><span>${h}</span><button onclick="editor.cfg.holidays.splice(editor.cfg.holidays.indexOf('${h}'),1);editor.renderHolidays()" class="text-red-500">x</button></div>`).join(''); },
+            saveConfig() { this.cfg.sat = document.getElementById('cfg-sat').checked; this.cfg.sun = document.getElementById('cfg-sun').checked; document.getElementById('modal-config').classList.remove('active'); this.recalc(); },
+            openSup(u) { this.activeSup = u; document.getElementById('modal-supply').classList.add('active'); },
+            saveSup() { const g = this.db.find(x=>x.uuid===this.activeSup); g.sup = { mode: document.getElementById('sup-mode').value, lead: parseInt(document.getElementById('sup-lead').value)||0, unit: document.getElementById('sup-unit').value, entry: parseFloat(document.getElementById('sup-entry').value)||100, install: parseInt(document.getElementById('sup-install').value)||1 }; document.getElementById('modal-supply').classList.remove('active'); this.recalc(); },
+            toggleSupFields() { document.getElementById('sup-fields').classList.toggle('hidden', document.getElementById('sup-mode').value==='padrao'); },
+            switchView(v) { document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden')); document.getElementById('v-'+v).classList.remove('hidden'); if(v==='dash') this.renderDash(); if(v==='cash') this.renderCash(); if(v==='lob') this.renderLOB(); },
+            upd(u,f,v) { this.db.find(x=>x.uuid===u)[f]=v; this.recalc(); },
+            updPr(u,v, iMap) { this.db.find(x=>x.uuid===u).pred = v.split(',').map(n=>iMap[parseInt(n.trim())]).filter(Boolean); this.recalc(); },
+            tog(u) { this.colap.has(u) ? this.colap.delete(u) : this.colap.add(u); this.recalc(); },
+            toggleAll(ex) { if(ex) this.colap.clear(); else this.db.filter(t=>t.type==='group').forEach(g=>this.colap.add(g.uuid)); this.recalc(); },
+            addItem(p) { this.db.splice(this.db.findLastIndex(x=>x.parent===p)+1 || this.db.length, 0, {uuid:'t'+Date.now(), name:'Nova Tarefa', type:'item', parent:p, duration:5, start:new Date().toISOString().split('T')[0], progress:0, cost:0}); this.recalc(); },
+            addGroup() { this.db.push({uuid:'g'+Date.now(), name:'ETAPA', type:'group', parent:'m'}); this.recalc(); },
+            rem(u) { this.db = this.db.filter(x=>x.uuid!==u && x.parent!==u); this.recalc(); },
+            changeScale(s) { this.ganttScale = s; this.renderG(); },
+            autoSave() { if(this.curr) { const idx = projectManager.all.findIndex(x=>x.id===this.curr); if(idx!==-1) { projectManager.all[idx].data = this.db; projectManager.all[idx].cfg = this.cfg; projectManager.save(); } } }
+        };
+    </script>
 </body>
 </html>
