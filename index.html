@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo CIVIL - v99 (Baseline Manager)</title>
+    <title>Bravo CIVIL - v112 (EAP Blueprint)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,52 +11,82 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        :root { --row-h: 38px; }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; margin: 0; }
-        .page { display: none; width: 100vw; height: 100vh; position: absolute; background: #f1f5f9; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        :root { --row-h: 45px; /* Aumentei a altura para caber a baseline */ }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden; margin: 0; }
+        .page { display: none; width: 100vw; height: 100vh; position: absolute; background: #f8fafc; }
         .page.active { display: block; }
         
-        /* Layout */
-        .master-grid { display: flex; height: calc(100vh - 120px); background: white; border-top: 1px solid #e2e8f0; }
-        #wrapper-table { width: 55%; overflow-y: scroll; overflow-x: auto; border-right: 1px solid #e2e8f0; scroll-behavior: smooth; }
-        #wrapper-gantt { width: 45%; overflow-y: scroll; overflow-x: auto; scroll-behavior: smooth; position: relative; background: #fff; }
+        /* Layout Grid */
+        .master-grid { display: flex; height: calc(100vh - 120px); background: white; border-top: 1px solid #cbd5e1; }
+        #wrapper-table { width: 50%; overflow-y: scroll; overflow-x: auto; border-right: 2px solid #cbd5e1; scroll-behavior: smooth; background: #fff; }
+        #wrapper-gantt { width: 50%; overflow-y: scroll; overflow-x: auto; scroll-behavior: smooth; position: relative; background: #fff; }
         
-        /* Tabela */
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        thead { position: sticky; top: 0; z-index: 30; background: #f8fafc; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        tr { height: var(--row-h); }
-        td, th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
-        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; font-size: 10px; border: 1px solid transparent; height: 28px; transition: 0.2s; }
-        .input-cell:focus { border-color: #3b82f6; background: #fff; border-radius: 4px; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
-        .critical-row { border-left: 4px solid #ef4444 !important; background-color: #fff1f2; }
-        .group-row { background-color: #f8fafc; font-weight: 700; color: #334155; }
+        /* Tabela Estilo Excel */
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+        thead { position: sticky; top: 0; z-index: 30; background: #f1f5f9; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        tr { height: var(--row-h); border-bottom: 1px solid #e2e8f0; }
+        td, th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 8px; }
         
-        /* GANTT HEATMAP & BASELINE */
+        .input-cell { background: transparent; width: 100%; outline: none; padding: 4px; font-size: 11px; border: 1px solid transparent; height: 28px; transition: 0.1s; border-radius: 4px; color: #334155; }
+        .input-cell:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+        
+        .group-row { background-color: #f8fafc; font-weight: 800; color: #0f172a; border-top: 2px solid #e2e8f0; }
+        .critical-row .input-cell { color: #dc2626; font-weight: 600; }
+        .blocked-cell { color: #94a3b8; background: #f1f5f9; cursor: not-allowed; font-style: italic; }
+        
+        /* GANTT REFINADO */
         .gantt .bar-risk-critical { fill: #ef4444 !important; }
         .gantt .bar-risk-high { fill: #f97316 !important; }
-        .gantt .bar-risk-med { fill: #eab308 !important; }
-        .gantt .bar-risk-low { fill: #3b82f6 !important; }
-        .gantt .bar-risk-ok { fill: #22c55e !important; }
-        .gantt .bar-group { fill: #64748b !important; opacity: 0.3; }
+        .gantt .bar-risk-med { fill: #3b82f6 !important; }
+        .gantt .bar-risk-ok { fill: #10b981 !important; }
+        .gantt .bar-group { fill: #475569 !important; opacity: 0.8; }
         
-        /* Barra de Linha de Base (Cinza embaixo) */
-        .baseline-bar { fill: #64748b; opacity: 0.6; height: 6px !important; pointer-events: none; }
+        /* Baseline Bar Styling (Estilo Blueprint) */
+        .baseline-bar { 
+            fill: url(#diagonalHatch); /* Hachura se possivel, ou cinza solido */
+            fill: #94a3b8;
+            opacity: 0.6; 
+            height: 6px !important; 
+            pointer-events: none; 
+            z-index: 0; 
+            rx: 2;
+        }
+        .gantt .bar { z-index: 10; rx: 3; }
 
-        /* EAP Canvas */
-        #eap-viewport { width: 100%; height: 100%; overflow: hidden; position: relative; background: #f8fafc; cursor: grab; }
-        #eap-viewport:active { cursor: grabbing; }
-        .eap-node { position: absolute; background: white; border: 2px solid #0f172a; padding: 10px; border-radius: 8px; width: 160px; z-index: 20; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: move; }
-        .eap-node.linking-source { border-color: #f59e0b; border-width: 3px; }
-        .eap-line { stroke: #64748b; stroke-width: 2px; pointer-events: none; }
-        .eap-actions { display: flex; justify-content: space-between; margin-top: 5px; }
-        .eap-btn { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; color: white; }
-        .btn-link { background: #f59e0b; } .btn-del { background: #ef4444; }
-
+        /* EAP BLUEPRINT STYLE */
+        #eap-viewport { 
+            width: 100%; height: 100%; overflow: hidden; position: relative; 
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 24px 24px; /* Grid de pontos */
+            cursor: default; 
+        }
+        #eap-viewport.dragging { cursor: grabbing; }
+        
+        .eap-node { 
+            position: absolute; 
+            background: white; 
+            border: 1px solid #cbd5e1; 
+            border-left: 4px solid #3b82f6; /* Accent Task */
+            padding: 0;
+            border-radius: 6px; 
+            width: 180px; 
+            z-index: 50; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: move; 
+            transition: transform 0.1s, box-shadow 0.2s; 
+        }
+        .eap-node:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transform: translateY(-2px); border-color: #3b82f6; }
+        .eap-node.is-group { border-left-color: #475569; background: #f8fafc; } /* Estilo diferente para grupos */
+        
+        .eap-header { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; }
+        .eap-body { padding: 8px 10px; }
+        .eap-line { stroke: #64748b; stroke-width: 2px; pointer-events: none; opacity: 0.6; }
+        
         /* Modais */
-        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(2px); z-index:100; align-items:center; justify-content:center; }
         .modal.active { display:flex; }
-        .ai-panel { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border: 1px solid #dbeafe; }
         #chat-window { position: fixed; bottom: 20px; right: 20px; width: 380px; height: 550px; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 200; overflow: hidden; border: 1px solid #e2e8f0; }
         #chat-window.active { display: flex; }
     </style>
@@ -105,31 +135,20 @@
         </header>
 
         <main id="editor-content" class="bg-white h-[calc(100vh-64px)] overflow-hidden">
-            <div id="v-eap" class="view hidden h-full w-full relative">
-                <div class="absolute top-4 left-4 z-50 flex gap-2">
-                    <button onclick="editor.addEapNode()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">+ Balão</button>
-                    <div class="bg-white flex rounded-xl shadow border">
-                        <button onclick="editor.zoom(0.1)" class="px-3 border-r hover:bg-slate-100"><i data-lucide="zoom-in" class="w-4"></i></button>
-                        <button onclick="editor.zoom(-0.1)" class="px-3 border-r hover:bg-slate-100"><i data-lucide="zoom-out" class="w-4"></i></button>
-                        <button onclick="editor.resetZoom()" class="px-3 text-[10px] font-bold hover:bg-slate-100">100%</button>
-                    </div>
-                </div>
-                <div id="eap-viewport"><div id="eap-scale-layer"><svg id="eap-svg" class="absolute inset-0 w-full h-full"></svg><div id="eap-nodes-layer"></div></div></div>
-            </div>
-
             <div id="v-main" class="view h-full flex flex-col">
                 <div class="bg-white border-b p-2 flex justify-between items-center h-[50px] flex-shrink-0">
                     <div class="flex gap-2 items-center">
-                        <button onclick="editor.addGroup()" class="bg-slate-900 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase hover:bg-slate-700">+ Etapa</button>
-                        <button onclick="editor.toggleAllGroups(false)" class="bg-slate-100 text-slate-600 text-[9px] px-3 py-1.5 rounded font-black uppercase">Recolher</button>
-                        <button onclick="editor.toggleAllGroups(true)" class="bg-slate-100 text-slate-600 text-[9px] px-3 py-1.5 rounded font-black uppercase">Expandir</button>
+                        <button onclick="editor.addGroup()" class="bg-slate-800 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase hover:bg-slate-700 flex gap-1 items-center shadow"><i data-lucide="folder-plus" class="w-3"></i> + Grupo</button>
+                        <div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
+                        <button onclick="editor.toggleAllGroups(true)" class="bg-slate-100 text-slate-600 text-[9px] px-3 py-1.5 rounded font-black uppercase">Recolher</button>
+                        <button onclick="editor.toggleAllGroups(false)" class="bg-slate-100 text-slate-600 text-[9px] px-3 py-1.5 rounded font-black uppercase">Expandir</button>
                         <div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
                         <button onclick="editor.toggleMode()" class="bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase flex gap-1 items-center hover:bg-blue-600 shadow-sm transition"><i data-lucide="activity" class="w-3"></i> <span id="mode-label">MODO PADRÃO</span></button>
                         <div id="measurement-controls" class="hidden flex gap-2 ml-2 animate-fade-in">
                             <button onclick="editor.saveMeasurementSnapshot()" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase flex gap-1 items-center"><i data-lucide="camera" class="w-3"></i> SALVAR</button>
                             <button onclick="editor.viewMeasurementHistory()" class="bg-slate-200 text-slate-700 text-[9px] px-3 py-1.5 rounded font-black uppercase">HISTÓRICO</button>
                         </div>
-                        <button onclick="editor.recalculateSchedule()" class="bg-orange-500 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase flex gap-1 items-center hover:bg-orange-600 shadow-sm ml-2" title="Projetar término baseado no real"><i data-lucide="refresh-cw" class="w-3"></i> RECALCULAR PRAZOS</button>
+                        <button onclick="editor.recalculateSchedule()" class="bg-orange-500 text-white text-[9px] px-3 py-1.5 rounded font-black uppercase flex gap-1 items-center hover:bg-orange-600 shadow-sm ml-2" title="Projetar término baseado na última medição"><i data-lucide="refresh-cw" class="w-3"></i> RECALCULAR PRAZOS</button>
                     </div>
                     <div class="flex gap-1 bg-slate-100 p-1 rounded"><button onclick="editor.changeGanttMode('Day')" class="text-[9px] font-bold px-3 py-1 hover:bg-white rounded transition">Dia</button><button onclick="editor.changeGanttMode('Week')" class="text-[9px] font-bold px-3 py-1 hover:bg-white rounded transition">Sem</button><button onclick="editor.changeGanttMode('Month')" class="text-[9px] font-bold px-3 py-1 hover:bg-white rounded transition">Mês</button></div>
                 </div>
@@ -139,49 +158,35 @@
                 </div>
             </div>
 
-            <div id="v-bal" class="view hidden h-full flex bg-slate-50"><div class="w-3/4 p-6 overflow-y-auto"><div class="h-[600px] border p-6 rounded-3xl bg-white shadow-sm relative"><h3 class="font-black text-[11px] uppercase mb-6 text-blue-600">Linha de Balanço</h3><div class="absolute inset-x-6 bottom-6 top-16"><canvas id="balance-chart"></canvas></div></div></div><div class="w-1/4 p-6 border-l bg-white overflow-y-auto"><h3 class="font-black text-[11px] uppercase mb-4 text-slate-800 flex items-center gap-2"><i data-lucide="zap" class="w-4 text-yellow-500"></i> Alertas de Fluxo</h3><div id="lob-alerts" class="space-y-3 text-xs"></div></div></div>
-            <div id="v-dash" class="view hidden p-10 bg-white h-full overflow-y-auto"><div class="flex justify-between items-end mb-8"><h2 class="text-2xl font-black italic text-slate-800">Visão Estratégica</h2><span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">IA v99</span></div><div class="ai-panel p-8 rounded-2xl shadow-sm mb-10 relative overflow-hidden"><h3 class="font-black text-blue-600 uppercase text-xs mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="w-4"></i> Análise Narrativa da IA</h3><div id="ai-narrative-content" class="text-slate-700 text-sm leading-relaxed font-medium space-y-2">Calculando...</div></div><div class="grid grid-cols-4 gap-6 mb-10" id="dash-kpi"></div><div class="grid grid-cols-2 gap-8"><div class="border p-6 rounded-[30px] bg-slate-50 h-96 flex flex-col shadow-sm"><h4 class="font-black text-[10px] mb-4 uppercase">Curva S</h4><div class="flex-grow relative h-full w-full"><canvas id="scurve-chart"></canvas></div></div><div class="border p-6 rounded-[30px] bg-slate-50 h-96 flex flex-col shadow-sm"><h4 class="font-black text-[10px] mb-4 uppercase">Status</h4><div class="flex-grow relative h-full w-full"><canvas id="pie-chart"></canvas></div></div></div></div>
+            <div id="v-eap" class="view hidden h-full w-full relative">
+                <div class="absolute top-4 left-4 z-50 flex gap-2">
+                    <button onclick="editor.addEapNode()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg hover:bg-slate-800 transition">+ Balão</button>
+                    <div class="bg-white flex rounded-xl shadow border">
+                        <button onclick="editor.zoom(0.1)" class="px-3 border-r hover:bg-slate-100"><i data-lucide="zoom-in" class="w-4"></i></button>
+                        <button onclick="editor.zoom(-0.1)" class="px-3 border-r hover:bg-slate-100"><i data-lucide="zoom-out" class="w-4"></i></button>
+                        <button onclick="editor.resetZoom()" class="px-3 text-[10px] font-bold hover:bg-slate-100">100%</button>
+                    </div>
+                </div>
+                <div id="eap-viewport">
+                    <div id="eap-scale-layer" class="w-full h-full absolute inset-0 transform-origin-top-left">
+                        <svg id="eap-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10"></svg>
+                        <div id="eap-nodes-layer" class="absolute inset-0 z-20"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="v-dash" class="view hidden p-10 bg-white h-full overflow-y-auto"><div class="flex justify-between items-end mb-8"><h2 class="text-2xl font-black italic text-slate-800">Visão Estratégica</h2><span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">IA v112</span></div><div class="ai-panel p-8 rounded-2xl shadow-sm mb-10 relative overflow-hidden"><h3 class="font-black text-blue-600 uppercase text-xs mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="w-4"></i> Análise Narrativa da IA</h3><div id="ai-narrative-content" class="text-slate-700 text-sm leading-relaxed font-medium space-y-2">Calculando...</div></div><div class="grid grid-cols-4 gap-6 mb-10" id="dash-kpi"></div><div class="grid grid-cols-2 gap-8"><div class="border p-6 rounded-[30px] bg-slate-50 h-96 flex flex-col shadow-sm"><h4 class="font-black text-[10px] mb-4 uppercase">Curva S</h4><div class="flex-grow relative h-full w-full"><canvas id="scurve-chart"></canvas></div></div><div class="border p-6 rounded-[30px] bg-slate-50 h-96 flex flex-col shadow-sm"><h4 class="font-black text-[10px] mb-4 uppercase">Status</h4><div class="flex-grow relative h-full w-full"><canvas id="pie-chart"></canvas></div></div></div></div>
             <div id="v-kanban" class="view hidden p-8 bg-slate-100 h-full overflow-x-auto"><div class="flex gap-6 h-full"><div class="bg-slate-200 p-4 rounded-xl min-w-[300px] flex flex-col"><h4 class="font-black text-[10px] mb-4 uppercase">A Fazer <button onclick="editor.addKb('todo')" class="ml-2">+</button></h4><div id="kb-todo" class="space-y-3 overflow-y-auto flex-grow"></div></div><div class="bg-blue-50 p-4 rounded-xl min-w-[300px] flex flex-col"><h4 class="font-black text-[10px] mb-4 uppercase text-blue-600">Em Andamento <button onclick="editor.addKb('doing')" class="ml-2">+</button></h4><div id="kb-doing" class="space-y-3 overflow-y-auto flex-grow"></div></div><div class="bg-green-50 p-4 rounded-xl min-w-[300px] flex flex-col"><h4 class="font-black text-[10px] mb-4 uppercase text-green-600">Concluído <button onclick="editor.addKb('done')" class="ml-2">+</button></h4><div id="kb-done" class="space-y-3 overflow-y-auto flex-grow"></div></div></div></div>
-            <div id="v-cash" class="view hidden p-10 bg-white h-full overflow-y-auto"><div class="max-w-6xl mx-auto"><h2 class="text-3xl font-black text-slate-800 mb-10">Fluxo de Caixa</h2><div class="h-[500px] border p-4 rounded-2xl shadow-sm"><canvas id="cash-chart"></canvas></div></div></div>
+            <div id="v-bal" class="view hidden h-full flex bg-slate-50"><div class="w-3/4 p-6 overflow-y-auto"><div class="h-[600px] border p-6 rounded-3xl bg-white shadow-sm relative"><h3 class="font-black text-[11px] uppercase mb-6 text-blue-600">Linha de Balanço</h3><div class="absolute inset-x-6 bottom-6 top-16"><canvas id="balance-chart"></canvas></div></div></div><div class="w-1/4 p-6 border-l bg-white overflow-y-auto"><h3 class="font-black text-[11px] uppercase mb-4 text-slate-800 flex items-center gap-2"><i data-lucide="zap" class="w-4 text-yellow-500"></i> Alertas de Fluxo</h3><div id="lob-alerts" class="space-y-3 text-xs"></div></div></div>
+            <div id="v-cash" class="view hidden p-10 bg-white h-full overflow-y-auto"><div class="max-w-6xl mx-auto"><h2 class="text-3xl font-black text-slate-800 mb-2">Fluxo de Caixa</h2><p class="text-slate-400 text-xs mb-10">Clique em uma barra para ver o detalhamento.</p><div class="h-[500px] border p-4 rounded-2xl shadow-sm"><canvas id="cash-chart"></canvas></div></div></div>
         </main>
     </div>
 
+    <div id="modal-finance-detail" class="modal"><div class="bg-white p-8 rounded-[30px] w-[500px] max-h-[80vh] flex flex-col shadow-2xl"><h3 class="font-black text-blue-600 mb-2 uppercase text-xs">Detalhamento Financeiro</h3><p id="finance-detail-title" class="text-xl font-black text-slate-800 mb-6">Mês</p><div id="finance-list" class="flex-grow overflow-y-auto space-y-2 mb-4 pr-2 bg-slate-50 p-2 rounded-xl border"></div><div class="flex justify-between items-center pt-4 border-t"><span class="text-xs font-bold text-slate-500">TOTAL</span><span id="finance-total" class="text-xl font-black text-blue-600">R$ 0,00</span></div><button onclick="document.getElementById('modal-finance-detail').classList.remove('active')" class="w-full mt-4 bg-slate-900 text-white py-3 rounded-xl font-black text-[10px]">Fechar</button></div></div>
     <div id="modal-users" class="modal"><div class="bg-white p-8 rounded-[30px] w-96"><h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Equipe</h3><div id="user-list" class="space-y-2 mb-6 max-h-48 overflow-y-auto"></div><div class="space-y-2 border-t pt-4"><input type="text" id="nu-u" placeholder="User" class="w-full border p-2 rounded text-xs"><input type="text" id="nu-p" placeholder="Pass" class="w-full border p-2 rounded text-xs"><button onclick="userManager.add()" class="w-full bg-slate-900 text-white py-2 rounded font-black text-[10px]">Add</button></div><button onclick="document.getElementById('modal-users').classList.remove('active')" class="w-full mt-4 text-xs">Fechar</button></div></div>
-    
-    <div id="modal-config" class="modal">
-        <div class="bg-white p-8 rounded-[30px] w-[500px] shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
-            <h3 class="font-black text-blue-600 mb-4 uppercase text-xs">Configurações & Linhas de Base</h3>
-            
-            <div class="mb-6 p-4 bg-orange-50 rounded-xl border border-orange-100 overflow-y-auto flex-grow">
-                <h4 class="text-[10px] font-black text-orange-700 uppercase mb-2">Gerenciar Versões (Snapshots)</h4>
-                
-                <div class="flex gap-2 mb-4">
-                    <input type="text" id="new-baseline-name" placeholder="Nome da Versão (Ex: Rev.01)" class="flex-grow border p-2 rounded text-xs">
-                    <button onclick="editor.saveBaseline()" class="bg-orange-500 text-white px-3 rounded font-black text-[10px] hover:bg-orange-600">SALVAR NOVA</button>
-                </div>
-
-                <div id="baseline-list" class="space-y-2 max-h-40 overflow-y-auto bg-white p-2 rounded border">
-                    </div>
-            </div>
-
-            <div class="flex gap-4 mb-4">
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-700"><input type="checkbox" id="cfg-sat"> Sábado Útil</label>
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-700"><input type="checkbox" id="cfg-sun"> Domingo Útil</label>
-            </div>
-
-            <div class="border-t pt-4 flex-grow overflow-hidden flex flex-col">
-                <p class="text-[9px] font-black text-slate-400 mb-2 uppercase">Feriados</p>
-                <div id="holiday-list" class="max-h-24 overflow-y-auto mb-2 text-[10px] space-y-1"></div>
-                <div class="flex gap-2"><input type="date" id="new-holiday" class="border p-1 rounded text-xs flex-grow"><button onclick="editor.addHoliday()" class="bg-slate-900 text-white px-3 rounded hover:bg-slate-700">+</button></div>
-            </div>
-
-            <button onclick="editor.saveConfig()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700">Salvar Tudo</button>
-            <button onclick="document.getElementById('modal-config').classList.remove('active')" class="w-full mt-2 text-slate-400 text-[9px] font-bold uppercase">Fechar</button>
-        </div>
-    </div>
-
+    <div id="modal-config" class="modal"><div class="bg-white p-8 rounded-[30px] w-[500px] shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"><h3 class="font-black text-blue-600 mb-4 uppercase text-xs">Configurações & Linhas de Base</h3><div class="mb-6 p-4 bg-orange-50 rounded-xl border border-orange-100 overflow-y-auto flex-grow"><h4 class="text-[10px] font-black text-orange-700 uppercase mb-2">Gerenciar Versões</h4><div class="flex gap-2 mb-4"><input type="text" id="new-baseline-name" placeholder="Nome (Ex: Rev.01)" class="flex-grow border p-2 rounded text-xs"><button onclick="editor.saveBaseline()" class="bg-orange-500 text-white px-3 rounded font-black text-[10px] hover:bg-orange-600">SALVAR</button></div><div id="baseline-list" class="space-y-2 max-h-40 overflow-y-auto bg-white p-2 rounded border"></div></div><div class="flex gap-4 mb-4"><label class="flex items-center gap-2 text-xs font-bold text-slate-700"><input type="checkbox" id="cfg-sat"> Sábado Útil</label><label class="flex items-center gap-2 text-xs font-bold text-slate-700"><input type="checkbox" id="cfg-sun"> Domingo Útil</label></div><div class="border-t pt-4 flex-grow overflow-hidden flex flex-col"><p class="text-[9px] font-black text-slate-400 mb-2 uppercase">Feriados</p><div id="holiday-list" class="max-h-24 overflow-y-auto mb-2 text-[10px] space-y-1"></div><div class="flex gap-2"><input type="date" id="new-holiday" class="border p-1 rounded text-xs flex-grow"><button onclick="editor.addHoliday()" class="bg-slate-900 text-white px-3 rounded hover:bg-slate-700">+</button></div></div><button onclick="editor.saveConfig()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase hover:bg-blue-700">Salvar Tudo</button><button onclick="document.getElementById('modal-config').classList.remove('active')" class="w-full mt-2 text-slate-400 text-[9px] font-bold uppercase">Fechar</button></div></div>
+    <div id="modal-history" class="modal"><div class="bg-white p-8 rounded-[30px] w-[500px] max-h-[80vh] flex flex-col shadow-2xl"><h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Histórico de Medições</h3><div id="history-list" class="flex-grow overflow-y-auto space-y-2 mb-4 pr-2"></div><button onclick="document.getElementById('modal-history').classList.remove('active')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-[10px]">Fechar</button></div></div>
     <div id="modal-purchase" class="modal"><div class="bg-white p-8 rounded-[30px] w-96 shadow-2xl border-2 border-purple-500"><h3 class="font-black text-purple-600 mb-2 uppercase text-xs">Configurar Compras</h3><p class="text-[10px] text-slate-400 mb-6" id="modal-purchase-title">Grupo</p><div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-lg"><button onclick="editor.setPurchaseMode('standard')" id="btn-p-standard" class="flex-1 py-2 rounded-md text-[10px] font-black uppercase transition">Padrão</button><button onclick="editor.setPurchaseMode('custom')" id="btn-p-custom" class="flex-1 py-2 rounded-md text-[10px] font-black uppercase transition">Personalizado</button></div><div id="panel-p-standard" class="text-center py-4 text-[10px] text-slate-500">Distribuição Linear.</div><div id="panel-p-custom" class="hidden space-y-3"><div><label class="text-[9px] font-bold uppercase">Meses Antes</label><input type="number" id="p-months" class="w-full border p-2 rounded text-xs" placeholder="0"></div><div class="flex gap-2"><div class="flex-1"><label class="text-[9px] font-bold uppercase">% Entrada</label><input type="number" id="p-entry" class="w-full border p-2 rounded text-xs" placeholder="0"></div><div class="flex-1"><label class="text-[9px] font-bold uppercase">Parcelas</label><input type="number" id="p-installments" class="w-full border p-2 rounded text-xs" placeholder="1"></div></div></div><button onclick="editor.savePurchase()" class="w-full mt-6 bg-purple-600 text-white py-3 rounded-xl font-black uppercase text-xs">Salvar</button><button onclick="document.getElementById('modal-purchase').classList.remove('active')" class="w-full mt-2 text-slate-400 text-[9px] font-bold uppercase">Cancelar</button></div></div>
-    <div id="modal-history" class="modal"><div class="bg-white p-8 rounded-[30px] w-[500px] max-h-[80vh] flex flex-col shadow-2xl"><h3 class="font-black text-blue-600 mb-6 uppercase text-xs">Histórico</h3><div id="history-list" class="flex-grow overflow-y-auto space-y-2 mb-4 pr-2"></div><button onclick="document.getElementById('modal-history').classList.remove('active')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-[10px]">Fechar</button></div></div>
     <div id="modal-history-editor" class="modal"><div class="bg-white p-8 rounded-[30px] w-[600px] shadow-2xl border-2 border-yellow-400"><h3 class="font-black text-yellow-600 uppercase text-xs mb-4">Editar Registro Antigo</h3><span id="history-editor-date" class="text-xs font-bold text-slate-500 mb-4 block"></span><div class="max-h-96 overflow-y-auto border rounded bg-slate-50 p-2 mb-4"><table class="w-full text-xs"><tbody id="history-editor-body"></tbody></table></div><button onclick="editor.saveHistoryEdit()" class="w-full bg-yellow-500 text-white py-3 rounded-xl font-black text-[10px]">SALVAR</button><button onclick="document.getElementById('modal-history-editor').classList.remove('active')" class="w-full mt-2 text-slate-400 text-[9px] font-bold">CANCELAR</button></div></div>
     <div id="chat-window"><div class="bg-slate-900 p-4 text-white flex justify-between"><span class="font-black text-[10px]">BRAVO AI</span><button onclick="bravoAI.toggle()">x</button></div><div id="chat-logs" class="flex-grow p-4 bg-slate-50 overflow-y-auto text-xs space-y-2"></div><div class="p-2 border-t flex"><input id="chat-input" class="flex-grow border rounded p-2 text-xs" onkeypress="if(event.key==='Enter')bravoAI.send()"><button onclick="bravoAI.send()" class="ml-2 bg-blue-600 text-white px-3 rounded">></button></div></div>
 
@@ -193,11 +198,13 @@
 
         const editor = {
             curr: null, db: [], eap: [], kb: [], measurements: [], cfg: {}, baselines: [], charts: {}, mode: 'planning', zoomLevel: 1, editingGroup: null, editingHistoryIndex: null,
-            drag: {active:false, item:null}, link: {active:false, source:null},
+            drag: {active:false, item:null}, link: {active:false, source:null}, financialBreakdown: {},
 
             open(id) {
                 this.curr = id; const p = projectManager.all.find(x=>x.id===id);
-                this.db = p.data || []; this.eap = p.eap || []; this.kb = p.kb || []; this.measurements = p.measurements || []; this.cfg = p.cfg || {sat:false, sun:false, holidays:[]}; this.baselines = p.baselines || [];
+                this.db = p.data || []; this.eap = p.eap || []; this.kb = p.kb || []; 
+                this.measurements = p.measurements || []; this.cfg = p.cfg || {sat:false, sun:false, holidays:[]}; 
+                this.baselines = p.baselines || [];
                 document.getElementById('edit-name').innerText = p.name.toUpperCase();
                 router.go('editor'); this.recalc(); this.setupSync(); this.initEapDrag();
             },
@@ -205,53 +212,116 @@
             setupSync() { const t=document.getElementById('wrapper-table'), g=document.getElementById('wrapper-gantt'); t.onscroll=()=>{if(t.matches(':hover'))g.scrollTop=t.scrollTop}; g.onscroll=()=>{if(g.matches(':hover'))t.scrollTop=g.scrollTop}; },
 
             isWorkDay(date) { const d=new Date(date+"T00:00:00"); if(!this.cfg.sat && d.getDay()===6) return false; if(!this.cfg.sun && d.getDay()===0) return false; if((this.cfg.holidays||[]).includes(date)) return false; return true; },
-            addWorkDays(start, days) { let d=new Date(start+"T00:00:00"), c=0; while(c<(parseInt(days)-1)){ d.setDate(d.getDate()+1); if(this.isWorkDay(d.toISOString().split('T')[0])) c++; } return d.toISOString().split('T')[0]; },
+            addWorkDays(start, days) { let d=new Date(start+"T00:00:00"); let count=0; const needed=parseInt(days)-1; while(count<needed){ d.setDate(d.getDate()+1); if(this.isWorkDay(d.toISOString().split('T')[0])) count++; } return d.toISOString().split('T')[0]; },
+            getNextWorkDay(dateStr) { let d=new Date(dateStr+"T00:00:00"); do { d.setDate(d.getDate() + 1); } while (!this.isWorkDay(d.toISOString().split('T')[0])); return d.toISOString().split('T')[0]; },
             getDuration(start, end) { let d1=new Date(start+"T00:00:00"), d2=new Date(end+"T00:00:00"), c=0; if(d2<d1) return 1; while(d1<=d2) { if(this.isWorkDay(d1.toISOString().split('T')[0])) c++; d1.setDate(d1.getDate()+1); } return c; },
 
             recalc(shouldSave=true) {
-                this.db.forEach(t => { if(t.type==='item') { if(t.pred?.length) { let maxEnd=""; t.pred.forEach(pid=>{ const p=this.db.find(x=>x.uuid===pid); if(p?.end>maxEnd) maxEnd=p.end; }); if(maxEnd) { let d=new Date(maxEnd+"T00:00:00"); d.setDate(d.getDate()+1); while(!this.isWorkDay(d.toISOString().split('T')[0])) d.setDate(d.getDate()+1); t.start=d.toISOString().split('T')[0]; } } if(t.start && t.duration) t.end = this.addWorkDays(t.start, t.duration); } });
-                for(let i=0;i<5;i++) { this.db.filter(t=>t.type==='group').forEach(g => { const ch = this.db.filter(x=>x.parent===g.uuid); if(ch.length) { g.start = ch.map(c=>c.start).filter(Boolean).sort()[0] || ""; g.end = ch.map(c=>c.end).filter(Boolean).sort().reverse()[0] || ""; g.cost = ch.reduce((s,c)=>s+(parseFloat(c.cost)||0),0); const totalVal = g.cost; if(totalVal > 0) { const earned = ch.reduce((s,c) => s + ((parseFloat(c.cost)||0) * (c.progress||0)/100), 0); g.progress = Math.round((earned / totalVal) * 100); } else { g.progress = Math.round(ch.reduce((s,c)=>s+(c.progress||0),0) / ch.length); } } }); }
-                const last=this.db.map(t=>t.end).filter(Boolean).sort().reverse()[0]; this.db.forEach(t=>t.critical=false); if(last) this.traceCritical(this.db.find(t=>t.end===last)?.uuid);
+                let changes = true; let loops = 0;
+                this.db.forEach(t=>t.critical=false);
+                while(changes && loops < 15) {
+                    changes = false;
+                    this.db.forEach(t => {
+                        if(t.type==='item') {
+                            const oldStart = t.start; const oldEnd = t.end;
+                            if(t.pred && t.pred.length > 0) {
+                                let maxPredEnd = null;
+                                t.pred.forEach(pid => { const parent = this.db.find(x => x.uuid === pid); if(parent && parent.end) { if(!maxPredEnd || parent.end > maxPredEnd) maxPredEnd = parent.end; } });
+                                if(maxPredEnd) { const newStart = this.getNextWorkDay(maxPredEnd); if(t.start !== newStart) { t.start = newStart; changes = true; } }
+                            } else if(!t.start) { t.start = new Date().toISOString().split('T')[0]; }
+                            if(t.start && t.duration) { const newEnd = this.addWorkDays(t.start, parseInt(t.duration)); if(t.end !== newEnd) { t.end = newEnd; changes = true; } }
+                        }
+                    });
+                    this.db.filter(t=>t.type==='group').forEach(g => {
+                        const ch = this.db.filter(x=>x.parent===g.uuid);
+                        if(ch.length) {
+                            g.start = ch.map(c=>c.start).filter(Boolean).sort()[0] || "";
+                            g.end = ch.map(c=>c.end).filter(Boolean).sort().reverse()[0] || "";
+                            g.cost = ch.reduce((s,c)=>s+(parseFloat(c.cost)||0),0);
+                            const totalVal = g.cost;
+                            if(totalVal > 0) { const earned = ch.reduce((s,c) => s + ((parseFloat(c.cost)||0) * (c.progress||0)/100), 0); g.progress = Math.round((earned / totalVal) * 100); }
+                            else { g.progress = Math.round(ch.reduce((s,c)=>s+(c.progress||0),0) / ch.length); }
+                        }
+                    });
+                    loops++;
+                }
+                const last=this.db.map(t=>t.end).filter(Boolean).sort().reverse()[0]; if(last) this.traceCritical(this.db.find(t=>t.end===last)?.uuid);
                 this.renderT(); setTimeout(()=>this.renderG(),50); if(shouldSave) this.autoSave();
             },
             traceCritical(uid) { const t=this.db.find(x=>x.uuid===uid); if(t){ t.critical=true; (t.pred||[]).forEach(pid=>this.traceCritical(pid)); } },
 
-            // === RECALCULO E BASELINE MANAGER ===
             recalculateSchedule() {
-                if(!confirm("Ajustar a data FINAL das tarefas com base no progresso atual?")) return;
-                const today = new Date(); let changed = 0;
-                this.db.filter(t => t.type==='item' && t.start && t.end && t.progress < 100).forEach(t => {
-                     const s = new Date(t.start);
-                     if (today > s) {
-                         const elapsed = this.getDuration(t.start, today.toISOString().split('T')[0]);
-                         const expectedP = (elapsed / t.duration) * 100;
-                         if (t.progress < expectedP && t.progress > 0) {
-                             const projDur = Math.round((elapsed / t.progress) * 100);
-                             if (projDur > t.duration) { t.duration = projDur; t.end = this.addWorkDays(t.start, t.duration); changed++; }
-                         } else if (t.progress === 0) {
-                             t.start = today.toISOString().split('T')[0]; t.end = this.addWorkDays(t.start, t.duration); changed++;
-                         }
-                     }
+                if (!this.measurements || this.measurements.length === 0) { alert("Erro: Nenhuma medição encontrada."); return; }
+                const sorted = [...this.measurements].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const lastMeas = sorted[0];
+                const refDateStr = new Date(lastMeas.date).toISOString().split('T')[0];
+                const label = new Date(refDateStr).toLocaleDateString();
+                if(!confirm(`Reprogramar tarefas baseado na medição de ${label}?`)) return;
+                let changed = 0;
+                this.db.filter(t => t.type === 'item' && t.start && t.end).forEach(t => {
+                    if (t.progress < 100) {
+                        const remainingPct = (100 - t.progress) / 100;
+                        const daysLeft = Math.ceil(parseInt(t.duration) * remainingPct);
+                        const projectedEnd = this.addWorkDays(refDateStr, Math.max(1, daysLeft));
+                        if (projectedEnd > t.end) { t.end = projectedEnd; t.duration = this.getDuration(t.start, t.end); changed++; }
+                    }
                 });
-                if(changed > 0) { alert(`${changed} tarefas ajustadas.`); this.recalc(); } else { alert("Nenhum ajuste necessário."); }
+                if(changed > 0) { alert(`${changed} tarefas foram reagendadas.`); this.recalc(); } else { alert("Tudo dentro do prazo conforme a medição."); }
             },
 
-            // === GANTT & BASELINE BAR ===
+            upd(u,f,v){ const t=this.db.find(x=>x.uuid===u); if(f==='duration'||f==='cost') t[f]=parseFloat(v)||0; else t[f]=v; this.recalc(); },
+            updEnd(u,v){ const t=this.db.find(x=>x.uuid===u); t.end=v; t.duration=this.getDuration(t.start, t.end); this.recalc(); },
+            updPr(u,v){
+                const parts = v.split(','); const finalPreds = [];
+                parts.forEach(p => { p = p.trim(); if(!p) return; if(!isNaN(p)) { const idx = parseInt(p) - 1; if(this.db[idx]) finalPreds.push(this.db[idx].uuid); } else { finalPreds.push(p); } });
+                this.db.find(x=>x.uuid===u).pred = finalPreds; this.recalc();
+            },
+
+            addItem(parentId) {
+                const parent = this.db.find(x => x.uuid === parentId); if(parent) parent.collapsed = false;
+                let insertPos = -1; for(let i = 0; i < this.db.length; i++){ if(this.db[i].uuid === parentId || this.db[i].parent === parentId) { insertPos = i; } }
+                if (insertPos !== -1) { const newItem = { uuid:'t'+Date.now(), name:'Nova Tarefa', type:'item', parent:parentId, duration:5, start:new Date().toISOString().split('T')[0], progress:0, cost:0 }; this.db.splice(insertPos + 1, 0, newItem); this.recalc(); }
+            },
+            addGroup() { const newG = { uuid:'g'+Date.now(), name:'NOVA ETAPA', type:'group', parent:'root', cost:0, progress:0, collapsed:false }; this.db.push(newG); this.recalc(); setTimeout(() => document.getElementById('wrapper-table').scrollTop = document.getElementById('wrapper-table').scrollHeight, 100); },
+            toggleAllGroups(collapse) { this.db.forEach(t => { if(t.type === 'group') t.collapsed = collapse; }); this.recalc(false); },
+            toggleGroup(uid) { const g = this.db.find(x => x.uuid === uid); if(g) g.collapsed = !g.collapsed; this.recalc(false); },
+            rem(uuid) { if(!confirm("Tem certeza?")) return; let toDelete = [uuid]; let added = true; while(added) { added = false; this.db.forEach(t => { if(toDelete.includes(t.parent) && !toDelete.includes(t.uuid)) { toDelete.push(t.uuid); added = true; } }); } this.db = this.db.filter(x => !toDelete.includes(x.uuid)); this.recalc(); },
+            cloneGroup(gid) { const groupIdx = this.db.findIndex(x => x.uuid === gid); if (groupIdx === -1) return; const originalGroup = this.db[groupIdx]; const originalChildren = this.db.filter(x => x.parent === gid); const newGid = 'g' + Date.now(); const newGroup = { ...originalGroup, uuid: newGid, name: originalGroup.name + ' (Cópia)' }; const newChildren = originalChildren.map((child, index) => { return { ...child, uuid: 't' + Date.now() + index, parent: newGid, progress: 0 }; }); let insertPos = groupIdx; while (insertPos + 1 < this.db.length && this.db[insertPos + 1].parent === gid) insertPos++; this.db.splice(insertPos + 1, 0, newGroup, ...newChildren); this.recalc(); },
+            
+            renderT(){
+                const thead=document.getElementById('table-head-row');
+                if(this.mode==='planning') thead.innerHTML=`<th class="w-8">#</th><th class="text-left">Descrição</th><th class="w-24">Início</th><th class="w-24">Término</th><th class="w-16">Duração</th><th class="w-24">Custo</th><th class="w-16">Links</th><th class="w-20">Ações</th>`;
+                else thead.innerHTML=`<th class="w-8">#</th><th class="text-left">Descrição</th><th class="w-24 text-slate-400">Anterior</th><th class="w-24 font-bold text-blue-600 bg-blue-50">HOJE</th><th class="w-24">Total</th><th class="w-24">Status</th>`;
+                let h=''; 
+                this.db.forEach((t, i) => { 
+                    const isG = t.type==='group'; 
+                    if(!isG && this.db.find(p=>p.uuid===t.parent)?.collapsed) return; 
+                    const hasPred = t.pred && t.pred.length > 0;
+                    const dateClass = hasPred ? 'blocked-cell' : 'input-cell text-center';
+                    let linkDisplay = '';
+                    if(t.pred && t.pred.length > 0) { linkDisplay = t.pred.map(uid => { const idx = this.db.findIndex(x => x.uuid === uid); return idx !== -1 ? (idx + 1) : '?'; }).join(', '); }
+                    h += `<tr class="${isG?'group-row':''} ${t.critical&&!isG?'critical-row':''} hover:bg-slate-50"><td class="text-center text-[10px] text-slate-400 font-bold border-r">${i+1}</td><td class="flex items-center gap-2 pl-2 border-r">${isG?`<button onclick="editor.toggleGroup('${t.uuid}')" class="font-bold w-4 h-4 flex items-center justify-center bg-white border rounded hover:bg-slate-100">${t.collapsed?'+':'-'}</button>`:''}<input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold"></td>`;
+                    if(this.mode==='planning') h+=`<td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="${isG? 'input-cell text-center' : dateClass}" ${isG || hasPred ? 'disabled' : ''}></td><td><input type="date" value="${t.end||''}" onchange="editor.updEnd('${t.uuid}',this.value)" class="input-cell text-center" ${isG?'disabled':''}></td><td><input type="number" value="${t.duration||1}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center font-bold" ${isG?'disabled':''}></td><td class="text-right p-2">${isG?fmt(t.cost):`<input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right">`}</td><td><input value="${linkDisplay}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center" placeholder="Ex: 1, 3"></td><td class="flex gap-1 justify-center p-1"><button onclick="editor.rem('${t.uuid}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5"></i></button>${isG?`<button onclick="editor.cloneGroup('${t.uuid}')" class="text-slate-500 hover:text-slate-800" title="Duplicar"><i data-lucide="copy" class="w-3.5"></i></button>`:''}${isG?`<button onclick="editor.openPurchaseModal('${t.uuid}')" class="text-purple-600"><i data-lucide="dollar-sign" class="w-3.5"></i></button>`:''}${isG?`<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500 hover:text-blue-700" title="Adicionar"><i data-lucide="plus-circle" class="w-3.5"></i></button>`:''}</td>`;
+                    else { const prev=this.getPreviousProgress(t.uuid); const total=t.progress||0; const cur=Math.max(0,total-prev); h+=`<td class="text-center text-slate-400 text-[10px] bg-slate-50">${prev}%</td><td>${isG?'-':`<input type="number" min="0" max="100" value="${cur}" onchange="editor.updMeasurement('${t.uuid}',this.value)" class="input-cell text-center font-black bg-blue-50 border border-blue-300 text-blue-700 rounded">`}</td><td class="text-center font-black text-slate-700 text-xs">${total}%</td><td class="text-center text-[9px] font-bold ${total==100?'text-green-600':'text-orange-500'}">${total==100?'OK':'...'}</td>`}h+='</tr>'
+                }); 
+                document.getElementById('tbody').innerHTML=h; lucide.createIcons();
+            },
+            
             renderG() { 
                 const tasks=[]; let minDate = null;
                 this.db.forEach(t=>{ 
                     if(t.start && t.end && !(t.type==='item' && this.db.find(x=>x.uuid===t.parent)?.collapsed)){ 
                         if(!minDate || t.start < minDate) minDate = t.start;
                         let css = 'bar-risk-low'; 
-                        if(t.type==='group') css = 'bar-group';
-                        else {
-                            const today = new Date().toISOString().split('T')[0];
-                            const isDelayed = t.end < today && t.progress < 100;
-                            const isCritical = t.critical;
-                            if (isCritical && isDelayed) css = 'bar-risk-critical';
-                            else if (isDelayed) css = 'bar-risk-high';
-                            else if (isCritical) css = 'bar-risk-med';
-                            else if (t.progress === 100) css = 'bar-risk-ok';
+                        if(t.type==='group') css = 'bar-group'; 
+                        else { 
+                            const today = new Date().toISOString().split('T')[0]; 
+                            const isDelayed = t.end < today && t.progress < 100; 
+                            const isCritical = t.critical; 
+                            if (isCritical && isDelayed) css = 'bar-risk-critical'; 
+                            else if (isDelayed) css = 'bar-risk-high'; 
+                            else if (isCritical) css = 'bar-risk-med'; 
+                            else if (t.progress === 100) css = 'bar-risk-ok'; 
                         }
                         tasks.push({id:t.uuid, name:t.name, start:t.start, end:t.end, progress:t.progress, dependencies:(t.pred||[]).join(','), custom_class:css}); 
                     }
@@ -259,28 +329,37 @@
                 document.getElementById('gantt-box').innerHTML=''; 
                 if(tasks.length) {
                     const startView = new Date(minDate); startView.setDate(startView.getDate() - 5);
-                    this.ganttInst = new Gantt("#gantt-box", tasks, {view_mode:'Day', language:'ptBr', bar_height:20, row_height:38, header_height:40});
+                    this.ganttInst = new Gantt("#gantt-box", tasks, {view_mode:'Day', language:'ptBr', bar_height:20, row_height:45, header_height:40});
                     
-                    // Desenha Linha de Base (Barra Cinza Embaixo)
+                    // PARALLEL BASELINE LOGIC
                     setTimeout(() => {
-                        const svg = document.querySelector('#gantt-box svg');
-                        if(!svg) return;
+                        const svg = document.querySelector('#gantt-box svg'); if(!svg) return;
                         this.db.forEach(t => {
                             if(t.baseStart && t.baseEnd) {
                                 const taskGroup = svg.querySelector(`.bar-wrapper[data-id="${t.uuid}"]`);
                                 if(taskGroup) {
                                     const rect = taskGroup.querySelector('.bar');
-                                    if(rect) {
-                                        const baseRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                                        baseRect.setAttribute("x", rect.getAttribute("x")); // Simplificação visual
-                                        baseRect.setAttribute("y", parseInt(rect.getAttribute("y")) + 16); 
-                                        baseRect.setAttribute("width", rect.getAttribute("width")); 
-                                        baseRect.setAttribute("height", "6");
-                                        baseRect.setAttribute("rx", "3");
-                                        baseRect.setAttribute("class", "baseline-bar");
+                                    // Math to calculate position relative to current view
+                                    const start = new Date(t.start);
+                                    const baseStart = new Date(t.baseStart);
+                                    const baseEnd = new Date(t.baseEnd);
+                                    const durationDays = (new Date(t.end) - start) / (1000 * 60 * 60 * 24);
+                                    const baseDurationDays = (baseEnd - baseStart) / (1000 * 60 * 60 * 24);
+                                    const diffDays = (baseStart - start) / (1000 * 60 * 60 * 24);
+                                    
+                                    if(rect && durationDays > 0) {
+                                        const currentWidth = parseFloat(rect.getAttribute("width"));
+                                        const pxPerDay = currentWidth / Math.max(1, durationDays);
                                         
-                                        // Se mudou data, pinta de vermelho claro
-                                        if(t.start !== t.baseStart || t.end !== t.baseEnd) { baseRect.setAttribute("fill", "#ef4444"); baseRect.setAttribute("opacity", "0.4"); }
+                                        const baseX = parseFloat(rect.getAttribute("x")) + (diffDays * pxPerDay);
+                                        const baseWidth = Math.max(1, baseDurationDays * pxPerDay);
+                                        
+                                        const baseRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                        baseRect.setAttribute("x", baseX);
+                                        baseRect.setAttribute("y", parseFloat(rect.getAttribute("y")) + 24); // Parallel below
+                                        baseRect.setAttribute("width", baseWidth);
+                                        baseRect.setAttribute("height", "6");
+                                        baseRect.setAttribute("class", "baseline-bar");
                                         taskGroup.appendChild(baseRect);
                                     }
                                 }
@@ -289,98 +368,223 @@
                     }, 500);
                 }
             },
+            
+            getPreviousProgress(taskId){if(!this.measurements.length)return 0;let max=0;this.measurements.forEach(m=>{const item=m.items.find(i=>i.uuid===taskId);if(item&&item.progress>max)max=item.progress});return max}, updMeasurement(taskId,currentVal){const prev=this.getPreviousProgress(taskId);let newTotal=prev+parseFloat(currentVal);if(newTotal>100)newTotal=100;if(newTotal<0)newTotal=0;this.db.find(t=>t.uuid===taskId).progress=newTotal;this.recalc()}, saveMeasurementSnapshot(){const snapshot={date:new Date().toISOString(),user:auth.ss?auth.ss.u:'Admin',edited:false,items:this.db.filter(t=>t.type==='item').map(t=>({uuid:t.uuid,progress:t.progress}))};this.measurements.push(snapshot);this.autoSave();alert('Salvo!')}, 
+            viewMeasurementHistory(){
+                document.getElementById('modal-history').classList.add('active');
+                const list=document.getElementById('history-list');
+                if(!this.measurements||this.measurements.length===0){list.innerHTML='<p class="text-center text-slate-400 py-4">Vazio</p>';return}
+                list.innerHTML=this.measurements.map((m,i)=>{
+                    const d=new Date(m.date).toLocaleDateString()+' '+new Date(m.date).toLocaleTimeString();
+                    const avg=m.items.length?Math.round(m.items.reduce((a,b)=>a+(parseInt(b.progress)||0),0)/m.items.length):0;
+                    return `<div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center mb-2"><div class="cursor-pointer flex-grow" onclick="editor.openHistoryEditor(${i})"><p class="font-bold text-[10px] text-slate-700">${d} <span class="text-blue-600 font-black">(${avg}%)</span></p><p class="text-[9px] text-slate-400">Por: ${m.user}</p></div><button onclick="editor.deleteMeasurement(${i})" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-4"></i></button></div>`
+                }).reverse().join('');
+                lucide.createIcons();
+            },
+            deleteMeasurement(idx) { if(confirm("Excluir?")) { this.measurements.splice(idx, 1); this.autoSave(); this.viewMeasurementHistory(); this.recalc(); } }, openHistoryEditor(idx){this.editingHistoryIndex=idx;const m=this.measurements[idx];document.getElementById('modal-history').classList.remove('active');document.getElementById('modal-history-editor').classList.add('active');document.getElementById('history-editor-date').innerText=new Date(m.date).toLocaleString();const body=document.getElementById('history-editor-body');body.innerHTML='';m.items.forEach(item=>{const t=this.db.find(x=>x.uuid===item.uuid);if(t)body.innerHTML+=`<tr class="border-b"><td class="p-2 font-bold text-slate-700">${t.name}</td><td class="p-2"><input type="number" value="${item.progress}" onchange="editor.updateHistoryItem('${item.uuid}',this.value)" class="border p-1 w-16 text-center text-xs"> %</td></tr>`})}, updateHistoryItem(u,v){const m=this.measurements[this.editingHistoryIndex];const i=m.items.find(x=>x.uuid===u);if(i)i.progress=parseInt(v);m.edited=true}, saveHistoryEdit(){document.getElementById('modal-history-editor').classList.remove('active');this.autoSave();alert('Histórico atualizado.')},
 
-            renderDash() {
-                const tot = this.db.reduce((a,t)=>a+(t.type==='item'?1:0),0); 
-                const done = this.db.reduce((a,t)=>a+(t.type==='item'&&t.progress==100?1:0),0);
-                const cost = this.db.reduce((a,t)=>a+(t.type==='item'?(parseFloat(t.cost)||0):0),0);
-                const prog = tot ? Math.round((done/tot)*100) : 0;
-                const measCount = this.measurements ? this.measurements.length : 0;
-                
+            renderCash(){
+                const monthly={}; this.financialBreakdown = {};
+                this.db.filter(t=>t.type==='group'&&t.start&&t.cost>0).forEach(g=>{
+                     const c=g.purchaseConfig||{mode:'standard',months:0,entry:0,installments:1};
+                     const s=new Date(g.start); if(c.mode==='custom'&&c.months>0)s.setMonth(s.getMonth()-c.months);
+                     let map = [];
+                     if(c.mode==='standard'){
+                         const e=new Date(g.end);
+                         const m=Math.max(1,(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1);
+                         const v=g.cost/m;
+                         for(let i=0;i<m;i++) map.push([new Date(s.getFullYear(),s.getMonth()+i,1), v]);
+                     } else {
+                         const entryVal=g.cost*(c.entry/100);
+                         const instVal=(g.cost-entryVal)/Math.max(1,c.installments);
+                         map.push([new Date(s), entryVal]);
+                         for(let i=1;i<=c.installments;i++) map.push([new Date(s.getFullYear(),s.getMonth()+i,1), instVal]);
+                     }
+                     map.forEach(([d, v]) => {
+                         const key = d.toISOString().slice(0,7);
+                         monthly[key] = (monthly[key]||0) + v;
+                         if(!this.financialBreakdown[key]) this.financialBreakdown[key] = [];
+                         this.financialBreakdown[key].push({name: g.name, value: v});
+                     });
+                });
+                const l=Object.keys(monthly).sort(); const d=l.map(k=>monthly[k]);
+                if(this.charts.cash) this.charts.cash.destroy();
+                this.charts.cash = new Chart(document.getElementById('cash-chart'), {
+                    type: 'bar',
+                    data: { labels: l, datasets: [{ label: 'Desembolso (R$)', data: d, backgroundColor: '#3b82f6' }] },
+                    options: { maintainAspectRatio: false, onClick: (evt, elements) => { if (elements.length > 0) { const idx = elements[0].index; this.showFinancialDetail(l[idx]); } } }
+                });
+            },
+            showFinancialDetail(monthKey) {
+                const list = document.getElementById('finance-list');
+                document.getElementById('finance-detail-title').innerText = "Detalhamento: " + monthKey;
+                const items = this.financialBreakdown[monthKey] || [];
+                list.innerHTML = items.map(i => `<div class="flex justify-between items-center border-b pb-1 mb-1 last:border-0"><span class="text-xs text-slate-700 font-medium truncate w-2/3">${i.name}</span><span class="text-xs font-bold text-slate-900">${fmt(i.value)}</span></div>`).join('');
+                document.getElementById('finance-total').innerText = fmt(items.reduce((acc, curr) => acc + curr.value, 0));
+                document.getElementById('modal-finance-detail').classList.add('active');
+            },
+
+            renderKanban(){
+                const c={todo:document.getElementById('kb-todo'),doing:document.getElementById('kb-doing'),done:document.getElementById('kb-done')};
+                Object.values(c).forEach(x=>x.innerHTML='');
+                (this.kb||[]).forEach(k=>{
+                    const h=`<div class="bg-white p-2 rounded shadow mb-2 text-xs border-l-4 ${k.status==='todo'?'border-slate-400':k.status==='doing'?'border-blue-500':'border-green-500'}"><input value="${k.title}" onchange="editor.updKb('${k.uuid}',this.value)" class="w-full font-bold outline-none"><div class="flex justify-end mt-1 gap-1"><button onclick="editor.moveKb('${k.uuid}','todo')" class="text-[8px] bg-slate-100 p-1">T</button><button onclick="editor.moveKb('${k.uuid}','doing')" class="text-[8px] bg-blue-100 p-1">D</button><button onclick="editor.moveKb('${k.uuid}','done')" class="text-[8px] bg-green-100 p-1">OK</button></div></div>`;
+                    if(c[k.status]) c[k.status].innerHTML+=h;
+                });
+            },
+            addKb(s){this.kb.push({uuid:'k'+Date.now(),title:'Card',status:s});this.renderKanban();this.autoSave()}, updKb(u,v){this.kb.find(x=>x.uuid===u).title=v;this.autoSave()}, moveKb(u,s){this.kb.find(x=>x.uuid===u).status=s;this.renderKanban();this.autoSave()},
+            
+            renderDash(){
+                if(this.charts.pie){ this.charts.pie.destroy(); this.charts.pie=null; }
+                if(this.charts.scurve){ this.charts.scurve.destroy(); this.charts.scurve=null; }
+                const tot=this.db.reduce((a,t)=>a+(t.type==='item'?1:0),0);
+                const done=this.db.reduce((a,t)=>a+(t.type==='item'&&t.progress==100?1:0),0);
+                const cost=this.db.reduce((a,t)=>a+(t.type==='item'?(parseFloat(t.cost)||0):0),0);
+                const prog=tot?Math.round((done/tot)*100):0;
+                const measCount=this.measurements?this.measurements.length:0;
                 document.getElementById('dash-kpi').innerHTML=`<div class="bg-blue-600 text-white p-6 rounded-[30px] shadow-lg"><h2 class="text-4xl font-black">${prog}%</h2><p class="text-[10px] opacity-70 uppercase">Global</p></div><div class="bg-white border p-6 rounded-[30px]"><h2 class="text-xl font-black text-slate-700">${fmt(cost)}</h2><p class="text-[10px] text-slate-400 uppercase">Orçamento</p></div><div class="bg-white border p-6 rounded-[30px]"><h2 class="text-xl font-black text-green-600">${done}/${tot}</h2><p class="text-[10px] text-slate-400 uppercase">Tarefas</p></div><div class="bg-white border p-6 rounded-[30px]"><h2 class="text-xl font-black text-purple-500">${measCount}</h2><p class="text-[10px] text-slate-400 uppercase">Medições</p></div>`;
-                if(this.charts.pie) this.charts.pie.destroy(); this.charts.pie=new Chart(document.getElementById('pie-chart'),{type:'doughnut',data:{labels:['OK','Pend'],datasets:[{data:[done,tot-done],backgroundColor:['#22c55e','#e2e8f0']}]},options:{maintainAspectRatio:false}});
-                if(this.charts.scurve) this.charts.scurve.destroy(); this.charts.scurve=new Chart(document.getElementById('scurve-chart'),{type:'line',data:{labels:['Start','End'],datasets:[{data:[0,100]}]},options:{maintainAspectRatio:false}});
+                const ctxPie = document.getElementById('pie-chart'); const ctxS = document.getElementById('scurve-chart');
+                if(ctxPie && ctxS) {
+                    this.charts.pie=new Chart(ctxPie,{type:'doughnut',data:{labels:['OK','Pend'],datasets:[{data:[done,tot-done],backgroundColor:['#22c55e','#e2e8f0']}]},options:{maintainAspectRatio:false}});
+                    this.charts.scurve=new Chart(ctxS,{type:'line',data:{labels:['Start','End'],datasets:[{data:[0,100]}]},options:{maintainAspectRatio:false}});
+                }
                 this.generateNarrative();
             },
+            generateNarrative(){const el=document.getElementById('ai-narrative-content');if(!el)return;const tot=this.db.reduce((a,t)=>a+(t.type==='item'?1:0),0);if(tot===0){el.innerHTML="Adicione tarefas.";return}const done=this.db.reduce((a,t)=>a+(t.type==='item'&&t.progress==100?1:0),0);const progGlobal=Math.round((done/tot)*100);const today=new Date();let activeItems=0;let plannedAccum=0;this.db.forEach(t=>{if(t.type==='item'&&t.start&&t.end){const s=new Date(t.start);const e=new Date(t.end);if(today>=s){activeItems++;const totalDur=(e-s);const elapsed=(today-s);let expected=(elapsed/totalDur)*100;if(expected>100)expected=100;plannedAccum+=expected}}});const plannedAvg=activeItems?(plannedAccum/activeItems):0;const deviation=progGlobal-plannedAvg;let narrative="";if(deviation<-10)narrative=`<p><strong class="text-red-600">Alerta:</strong> Atraso de <strong>${Math.round(Math.abs(deviation))}%</strong>.</p>`;else if(deviation<0)narrative=`<p><strong class="text-orange-500">Atenção:</strong> Desvio de <strong>${Math.round(Math.abs(deviation))}%</strong>.</p>`;else narrative=`<p><strong class="text-green-600">Excelente:</strong> Obra em dia.</p>`;el.innerHTML=narrative},
             
-            generateNarrative() {
-                const el = document.getElementById('ai-narrative-content'); if(!el) return;
-                const tot = this.db.reduce((a,t)=>a+(t.type==='item'?1:0),0); if(tot === 0) { el.innerHTML = "Adicione tarefas."; return; }
-                const done = this.db.reduce((a,t)=>a+(t.type==='item'&&t.progress==100?1:0),0); 
-                const progGlobal = Math.round((done/tot)*100);
-                const today = new Date(); let activeItems = 0; let plannedAccum = 0;
-                this.db.forEach(t => { if(t.type === 'item' && t.start && t.end) { const s = new Date(t.start); const e = new Date(t.end); if(today >= s) { activeItems++; const totalDur = (e-s); const elapsed = (today-s); let expected = (elapsed/totalDur)*100; if(expected>100) expected=100; plannedAccum += expected; } } });
-                const plannedAvg = activeItems ? (plannedAccum/activeItems) : 0; const deviation = progGlobal - plannedAvg;
-                let narrative = "";
-                if (deviation < -10) narrative = `<p><strong class="text-red-600">Alerta:</strong> Atraso de <strong>${Math.round(Math.abs(deviation))}%</strong>.</p>`;
-                else if (deviation < 0) narrative = `<p><strong class="text-orange-500">Atenção:</strong> Desvio de <strong>${Math.round(Math.abs(deviation))}%</strong>.</p>`;
-                else narrative = `<p><strong class="text-green-600">Excelente:</strong> Obra em dia.</p>`;
-                el.innerHTML = narrative;
-            },
+            renderBalance(){
+                if(!this.db || this.db.length === 0) return;
+                if(this.charts.bal) { this.charts.bal.destroy(); this.charts.bal = null; }
 
-            // --- UI & Utils ---
-            renderT(){const thead=document.getElementById('table-head-row');if(this.mode==='planning')thead.innerHTML=`<th class="w-8">#</th><th class="text-left">Descrição</th><th class="w-24">Início</th><th class="w-24">Término</th><th class="w-8">D.</th><th class="w-24">Custo</th><th class="w-16">Links</th><th class="w-20">Ações</th>`;else thead.innerHTML=`<th class="w-8">#</th><th class="text-left">Descrição</th><th class="w-24 text-slate-400">Anterior</th><th class="w-24 font-bold text-blue-600 bg-blue-50">HOJE</th><th class="w-24">Total</th><th class="w-24">Status</th>`;let h='';this.db.forEach((t,i)=>{const isG=t.type==='group';if(!isG&&this.db.find(p=>p.uuid===t.parent)?.collapsed)return;h+=`<tr class="${isG?'group-row':''} ${t.critical&&!isG?'critical-row':''} border-b border-slate-100 hover:bg-slate-50"><td class="text-center text-[9px] opacity-40">${i+1}</td><td class="flex items-center gap-2 pl-2">${isG?`<button onclick="editor.toggleGroup('${t.uuid}')" class="font-bold w-4 h-4 flex items-center justify-center bg-white border rounded hover:bg-slate-100">${t.collapsed?'+':'-'}</button>`:''}<input value="${t.name}" onchange="editor.upd('${t.uuid}','name',this.value)" class="input-cell font-bold text-slate-700"></td>`;if(this.mode==='planning')h+=`<td><input type="date" value="${t.start||''}" onchange="editor.upd('${t.uuid}','start',this.value)" class="input-cell text-center" ${isG?'disabled':''}></td><td><input type="date" value="${t.end||''}" onchange="editor.updEnd('${t.uuid}',this.value)" class="input-cell text-center" ${isG?'disabled':''}></td><td><input type="number" value="${t.duration||1}" onchange="editor.upd('${t.uuid}','duration',this.value)" class="input-cell text-center" ${isG?'disabled':''}></td><td class="text-right p-2">${isG?fmt(t.cost):`<input type="number" value="${t.cost||0}" onchange="editor.upd('${t.uuid}','cost',this.value)" class="input-cell text-right">`}</td><td><input value="${(t.pred||[]).join(',')}" onchange="editor.updPr('${t.uuid}',this.value)" class="input-cell text-center"></td><td class="flex gap-1 justify-center p-1"><button onclick="editor.rem('${t.uuid}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5"></i></button>${isG?`<button onclick="editor.openPurchaseModal('${t.uuid}')" class="text-purple-600"><i data-lucide="dollar-sign" class="w-3.5"></i></button>`:''}${isG?`<button onclick="editor.addItem('${t.uuid}')" class="text-blue-500"><i data-lucide="plus-circle" class="w-3.5"></i></button>`:''}</td>`;else{const prev=this.getPreviousProgress(t.uuid);const total=t.progress||0;const cur=Math.max(0,total-prev);h+=`<td class="text-center text-slate-400 text-[10px] bg-slate-50">${prev}%</td><td>${isG?'-':`<input type="number" min="0" max="100" value="${cur}" onchange="editor.updMeasurement('${t.uuid}',this.value)" class="input-cell text-center font-black bg-blue-50 border border-blue-300 text-blue-700 rounded">`}</td><td class="text-center font-black text-slate-700 text-xs">${total}%</td><td class="text-center text-[9px] font-bold ${total==100?'text-green-600':'text-orange-500'}">${total==100?'OK':'...'}</td>`}h+='</tr>'});document.getElementById('tbody').innerHTML=h;lucide.createIcons();},
-            upd(u,f,v){this.db.find(x=>x.uuid===u)[f]=v;this.recalc()}, updEnd(u,v){const t=this.db.find(x=>x.uuid===u);t.end=v;t.duration=(new Date(v)-new Date(t.start))/(1000*60*60*24);this.recalc()}, updPr(u,v){this.db.find(x=>x.uuid===u).pred=v.split(',');this.recalc()}, addGroup(){this.db.push({uuid:'g'+Date.now(),name:'NOVA ETAPA',type:'group',parent:'m',cost:0,progress:0,collapsed:false});this.recalc()}, addItem(p){this.db.push({uuid:'t'+Date.now(),name:'Nova Tarefa',type:'item',parent:p,duration:5,start:new Date().toISOString().split('T')[0],progress:0,cost:0});this.recalc()}, rem(u){this.db=this.db.filter(x=>x.uuid!==u && x.parent!==u);this.recalc()}, toggleGroup(u){const g=this.db.find(x=>x.uuid===u);g.collapsed=!g.collapsed;this.recalc()}, toggleAllGroups(e){this.db.filter(t=>t.type==='group').forEach(g=>g.collapsed=!e);this.recalc()}, changeGanttMode(m){if(this.ganttInst)this.ganttInst.change_view_mode(m)}, renderKanban(){const c={todo:document.getElementById('kb-todo'),doing:document.getElementById('kb-doing'),done:document.getElementById('kb-done')};Object.values(c).forEach(x=>x.innerHTML='');this.kb.forEach(k=>{const h=`<div class="bg-white p-2 rounded shadow mb-2 text-xs border-l-4 ${k.status==='todo'?'border-slate-400':k.status==='doing'?'border-blue-500':'border-green-500'}"><input value="${k.title}" onchange="editor.updKb('${k.uuid}',this.value)" class="w-full font-bold outline-none"><div class="flex justify-end mt-1 gap-1"><button onclick="editor.moveKb('${k.uuid}','todo')" class="text-[8px] bg-slate-100 p-1">T</button><button onclick="editor.moveKb('${k.uuid}','doing')" class="text-[8px] bg-blue-100 p-1">D</button><button onclick="editor.moveKb('${k.uuid}','done')" class="text-[8px] bg-green-100 p-1">OK</button></div></div>`;c[k.status].innerHTML+=h})}, addKb(s){this.kb.push({uuid:'k'+Date.now(),title:'Card',status:s});this.renderKanban();this.autoSave()}, updKb(u,v){this.kb.find(x=>x.uuid===u).title=v;this.autoSave()}, moveKb(u,s){this.kb.find(x=>x.uuid===u).status=s;this.renderKanban();this.autoSave()}, renderBalance(){const u=[...new Set(this.db.filter(t=>t.type==='item').map(t=>t.name))];const ds=this.db.filter(t=>t.type==='group').map((g,i)=>{return{label:g.name,data:this.db.filter(t=>t.parent===g.uuid).map(t=>({x:t.start,y:u.indexOf(t.name)+1})).sort((a,b)=>new Date(a.x)-new Date(b.x)),borderColor:`hsl(${i*40},70%,50%)`,showLine:true}});if(this.charts.bal)this.charts.bal.destroy();this.charts.bal=new Chart(document.getElementById('balance-chart'),{type:'scatter',data:{datasets:ds},options:{maintainAspectRatio:false,scales:{x:{type:'time',time:{unit:'day'}},y:{ticks:{callback:v=>u[v-1]}}}}});this.analyzeFlow()}, analyzeFlow(){const a=[];const g=this.db.filter(t=>t.type==='group'&&t.start&&t.end).sort((a,b)=>new Date(a.start)-new Date(b.start));for(let i=0;i<g.length-1;i++){const c=g[i];const n=g[i+1];const dc=(new Date(c.end)-new Date(c.start))/(1000*60*60*24);const dn=(new Date(n.end)-new Date(n.start))/(1000*60*60*24);if(dn<dc&&new Date(n.start)>new Date(c.start))a.push(`<div class="bg-red-50 p-2 rounded border border-red-100 text-[10px] text-red-700 font-bold">⚠️ Choque: ${n.name} mais rápido que ${c.name}.</div>`);const gap=(new Date(n.start)-new Date(c.end))/(1000*60*60*24);if(gap>5)a.push(`<div class="bg-yellow-50 p-2 rounded border border-yellow-100 text-[10px] text-yellow-700 font-bold">💤 Ociosidade: ${Math.round(gap)} dias entre ${c.name} e ${n.name}.</div>`)}if(a.length===0)a.push('<div class="text-green-600 text-xs font-bold">Fluxo otimizado.</div>');document.getElementById('lob-alerts').innerHTML=a.join('')},
-            toggleMode(){this.mode=this.mode==='planning'?'measurement':'planning';document.getElementById('mode-label').innerText=this.mode==='planning'?'MODO PADRÃO':'MODO MEDIÇÃO';document.getElementById('measurement-controls').className=this.mode==='measurement'?'flex gap-2 ml-2 animate-fade-in':'hidden';this.renderT()}, switchView(v){document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));document.getElementById('v-'+v).classList.remove('hidden');if(v==='main')setTimeout(()=>this.setupSync(),200);if(v==='bal')setTimeout(()=>this.renderBalance(),200);if(v==='cash')setTimeout(()=>this.renderCash(),200);if(v==='dash')setTimeout(()=>this.renderDash(),200);if(v==='kanban')this.renderKanban();if(v==='eap')this.renderEAP()}, autoSave(){if(this.curr){const p=projectManager.all.find(x=>x.id===this.curr);p.data=this.db;p.eap=this.eap;p.kb=this.kb;p.cfg=this.cfg;p.measurements=this.measurements;p.baselines=this.baselines;projectManager.save()}},
-            renderEAP(){document.getElementById('eap-nodes-layer').innerHTML=''; this.eap.forEach(n=>{const el=document.createElement('div');el.className=`eap-node ${this.link.active&&this.link.source===n.uuid?'linking-source':''}`;el.style.left=n.x+'px';el.style.top=n.y+'px';el.innerHTML=`<input value="${n.name}" onchange="editor.updEap('${n.uuid}','name',this.value)" class="w-full text-xs font-bold text-center outline-none"><div class="eap-actions"><div class="eap-btn btn-link" onclick="editor.toggleLink('${n.uuid}')">#</div><div class="eap-btn btn-del" onclick="editor.remEap('${n.uuid}')">x</div></div>`;el.onclick=(e)=>{if(this.link.active&&this.link.source!==n.uuid){this.finishLink(n.uuid);e.stopPropagation()}};el.onmousedown=(e)=>{if(!this.link.active&&e.target.tagName!=='INPUT'&&!e.target.classList.contains('eap-btn')){editor.drag={active:true,item:n.uuid}}};document.getElementById('eap-nodes-layer').appendChild(el)});this.drawEapLines()}, drawEapLines(){const svg=document.getElementById('eap-svg');svg.innerHTML='';this.eap.forEach(n=>{(n.links||[]).forEach(tid=>{const t=this.eap.find(x=>x.uuid===tid);if(t){const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',n.x+80);l.setAttribute('y1',n.y+25);l.setAttribute('x2',t.x+80);l.setAttribute('y2',t.y+25);l.setAttribute('class','eap-line');svg.appendChild(l)}})})}, toggleLink(u){if(this.link.active&&this.link.source===u)this.link={active:false,source:null};else this.link={active:true,source:u};this.renderEAP()}, finishLink(t){const s=this.eap.find(x=>x.uuid===this.link.source);if(s){s.links=s.links||[];if(!s.links.includes(t))s.links.push(t)}this.link={active:false,source:null};this.renderEAP();this.autoSave()}, initEapDrag(){const c=document.getElementById('eap-viewport');c.onmousemove=(e)=>{if(editor.drag.active){const n=editor.eap.find(x=>x.uuid===editor.drag.item);n.x+=e.movementX/editor.zoomLevel;n.y+=e.movementY/editor.zoomLevel;editor.renderEAP()}};c.onmouseup=()=>{editor.drag.active=false;editor.autoSave()}}, addEapNode(){this.eap.push({uuid:'e'+Date.now(),name:'Nó',x:100,y:100,links:[]});this.renderEAP();this.autoSave()}, updEap(u,f,v){this.eap.find(x=>x.uuid===u)[f]=v;this.autoSave()}, remEap(u){this.eap=this.eap.filter(x=>x.uuid!==u);this.renderEAP();this.autoSave()}, zoom(d){this.zoomLevel+=d;if(this.zoomLevel<0.5)this.zoomLevel=0.5;document.getElementById('eap-nodes-layer').style.transform=`scale(${this.zoomLevel})`;document.getElementById('eap-svg').style.transform=`scale(${this.zoomLevel})`}, resetZoom(){this.zoomLevel=1;this.zoom(0)},
-            openPurchaseModal(gid){this.editingGroup=gid;const g=this.db.find(x=>x.uuid===gid);document.getElementById('modal-purchase').classList.add('active');document.getElementById('modal-purchase-title').innerText=g.name;const c=g.purchaseConfig||{mode:'standard',months:0,entry:0,installments:1};document.getElementById('p-months').value=c.months;document.getElementById('p-entry').value=c.entry;document.getElementById('p-installments').value=c.installments;this.setPurchaseMode(c.mode)}, setPurchaseMode(m){this.tempPurchaseMode=m;document.getElementById('panel-p-standard').className=m==='standard'?'block text-center py-4 text-[10px] text-slate-500':'hidden';document.getElementById('panel-p-custom').className=m==='custom'?'block space-y-3':'hidden';document.getElementById('btn-p-standard').className=`flex-1 py-2 rounded-md text-[10px] font-black uppercase ${m==='standard'?'bg-purple-600 text-white':'bg-slate-200'}`;document.getElementById('btn-p-custom').className=`flex-1 py-2 rounded-md text-[10px] font-black uppercase ${m==='custom'?'bg-purple-600 text-white':'bg-slate-200'}`}, savePurchase(){const g=this.db.find(x=>x.uuid===this.editingGroup);g.purchaseConfig={mode:this.tempPurchaseMode,months:parseInt(document.getElementById('p-months').value)||0,entry:parseFloat(document.getElementById('p-entry').value)||0,installments:parseInt(document.getElementById('p-installments').value)||1};document.getElementById('modal-purchase').classList.remove('active');this.autoSave()},
-            renderCash(){const monthly={};this.db.filter(t=>t.type==='group'&&t.start&&t.cost>0).forEach(g=>{const c=g.purchaseConfig||{mode:'standard',months:0,entry:0,installments:1};const s=new Date(g.start);if(c.mode==='custom'&&c.months>0)s.setMonth(s.getMonth()-c.months);if(c.mode==='standard'){const e=new Date(g.end);const m=Math.max(1,(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1);const v=g.cost/m;for(let i=0;i<m;i++){const d=new Date(s.getFullYear(),s.getMonth()+i,1);monthly[d.toISOString().slice(0,7)]=(monthly[d.toISOString().slice(0,7)]||0)+v}}else{const e=g.cost*(c.entry/100);const iv=(g.cost-e)/Math.max(1,c.installments);const de=new Date(s);monthly[de.toISOString().slice(0,7)]=(monthly[de.toISOString().slice(0,7)]||0)+e;for(let i=1;i<=c.installments;i++){const d=new Date(s.getFullYear(),s.getMonth()+i,1);monthly[d.toISOString().slice(0,7)]=(monthly[d.toISOString().slice(0,7)]||0)+iv}}});const l=Object.keys(monthly).sort();const d=l.map(k=>monthly[k]);if(this.charts.cash)this.charts.cash.destroy();this.charts.cash=new Chart(document.getElementById('cash-chart'),{type:'bar',data:{labels:l,datasets:[{label:'Desembolso (R$)',data:d,backgroundColor:'#3b82f6'}]},options:{maintainAspectRatio:false}})},
-            openConfig(){document.getElementById('modal-config').classList.add('active');document.getElementById('cfg-sat').checked=this.cfg.sat;document.getElementById('cfg-sun').checked=this.cfg.sun;this.renderHolidays();this.renderBaselineList()}, saveConfig(){this.cfg.sat=document.getElementById('cfg-sat').checked;this.cfg.sun=document.getElementById('cfg-sun').checked;document.getElementById('modal-config').classList.remove('active');this.recalc()}, addHoliday(){const h=document.getElementById('new-holiday').value;if(h){this.cfg.holidays=this.cfg.holidays||[];this.cfg.holidays.push(h);this.renderHolidays()}}, renderHolidays(){document.getElementById('holiday-list').innerHTML=(this.cfg.holidays||[]).map(h=>`<div>${h}</div>`).join('')},
+                const u=[...new Set(this.db.filter(t=>t.type==='item').map(t=>t.name))];
+                const ds=this.db.filter(t=>t.type==='group').map((g,i)=>{
+                    return{
+                        label:g.name,
+                        data:this.db.filter(t=>t.parent===g.uuid).map(t=>({x:t.start,y:u.indexOf(t.name)+1})).sort((a,b)=>new Date(a.x)-new Date(b.x)),
+                        borderColor:`hsl(${i*40},70%,50%)`,
+                        showLine:true
+                    }
+                });
+                
+                const ctx = document.getElementById('balance-chart').getContext('2d');
+                this.charts.bal=new Chart(ctx,{
+                    type:'scatter',
+                    data:{datasets:ds},
+                    options:{maintainAspectRatio:false,scales:{x:{type:'time',time:{unit:'day'}},y:{ticks:{callback:v=>u[v-1]}}}}
+                });
+                this.analyzeFlow();
+            },
+            analyzeFlow(){const a=[];const g=this.db.filter(t=>t.type==='group'&&t.start&&t.end).sort((a,b)=>new Date(a.start)-new Date(b.start));for(let i=0;i<g.length-1;i++){const c=g[i];const n=g[i+1];const dc=(new Date(c.end)-new Date(c.start))/(1000*60*60*24);const dn=(new Date(n.end)-new Date(n.start))/(1000*60*60*24);if(dn<dc&&new Date(n.start)>new Date(c.start))a.push(`<div class="bg-red-50 p-2 rounded border border-red-100 text-[10px] text-red-700 font-bold">⚠️ Choque: ${n.name} mais rápido que ${c.name}.</div>`);const gap=(new Date(n.start)-new Date(c.end))/(1000*60*60*24);if(gap>5)a.push(`<div class="bg-yellow-50 p-2 rounded border border-yellow-100 text-[10px] text-yellow-700 font-bold">💤 Ociosidade: ${Math.round(gap)} dias entre ${c.name} e ${n.name}.</div>`)}if(a.length===0)a.push('<div class="text-green-600 text-xs font-bold">Fluxo otimizado.</div>');document.getElementById('lob-alerts').innerHTML=a.join('')},
+
+            toggleMode(){this.mode=this.mode==='planning'?'measurement':'planning';document.getElementById('mode-label').innerText=this.mode==='planning'?'MODO PADRÃO':'MODO MEDIÇÃO';document.getElementById('measurement-controls').className=this.mode==='measurement'?'flex gap-2 ml-2 animate-fade-in':'hidden';this.renderT()}, 
+            switchView(v){
+                document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+                document.getElementById('v-'+v).classList.remove('hidden');
+                if(v==='main') setTimeout(()=>this.setupSync(),200);
+                if(v==='bal') setTimeout(()=>this.renderBalance(),200);
+                if(v==='cash') setTimeout(()=>this.renderCash(),200);
+                if(v==='dash') setTimeout(()=>this.renderDash(),200);
+                if(v==='kanban') this.renderKanban();
+                if(v==='eap') this.renderEAP();
+            }, 
+            autoSave(){if(this.curr){const p=projectManager.all.find(x=>x.id===this.curr);p.data=this.db;p.eap=this.eap;p.kb=this.kb;p.cfg=this.cfg;p.measurements=this.measurements;p.baselines=this.baselines;projectManager.save()}},
+            renderEAP(){
+                document.getElementById('eap-nodes-layer').innerHTML=''; 
+                this.eap.forEach(n=>{
+                    const isG = n.links && n.links.length > 0; // Visual logic, optional
+                    const el=document.createElement('div');
+                    el.className=`eap-node ${this.link.active&&this.link.source===n.uuid?'linking-source':''} ${isG?'is-group':''}`;
+                    el.style.left=n.x+'px'; el.style.top=n.y+'px';
+                    el.innerHTML=`
+                        <div class="eap-header"><span class="text-[9px] font-black uppercase text-slate-500">ID: ${n.uuid.substr(-4)}</span><div class="eap-btn btn-del" onclick="editor.remEap('${n.uuid}')">x</div></div>
+                        <div class="eap-body">
+                            <input value="${n.name}" onchange="editor.updEap('${n.uuid}','name',this.value)" class="w-full text-xs font-bold text-center outline-none bg-transparent">
+                            <div class="flex justify-center mt-2"><div class="eap-btn btn-link" onclick="editor.toggleLink('${n.uuid}')">#</div></div>
+                        </div>
+                    `;
+                    el.onclick=(e)=>{if(this.link.active&&this.link.source!==n.uuid){this.finishLink(n.uuid);e.stopPropagation()}};
+                    el.onmousedown=(e)=>{if(!this.link.active&&e.target.tagName!=='INPUT'&&!e.target.classList.contains('eap-btn')){editor.drag={active:true,item:n.uuid}}};
+                    document.getElementById('eap-nodes-layer').appendChild(el)
+                });
+                this.drawEapLines();
+            }, 
+            drawEapLines(){
+                const svg=document.getElementById('eap-svg');svg.innerHTML='';
+                // Define arrow marker
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                defs.innerHTML = `<marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748b" /></marker>`;
+                svg.appendChild(defs);
+
+                this.eap.forEach(n=>{(n.links||[]).forEach(tid=>{const t=this.eap.find(x=>x.uuid===tid);if(t){
+                    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+                    l.setAttribute('x1',parseInt(n.x)+90);l.setAttribute('y1',parseInt(n.y)+80); // Bottom center of source
+                    l.setAttribute('x2',parseInt(t.x)+90);l.setAttribute('y2',parseInt(t.y)); // Top center of target
+                    l.setAttribute('class','eap-line');
+                    l.setAttribute('marker-end', 'url(#arrow)');
+                    svg.appendChild(l)}})
+                })
+            }, 
+            toggleLink(u){if(this.link.active&&this.link.source===u)this.link={active:false,source:null};else this.link={active:true,source:u};this.renderEAP()}, finishLink(t){const s=this.eap.find(x=>x.uuid===this.link.source);if(s){s.links=s.links||[];if(!s.links.includes(t))s.links.push(t)}this.link={active:false,source:null};this.renderEAP();this.autoSave()}, initEapDrag(){const c=document.getElementById('eap-viewport');c.onmousemove=(e)=>{if(editor.drag.active){const n=editor.eap.find(x=>x.uuid===editor.drag.item);n.x=parseInt(n.x)+e.movementX/editor.zoomLevel;n.y=parseInt(n.y)+e.movementY/editor.zoomLevel;editor.renderEAP()}};c.onmouseup=()=>{editor.drag.active=false;editor.autoSave()}}, addEapNode(){this.eap.push({uuid:'e'+Date.now(),name:'Novo Item',x:100,y:100,links:[]});this.renderEAP();this.autoSave()}, updEap(u,f,v){this.eap.find(x=>x.uuid===u)[f]=v;this.autoSave()}, remEap(u){this.eap=this.eap.filter(x=>x.uuid!==u);this.renderEAP();this.autoSave()}, zoom(d){this.zoomLevel+=d;if(this.zoomLevel<0.5)this.zoomLevel=0.5;document.getElementById('eap-scale-layer').style.transform=`scale(${this.zoomLevel})`;}, resetZoom(){this.zoomLevel=1;this.zoom(0)},
             
-            // Baseline Manager Methods
-            saveBaseline(){
-                const name = document.getElementById('new-baseline-name').value;
-                if(!name) { alert("Digite um nome para a linha de base."); return; }
-                const snapshot = {};
-                this.db.forEach(t => { snapshot[t.uuid] = { start: t.start, end: t.end } });
-                this.baselines.push({ id: 'b'+Date.now(), name: name, date: new Date().toISOString(), items: snapshot });
-                document.getElementById('new-baseline-name').value = '';
+            // Baseline Saving Logic (Unchanged but verified)
+            async saveBaseline(){
+                const name=document.getElementById('new-baseline-name').value;
+                if(!name){alert("Nome necessário.");return}
+                const snapshot={};
+                this.db.forEach(t=>{snapshot[t.uuid]={start:t.start,end:t.end}});
+                this.baselines.push({id:'b'+Date.now(),name:name,date:new Date().toISOString(),items:snapshot});
+                document.getElementById('new-baseline-name').value='';
                 this.renderBaselineList();
-                this.autoSave();
-                alert(`Linha de Base '${name}' salva!`);
-            },
-            renderBaselineList(){
-                const list = document.getElementById('baseline-list');
-                list.innerHTML = this.baselines.map(b => `
-                    <div class="flex justify-between items-center bg-slate-50 p-2 mb-1 rounded border">
-                        <div>
-                            <span class="font-bold text-[10px] text-slate-700 uppercase block">${b.name}</span>
-                            <span class="text-[8px] text-slate-400">${new Date(b.date).toLocaleDateString()}</span>
-                        </div>
-                        <div class="flex gap-1">
-                            <button onclick="editor.applyBaseline('${b.id}')" class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-[9px] font-bold hover:bg-blue-200">APLICAR</button>
-                            <button onclick="editor.deleteBaseline('${b.id}')" class="text-red-400 hover:text-red-600 px-1 font-bold">x</button>
-                        </div>
-                    </div>
-                `).join('');
-                if(this.baselines.length === 0) list.innerHTML = '<p class="text-[9px] text-center text-slate-400">Nenhuma versão salva.</p>';
-            },
-            applyBaseline(bid){
-                const bl = this.baselines.find(b => b.id === bid);
-                if(bl){
-                    this.db.forEach(t => {
-                        if(bl.items[t.uuid]){
-                            t.baseStart = bl.items[t.uuid].start;
-                            t.baseEnd = bl.items[t.uuid].end;
-                        }
-                    });
-                    this.recalc();
-                    alert(`Versão '${bl.name}' aplicada como comparativo.`);
-                }
-            },
-            deleteBaseline(bid){
-                if(confirm("Excluir esta versão?")){
-                    this.baselines = this.baselines.filter(b => b.id !== bid);
-                    this.renderBaselineList();
-                    this.autoSave();
-                }
-            },
+                this.autoSave(); 
+                await projectManager.save(); 
+                alert('Baseline salva e sincronizada com o servidor!');
+            }, 
+            renderBaselineList(){const list=document.getElementById('baseline-list');list.innerHTML=this.baselines.map(b=>`<div class="flex justify-between items-center bg-slate-50 p-2 mb-1 rounded border"><div><span class="font-bold text-[10px] text-slate-700 uppercase block">${b.name}</span><span class="text-[8px] text-slate-400">${new Date(b.date).toLocaleDateString()}</span></div><div class="flex gap-1"><button onclick="editor.applyBaseline('${b.id}')" class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-[9px] font-bold hover:bg-blue-200">APLICAR</button><button onclick="editor.deleteBaseline('${b.id}')" class="text-red-400 hover:text-red-600 px-1 font-bold">x</button></div></div>`).join('');if(this.baselines.length===0)list.innerHTML='<p class="text-[9px] text-center text-slate-400">Vazio</p>'}, 
+            applyBaseline(bid){const bl=this.baselines.find(b=>b.id===bid);if(bl){this.db.forEach(t=>{if(bl.items[t.uuid]){t.baseStart=bl.items[t.uuid].start;t.baseEnd=bl.items[t.uuid].end}});this.recalc();alert('Aplicado!')}}, 
+            deleteBaseline(bid){if(confirm("Excluir?")){this.baselines=this.baselines.filter(b=>b.id!==bid);this.renderBaselineList();this.autoSave()}},
 
-            getPreviousProgress(taskId){if(!this.measurements.length)return 0;let max=0;this.measurements.forEach(m=>{const item=m.items.find(i=>i.uuid===taskId);if(item&&item.progress>max)max=item.progress});return max}, updMeasurement(taskId,currentVal){const prev=this.getPreviousProgress(taskId);let newTotal=prev+parseFloat(currentVal);if(newTotal>100)newTotal=100;if(newTotal<0)newTotal=0;this.db.find(t=>t.uuid===taskId).progress=newTotal;this.recalc()}, saveMeasurementSnapshot(){const snapshot={date:new Date().toISOString(),user:auth.ss?auth.ss.u:'Admin',edited:false,items:this.db.filter(t=>t.type==='item').map(t=>({uuid:t.uuid,progress:t.progress}))};this.measurements.push(snapshot);this.autoSave();alert('Salvo!')}, viewMeasurementHistory(){document.getElementById('modal-history').classList.add('active');const list=document.getElementById('history-list');if(!this.measurements||this.measurements.length===0){list.innerHTML='<p class="text-center text-slate-400 py-4">Vazio</p>';return}list.innerHTML=this.measurements.map((m,i)=>{const d=new Date(m.date).toLocaleDateString()+' '+new Date(m.date).toLocaleTimeString();const avg=m.items.length?Math.round(m.items.reduce((a,b)=>a+(parseInt(b.progress)||0),0)/m.items.length):0;return`<div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center mb-2 hover:bg-slate-100 cursor-pointer" onclick="editor.openHistoryEditor(${i})"><div><p class="font-bold text-[10px] text-slate-700">${d}</p><p class="text-[9px] text-slate-400">${m.user}</p></div><div class="text-xl font-black text-blue-600">${avg}%</div></div>`}).reverse().join('')}, openHistoryEditor(idx){this.editingHistoryIndex=idx;const m=this.measurements[idx];document.getElementById('modal-history').classList.remove('active');document.getElementById('modal-history-editor').classList.add('active');document.getElementById('history-editor-date').innerText=new Date(m.date).toLocaleString();const body=document.getElementById('history-editor-body');body.innerHTML='';m.items.forEach(item=>{const t=this.db.find(x=>x.uuid===item.uuid);if(t)body.innerHTML+=`<tr class="border-b"><td class="p-2 font-bold text-slate-700">${t.name}</td><td class="p-2"><input type="number" value="${item.progress}" onchange="editor.updateHistoryItem('${item.uuid}',this.value)" class="border p-1 w-16 text-center text-xs"> %</td></tr>`})}, updateHistoryItem(u,v){const m=this.measurements[this.editingHistoryIndex];const i=m.items.find(x=>x.uuid===u);if(i)i.progress=parseInt(v);m.edited=true}, saveHistoryEdit(){document.getElementById('modal-history-editor').classList.remove('active');this.autoSave();alert('Histórico atualizado.')}
+            openPurchaseModal(gid){this.editingGroup=gid;const g=this.db.find(x=>x.uuid===gid);document.getElementById('modal-purchase').classList.add('active');document.getElementById('modal-purchase-title').innerText=g.name;const c=g.purchaseConfig||{mode:'standard',months:0,entry:0,installments:1};document.getElementById('p-months').value=c.months;document.getElementById('p-entry').value=c.entry;document.getElementById('p-installments').value=c.installments;this.setPurchaseMode(c.mode)}, setPurchaseMode(m){this.tempPurchaseMode=m;document.getElementById('panel-p-standard').className=m==='standard'?'block text-center py-4 text-[10px] text-slate-500':'hidden';document.getElementById('panel-p-custom').className=m==='custom'?'block space-y-3':'hidden';document.getElementById('btn-p-standard').className=`flex-1 py-2 rounded-md text-[10px] font-black uppercase ${m==='standard'?'bg-purple-600 text-white':'bg-slate-200'}`;document.getElementById('btn-p-custom').className=`flex-1 py-2 rounded-md text-[10px] font-black uppercase ${m==='custom'?'bg-purple-600 text-white':'bg-slate-200'}`}, savePurchase(){const g=this.db.find(x=>x.uuid===this.editingGroup);g.purchaseConfig={mode:this.tempPurchaseMode,months:parseInt(document.getElementById('p-months').value)||0,entry:parseFloat(document.getElementById('p-entry').value)||0,installments:parseInt(document.getElementById('p-installments').value)||1};document.getElementById('modal-purchase').classList.remove('active');this.autoSave()},
+            openConfig(){document.getElementById('modal-config').classList.add('active');document.getElementById('cfg-sat').checked=this.cfg.sat;document.getElementById('cfg-sun').checked=this.cfg.sun;this.renderHolidays();this.renderBaselineList()}, saveConfig(){this.cfg.sat=document.getElementById('cfg-sat').checked;this.cfg.sun=document.getElementById('cfg-sun').checked;document.getElementById('modal-config').classList.remove('active');this.recalc()}, addHoliday(){const h=document.getElementById('new-holiday').value;if(h){this.cfg.holidays=this.cfg.holidays||[];this.cfg.holidays.push(h);this.renderHolidays()}}, renderHolidays(){document.getElementById('holiday-list').innerHTML=(this.cfg.holidays||[]).map(h=>`<div>${h}</div>`).join('')}
         };
 
         const router = { go(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); lucide.createIcons(); } };
-        const projectManager = { all:[], async load(){const r=await fetch(`${FB}db_${auth.ss.id}.json`);this.all=await r.json()||[];this.render()}, render(){document.getElementById('grid-projects').innerHTML=this.all.map(p=>`<div onclick="editor.open('${p.id}')" class="bg-white p-8 rounded-[30px] border font-black uppercase text-xs hover:border-blue-500 cursor-pointer shadow-sm hover:shadow-md transition">${p.name}</div>`).join('')}, async save(){await fetch(`${FB}db_${auth.ss.id}.json`,{method:'PUT',body:JSON.stringify(this.all)})}, create(){const n=prompt('Nome:');if(n){this.all.push({id:'p'+Date.now(),name:n,data:[],eap:[],kb:[],measurements:[]});this.save();this.render()}} };
+        const projectManager = { 
+            all:[], 
+            async load(){const r=await fetch(`${FB}db_${auth.ss.id}.json`);this.all=await r.json()||[];this.render()}, 
+            render(){document.getElementById('grid-projects').innerHTML=this.all.map(p=>`
+                <div class="relative group bg-white p-8 rounded-[30px] border hover:border-blue-500 shadow-sm hover:shadow-md transition">
+                    <div onclick="editor.open('${p.id}')" class="cursor-pointer">
+                        <h3 class="font-black uppercase text-xs text-slate-800">${p.name}</h3>
+                        <p class="text-[10px] text-slate-400 mt-2">ID: ${p.id}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); projectManager.del('${p.id}')" class="absolute top-4 right-4 text-red-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                        <i data-lucide="trash-2" class="w-4"></i>
+                    </button>
+                </div>`).join(''); lucide.createIcons();
+            }, 
+            async save(){await fetch(`${FB}db_${auth.ss.id}.json`,{method:'PUT',body:JSON.stringify(this.all)})}, 
+            create(){
+                const n=prompt('Nome:');
+                if(n){
+                    const rootId = 'g' + Date.now();
+                    this.all.push({
+                        id:'p'+Date.now(),
+                        name:n,
+                        data: [{ uuid: rootId, name: 'RESUMO DO PROJETO', type: 'group', parent: 'root', cost: 0, progress: 0, collapsed: false }],
+                        eap:[], kb:[], measurements:[], baselines: []
+                    });
+                    this.save();
+                    this.render();
+                }
+            },
+            async del(id){
+                if(confirm("ATENÇÃO: Isso excluirá todo o projeto permanentemente. Continuar?")){
+                    this.all = this.all.filter(p => p.id !== id);
+                    await this.save();
+                    this.render();
+                }
+            }
+        };
         const bravoAI = { toggle(){document.getElementById('chat-window').classList.toggle('active')}, push(t,x){const l=document.getElementById('chat-logs');l.innerHTML+=`<div class="${t==='bot'?'bg-blue-600 text-white self-start':'bg-white border self-end'} p-3 rounded-xl shadow-sm max-w-[85%]">${x}</div>`;l.scrollTop=l.scrollHeight}, send(){const i=document.getElementById('chat-input'); if(!i.value)return; this.push("user",i.value); i.value=''; setTimeout(()=>{this.push("bot", `Analisando...`);},800);} };
     </script>
 </body>
