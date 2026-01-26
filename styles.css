@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+    
+:root { --header-h: 50px; --row-h: 40px; }
+* { box-sizing: border-box; } 
+
+body { font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden; margin: 0; }
+.page { display: none; width: 100vw; height: 100vh; position: absolute; background: #f8fafc; }
+.page.active { display: block; }
+
+.master-grid { display: flex; height: calc(100vh - 120px); background: white; border-top: 1px solid #cbd5e1; }
+
+#wrapper-table { width: 60%; overflow-y: auto; overflow-x: auto; border-right: 2px solid #cbd5e1; background: #fff; }
+#wrapper-table::-webkit-scrollbar { width: 6px; height: 6px; }
+#wrapper-table::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+table { width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; font-size: 11px; }
+thead { height: var(--header-h); background: #f1f5f9; position: sticky; top: 0; z-index: 40; }
+th { height: var(--header-h); line-height: var(--header-h); padding: 0 8px; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #e2e8f0; background: #f1f5f9; color: #475569; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+
+tr { height: var(--row-h); max-height: var(--row-h); transition: background-color 0.1s ease; }
+tr:hover { background-color: #f8fafc; }
+td { height: var(--row-h); max-height: var(--row-h); padding: 0; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; white-space: nowrap; overflow: hidden; vertical-align: middle; }
+
+.cell-actions { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; gap: 2px; }
+.cell-actions button { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; transition: background 0.2s; }
+.cell-actions button:hover { background-color: #f1f5f9; }
+
+.input-cell { background: transparent; width: 100%; outline: none; padding: 0 4px; font-size: 11px; border: 1px solid transparent; height: 100%; color: #334155; display: flex; align-items: center; }
+.input-cell:focus { border: 2px solid #3b82f6; background: #fff; color: #000; font-weight: bold; }
+
+.flatpickr-input { background: transparent; width: 100%; border: none; height: 100%; font-size: 11px; text-align: center; cursor: pointer; color: #334155; font-weight: 500; }
+.flatpickr-input:focus { outline: none; background: #f0f9ff; color: #000; font-weight: bold; }
+
+.group-row { background-color: #f8fafc; font-weight: 800; color: #0f172a; border-top: 1px solid #cbd5e1; }
+.root-row { background-color: #1e293b !important; color: #fff !important; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+.root-row input { color: #fff !important; }
+.blocked-cell { color: #94a3b8; background: #f1f5f9; cursor: not-allowed; font-style: italic; display: flex; align-items: center; justify-content: center; height: 100%; }
+
+/* ESTILOS DE LINKAGEM VISUAL */
+body.linking-mode .master-grid { cursor: crosshair; }
+tr.row-linking-source { background-color: #dbeafe !important; border-left: 4px solid #2563eb; }
+tr.row-linking-hover:hover { background-color: #f0fdf4 !important; cursor: alias; }
+
+#wrapper-gantt { width: 40%; overflow-y: auto; overflow-x: auto; position: relative; background: #fff; }
+.gantt .grid-header { height: var(--header-h); fill: #f8fafc; stroke: #e2e8f0; }
+.gantt .grid-row { height: var(--row-h); fill: white; stroke: #f1f5f9; } 
+.gantt-container { height: auto; overflow: visible; }
+
+.gantt .bar { z-index: 20; height: 18px !important; rx: 3; transform: translateY(-2px); fill: #3b82f6 !important; }
+.gantt .bar-progress { fill: #15803d !important; opacity: 1; height: 8px !important; transform: translateY(3px); }
+.gantt .bar-group { fill: #334155 !important; opacity: 1; height: 10px !important; transform: translateY(2px) !important; }
+
+.baseline-bar { fill: #94a3b8 !important; opacity: 0.6; height: 4px !important; pointer-events: none; z-index: 10; rx: 2; }
+.gantt .bar-risk-critical { stroke: #ef4444; stroke-width: 2px; }
+.gantt .bar-risk-high { stroke: #f97316; stroke-width: 2px; }
+.gantt .bar-invisible { opacity: 0; pointer-events: none; }
+.scroll-spacer { height: 200px; width: 100%; }
+
+#eap-viewport { width: 100%; height: 100%; overflow: hidden; position: relative; background-color: #f8fafc; background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 24px 24px; cursor: default; }
+#eap-canvas { transform-origin: 0 0; position: absolute; top: 0; left: 0; w-full; h-full; }
+.eap-node { position: absolute; background: white; border: 1px solid #cbd5e1; border-left: 4px solid #3b82f6; padding: 0; border-radius: 6px; width: 180px; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.eap-header { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background: #f8fafc; cursor: grab; }
+.eap-header:active { cursor: grabbing; } 
+body.linking-cursor #eap-viewport, body.linking-cursor .eap-node { cursor: crosshair !important; }
+.eap-node.linking-mode { border: 2px dashed #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: scale(1.02); transition: 0.2s; }
+
+.modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(2px); z-index:100; align-items:center; justify-content:center; }
+.modal.active { display:flex; }
+
+@media print {
+    @page { size: landscape; margin: 5mm; }
+    body { background: white; overflow: visible; height: auto; }
+    .page { position: relative; height: auto; overflow: visible; }
+    nav, header, .no-print, button, .scroll-spacer { display: none !important; }
+    #wrapper-table, #wrapper-gantt { width: 100%; overflow: visible; border: none; }
+    .master-grid { display: block; height: auto; border: none; }
+    #v-dash, #v-site { display: block !important; height: auto; overflow: visible; page-break-after: always; }
+    #v-main { display: block !important; height: auto; overflow: visible; }
+    table { font-size: 10px; width: 100%; border: 1px solid #ccc; }
+    th, td { border: 1px solid #eee; height: 30px; }
+    .root-row { background-color: #ddd !important; color: #000 !important; -webkit-print-color-adjust: exact; }
+    #gantt-box svg { overflow: visible; width: 100%; }
+}
