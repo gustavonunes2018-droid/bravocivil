@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner PRO v15 - Gestão Administrativa</title>
+    <title>Planner PRO v16 - Com Valores nos Gráficos</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -76,7 +76,7 @@
 
 <aside>
     <div class="brand">
-        <span><i class="fas fa-hard-hat"></i> PLANNER v15</span>
+        <span><i class="fas fa-hard-hat"></i> PLANNER v16</span>
         <div class="save-indicator" id="save-status"><i class="fas fa-save"></i></div>
     </div>
     
@@ -85,7 +85,7 @@
     <div class="nav-btn" onclick="nav('schedule', this)"><i class="fas fa-calendar-alt"></i> Cronograma</div>
     
     <div class="nav-category">Cadastros</div>
-    <div class="nav-btn" onclick="nav('services', this)"><i class="fas fa-cubes"></i> Serviços (Novo)</div>
+    <div class="nav-btn" onclick="nav('services', this)"><i class="fas fa-cubes"></i> Serviços</div>
     <div class="nav-btn" onclick="nav('teams', this)"><i class="fas fa-users"></i> Equipes</div>
     <div class="nav-btn" onclick="nav('resources', this)"><i class="fas fa-id-card"></i> Cargos</div>
     <div class="nav-btn" onclick="nav('productivity', this)"><i class="fas fa-stopwatch"></i> Produtividade</div>
@@ -114,12 +114,12 @@
             </div>
         </div>
         <div class="card">
-            <h3>Fluxo de Caixa Mensal</h3>
-            <div id="chart-finance-stack" style="height:400px;"></div>
+            <h3>Fluxo de Caixa Mensal (R$)</h3>
+            <div id="chart-finance-stack" style="height:450px;"></div>
         </div>
         <div class="card">
-            <h3>Histograma de Equipe</h3>
-            <div id="chart-manpower-stack" style="height:350px;"></div>
+            <h3>Histograma de Equipe (Qtd Pessoas)</h3>
+            <div id="chart-manpower-stack" style="height:400px;"></div>
         </div>
         <button class="btn" style="width:100%" onclick="calcDash()">Atualizar Dados</button>
     </div>
@@ -217,23 +217,19 @@
 <script>
     // --- DADOS INICIAIS ---
     let db = {
-        // Agora svc tem a propriedade 'type'
-        svc: JSON.parse(localStorage.getItem('p15_svc')) || [
-            {id:1, name:'Alvenaria', type:'prod', unit:'m²'},
-            {id:2, name:'Engenharia', type:'adm', unit:'mes'} 
-        ],
-        res: JSON.parse(localStorage.getItem('p15_res')) || [{id:1, name:'Pedreiro', type:'operacional', cost:3500}, {id:2, name:'Engenheiro', type:'adm', cost:12000}],
-        prod: JSON.parse(localStorage.getItem('p15_prod')) || {1:{1:15}}, 
-        teams: JSON.parse(localStorage.getItem('p15_teams')) || [{id:1, name:'Eq. Obra', members:[{resId:1, qty:2}]}, {id:2, name:'Eq. Eng', members:[{resId:2, qty:1}]}],
-        tasks: JSON.parse(localStorage.getItem('p15_tasks')) || []
+        svc: JSON.parse(localStorage.getItem('p16_svc')) || [{id:1, name:'Alvenaria', type:'prod', unit:'m²'}, {id:2, name:'Gestão', type:'adm', unit:'mes'}],
+        res: JSON.parse(localStorage.getItem('p16_res')) || [{id:1, name:'Pedreiro', type:'operacional', cost:3500}, {id:2, name:'Engenheiro', type:'adm', cost:12000}],
+        prod: JSON.parse(localStorage.getItem('p16_prod')) || {1:{1:15}}, 
+        teams: JSON.parse(localStorage.getItem('p16_teams')) || [{id:1, name:'Eq. Obra', members:[{resId:1, qty:2}]}, {id:2, name:'Eq. Eng', members:[{resId:2, qty:1}]}],
+        tasks: JSON.parse(localStorage.getItem('p16_tasks')) || []
     };
 
     function save() {
-        localStorage.setItem('p15_svc', JSON.stringify(db.svc));
-        localStorage.setItem('p15_res', JSON.stringify(db.res));
-        localStorage.setItem('p15_prod', JSON.stringify(db.prod));
-        localStorage.setItem('p15_teams', JSON.stringify(db.teams));
-        localStorage.setItem('p15_tasks', JSON.stringify(db.tasks));
+        localStorage.setItem('p16_svc', JSON.stringify(db.svc));
+        localStorage.setItem('p16_res', JSON.stringify(db.res));
+        localStorage.setItem('p16_prod', JSON.stringify(db.prod));
+        localStorage.setItem('p16_teams', JSON.stringify(db.teams));
+        localStorage.setItem('p16_tasks', JSON.stringify(db.tasks));
         const status = document.getElementById('save-status');
         status.style.opacity = '1'; setTimeout(() => status.style.opacity = '0', 1000);
         renderAll();
@@ -252,113 +248,13 @@
         updateSelects();
     }
 
-    // --- ABA SERVIÇOS ---
-    function addSvc() {
-        let name = document.getElementById('svc-name').value;
-        let type = document.getElementById('svc-type').value;
-        let unit = document.getElementById('svc-unit').value;
-        if(name && unit) {
-            db.svc.push({id:Date.now(), name, type, unit});
-            save(); document.getElementById('svc-name').value = '';
-        }
-    }
-
-    function renderServicesTable() {
-        document.getElementById('svc-list-table').innerHTML = db.svc.map(s => `
-            <tr>
-                <td><strong>${s.name}</strong></td>
-                <td><span class="type-tag ${s.type==='prod'?'type-prod':'type-adm'}">${s.type==='prod'?'Produção':'Administrativo'}</span></td>
-                <td>${s.unit}</td>
-                <td style="text-align:center"><button class="btn btn-danger" style="padding:5px" onclick="delSvc(${s.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>
-        `).join('');
-    }
-    function delSvc(id) { db.svc = db.svc.filter(s => s.id !== id); save(); }
-
-    // --- VALIDAÇÃO (O GRANDE TRUQUE) ---
-    function countBusinessDays(s,e){ let c=0; let d=new Date(s); let z=new Date(e); while(d<=z){ let w=d.getDay(); if(w!==0&&w!==6)c++; d.setDate(d.getDate()+1); } return c; }
-
-    function validate() {
-        const svcId=document.getElementById('t-svc').value, teamId=document.getElementById('t-team').value, qtdVal=document.getElementById('t-qtd').value, start=document.getElementById('t-start').value, end=document.getElementById('t-end').value;
-        const btn=document.getElementById('btn-add'), alertBox=document.getElementById('alert-box'), status=document.getElementById('t-status');
-        btn.disabled=true; alertBox.style.display='none'; status.value="";
-
-        if(!svcId||!teamId||!start||!end){status.value="...";return;}
-        if(new Date(end)<new Date(start)){status.value="Datas Inválidas";return;}
-
-        let svc = db.svc.find(x => x.id == svcId);
-        
-        // ** NOVA LÓGICA DE BYPASS **
-        if(svc.type === 'adm') {
-            // Serviço Administrativo: Ignora produtividade e quantidade
-            status.value = "VIÁVEL (Administrativo)";
-            status.style.color = "blue";
-            alertBox.style.display='block'; 
-            alertBox.className='alert-box alert-info'; 
-            alertBox.innerHTML=`<strong>${svc.name}:</strong> Tarefa baseada em tempo. Cálculo de produtividade ignorado.`;
-            btn.disabled = false;
-            return; // Sai da função, liberando o botão
-        }
-
-        // Se for Produção, continua a validação rigorosa
-        if(!qtdVal) { status.value="Qtd?"; return; }
-        
-        let team=db.teams.find(x=>x.id==teamId); let dailyCap=0;
-        team.members.forEach(m=>{ let r=db.res.find(rx=>rx.id==m.resId); if(r&&r.type!=='adm'){ let p=(db.prod[m.resId]&&db.prod[m.resId][svcId])||0; dailyCap+=p*m.qty; } });
-
-        if(dailyCap===0){status.value="Sem Produtividade"; alertBox.style.display='block'; alertBox.className='alert-box alert-danger'; alertBox.innerHTML="Equipe não produtiva."; return;}
-
-        let daysNeeded=Math.ceil(qtdVal/dailyCap); let daysAvailable=countBusinessDays(start+'T00:00:00',end+'T00:00:00'); 
-        
-        if(daysNeeded>daysAvailable){ 
-            status.value="ATRASO"; alertBox.style.display='block'; alertBox.className='alert-box alert-danger'; alertBox.innerHTML=`Falta Prazo. Necessário: ${daysNeeded} dias. Disp: ${daysAvailable} dias.`; 
-        } else { 
-            status.value="VIÁVEL"; alertBox.style.display='block'; alertBox.className='alert-box alert-success'; alertBox.innerHTML=`OK. Folga: ${daysAvailable-daysNeeded} dias.`; btn.disabled=false; 
-        }
-    }
-
-    function addTask() {
-        db.tasks.push({
-            id:Date.now(), desc:document.getElementById('t-desc').value, svcId:document.getElementById('t-svc').value, teamId:document.getElementById('t-team').value, qtd:document.getElementById('t-qtd').value || 1, start:document.getElementById('t-start').value, end:document.getElementById('t-end').value
-        });
-        save(); document.getElementById('t-desc').value=''; renderTasksVisual();
-    }
-    
-    function delTask(id){ db.tasks=db.tasks.filter(t=>t.id!==id); save(); renderTasksVisual(); }
-    function renderTasksVisual(){ const c=document.getElementById('task-list-visual'); if(db.tasks.length===0){c.innerHTML="<p style='text-align:center; color:#999'>Vazio</p>";return;} c.innerHTML=db.tasks.map(t=>{ let tm=db.teams.find(x=>x.id==t.teamId); let svc=db.svc.find(x=>x.id==t.svcId); return `<div class="team-card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><strong>${t.desc}</strong><br><small>${svc?svc.name:'?'} | ${tm?tm.name:'?'}</small></div><button class="btn btn-danger" onclick="delTask(${t.id})"><i class="fas fa-trash"></i></button></div>`}).join(''); }
-
-    // --- ABA EQUIPES ---
-    function renderTeamsCards() {
-        document.getElementById('teams-grid').innerHTML = db.teams.map(t => {
-            let cost=0; let count=0;
-            let mems = t.members.map(m => {
-                let r=db.res.find(x=>x.id==m.resId);
-                if(r) { cost+=r.cost*m.qty; count+=m.qty; return `<span class="member-badge">${m.qty}x ${r.name}</span>`; }
-            }).join('');
-            return `<div class="team-card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><strong>${t.name}</strong><span style="background:#eee; padding:2px 8px; border-radius:10px; font-size:0.8rem">${count} <i class="fas fa-user"></i></span></div>
-                <div style="margin-bottom:10px;">${mems||'-'}</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:10px;">
-                    <div style="color:green; font-weight:bold">R$ ${cost.toLocaleString('pt-BR')}</div>
-                    <button class="btn btn-warning" style="padding:4px 10px; font-size:0.8rem" onclick="editTeam(${t.id})">Edit</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-    // Edit Logic
-    function createTeam(){ db.teams.push({id:Date.now(), name:document.getElementById('team-name').value, members:[]}); save(); document.getElementById('team-name').value=''; }
-    function editTeam(id){ document.getElementById('edit-box').style.display='block'; let t=db.teams.find(x=>x.id==id); document.getElementById('edit-id').value=t.id; document.getElementById('edit-name-input').value=t.name; renderMemEdit(t); document.getElementById('edit-res-sel').innerHTML=db.res.map(r=>`<option value="${r.id}">${r.name}</option>`).join(''); }
-    function renderMemEdit(t){ document.getElementById('edit-list').innerHTML=t.members.map((m,i)=>{ let r=db.res.find(x=>x.id==m.resId); return `<span class="member-badge">${m.qty}x ${r?r.name:'?'} <i class="fas fa-times" onclick="remMem(${i})" style="color:red;cursor:pointer"></i></span>` }).join(''); }
-    function addMemEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.push({resId:parseInt(document.getElementById('edit-res-sel').value), qty:parseInt(document.getElementById('edit-res-qty').value)}); renderMemEdit(t); }
-    function remMem(i){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.splice(i,1); renderMemEdit(t); }
-    function saveEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.name=document.getElementById('edit-name-input').value; save(); cancelEdit(); }
-    function cancelEdit(){ document.getElementById('edit-box').style.display='none'; }
-
-    // --- DASHBOARD ---
+    // --- DASHBOARD ATUALIZADO (TEXTO NOS GRÁFICOS) ---
     function calcDash() {
-        if(db.tasks.length===0){ document.getElementById('chart-manpower-stack').innerHTML="Vazio"; return; }
+        if(db.tasks.length===0){ document.getElementById('chart-manpower-stack').innerHTML="<p style='text-align:center;padding:50px'>Sem dados</p>"; return; }
+        
         let dMin = new Date(db.tasks[0].start); let dMax = new Date(db.tasks[0].end);
         db.tasks.forEach(t=>{ if(new Date(t.start)<dMin)dMin=new Date(t.start); if(new Date(t.end)>dMax)dMax=new Date(t.end); });
+        
         let months=[]; let curr=new Date(dMin.getFullYear(), dMin.getMonth(), 1); let end=new Date(dMax.getFullYear(), dMax.getMonth()+1, 0);
         while(curr<=end){ months.push(new Date(curr)); curr.setMonth(curr.getMonth()+1); }
         let labels=months.map(d=>d.toLocaleString('pt-BR',{month:'short', year:'2-digit'}));
@@ -385,14 +281,129 @@
         document.getElementById('kpi-peak').innerText=Math.max(...moArr);
         document.getElementById('kpi-tasks').innerText=db.tasks.length;
 
-        let tracesMO=[]; for(let tm in teamStack) tracesMO.push({x:labels, y:teamStack[tm], name:tm, type:'bar'});
-        Plotly.newPlot('chart-manpower-stack', tracesMO, {barmode:'stack', margin:{t:30,b:30}});
-        let tracesFin=[]; for(let s in serviceStack) tracesFin.push({x:labels, y:serviceStack[s], name:s, type:'bar'});
-        Plotly.newPlot('chart-finance-stack', tracesFin, {barmode:'stack', margin:{t:30,b:30}});
+        // GRÁFICO 1: Mão de Obra (Com Text)
+        let tracesMO=[]; 
+        for(let tm in teamStack) {
+            // Filtrar zeros para não poluir
+            let textVals = teamStack[tm].map(v => v > 0 ? v : '');
+            tracesMO.push({
+                x:labels, y:teamStack[tm], name:tm, type:'bar',
+                text: textVals, textposition: 'auto', hoverinfo: 'y+name'
+            });
+        }
+        Plotly.newPlot('chart-manpower-stack', tracesMO, {barmode:'stack', margin:{t:30,b:30}, title:'Pessoas por Equipe'});
+
+        // GRÁFICO 2: Financeiro (Com Text R$)
+        let tracesFin=[]; 
+        let accCost = new Array(months.length).fill(0);
+
+        for(let s in serviceStack) {
+            let textVals = serviceStack[s].map(v => v > 0 ? "R$ " + (v/1000).toFixed(1)+"k" : '');
+            serviceStack[s].forEach((v,i) => accCost[i]+=v);
+            
+            tracesFin.push({
+                x:labels, y:serviceStack[s], name:s, type:'bar',
+                text: textVals, textposition: 'auto', hoverinfo: 'y+name'
+            });
+        }
+        
+        // Linha Acumulada
+        let accumulated = [];
+        accCost.reduce((a,b,i)=>accumulated[i]=a+b,0);
+        
+        tracesFin.push({
+            x:labels, y:accumulated, name:'Total Acumulado', type:'scatter', mode:'lines+markers', yaxis:'y2',
+            line: {color:'#2c3e50', width:3}, marker:{size:6}
+        });
+
+        Plotly.newPlot('chart-finance-stack', tracesFin, {
+            barmode:'stack', 
+            margin:{t:30,b:30,r:50}, 
+            title:'Fluxo Mensal (Barras) e Acumulado (Linha)',
+            yaxis: {title: 'Mensal'},
+            yaxis2: {title: 'Acumulado', overlaying: 'y', side: 'right', showgrid: false}
+        });
     }
 
-    // --- APOIO ---
+    // --- FUNÇÕES DE CADASTRO ---
+    function addSvc() {
+        let name = document.getElementById('svc-name').value;
+        let type = document.getElementById('svc-type').value;
+        let unit = document.getElementById('svc-unit').value;
+        if(name && unit) {
+            db.svc.push({id:Date.now(), name, type, unit});
+            save(); document.getElementById('svc-name').value = '';
+        }
+    }
+    function renderServicesTable() {
+        document.getElementById('svc-list-table').innerHTML = db.svc.map(s => `
+            <tr>
+                <td><strong>${s.name}</strong></td>
+                <td><span class="type-tag ${s.type==='prod'?'type-prod':'type-adm'}">${s.type==='prod'?'Produção':'Administrativo'}</span></td>
+                <td>${s.unit}</td>
+                <td style="text-align:center"><button class="btn btn-danger" style="padding:5px" onclick="delSvc(${s.id})"><i class="fas fa-trash"></i></button></td>
+            </tr>
+        `).join('');
+    }
+    function delSvc(id) { db.svc = db.svc.filter(s => s.id !== id); save(); }
+
+    function renderTeamsCards() {
+        document.getElementById('teams-grid').innerHTML = db.teams.map(t => {
+            let cost=0; let count=0;
+            let mems = t.members.map(m => {
+                let r=db.res.find(x=>x.id==m.resId);
+                if(r) { cost+=r.cost*m.qty; count+=m.qty; return `<span class="member-badge">${m.qty}x ${r.name}</span>`; }
+            }).join('');
+            return `<div class="team-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><strong>${t.name}</strong><span style="background:#eee; padding:2px 8px; border-radius:10px; font-size:0.8rem">${count} <i class="fas fa-user"></i></span></div>
+                <div style="margin-bottom:10px;">${mems||'-'}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:10px;">
+                    <div style="color:green; font-weight:bold">R$ ${cost.toLocaleString('pt-BR')}</div>
+                    <button class="btn btn-warning" style="padding:4px 10px; font-size:0.8rem" onclick="editTeam(${t.id})">Edit</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // --- CRONOGRAMA ---
+    function countBusinessDays(s,e){ let c=0; let d=new Date(s); let z=new Date(e); while(d<=z){ let w=d.getDay(); if(w!==0&&w!==6)c++; d.setDate(d.getDate()+1); } return c; }
+    function validate() {
+        const svcId=document.getElementById('t-svc').value, teamId=document.getElementById('t-team').value, qtdVal=document.getElementById('t-qtd').value, start=document.getElementById('t-start').value, end=document.getElementById('t-end').value;
+        const btn=document.getElementById('btn-add'), alertBox=document.getElementById('alert-box'), status=document.getElementById('t-status');
+        btn.disabled=true; alertBox.style.display='none'; status.value="";
+
+        if(!svcId||!teamId||!start||!end){status.value="...";return;}
+        if(new Date(end)<new Date(start)){status.value="Datas Inválidas";return;}
+
+        let svc = db.svc.find(x => x.id == svcId);
+        if(svc.type === 'adm') {
+            status.value = "VIÁVEL (Administrativo)"; status.style.color = "blue";
+            alertBox.style.display='block'; alertBox.className='alert-box alert-info'; alertBox.innerHTML=`<strong>${svc.name}:</strong> Tarefa baseada em tempo.`;
+            btn.disabled = false; return;
+        }
+
+        if(!qtdVal) { status.value="Qtd?"; return; }
+        let team=db.teams.find(x=>x.id==teamId); let dailyCap=0;
+        team.members.forEach(m=>{ let r=db.res.find(rx=>rx.id==m.resId); if(r&&r.type!=='adm'){ let p=(db.prod[m.resId]&&db.prod[m.resId][svcId])||0; dailyCap+=p*m.qty; } });
+
+        if(dailyCap===0){status.value="Sem Produtividade"; alertBox.style.display='block'; alertBox.className='alert-box alert-danger'; alertBox.innerHTML="Equipe não produtiva."; return;}
+        let daysNeeded=Math.ceil(qtdVal/dailyCap); let daysAvailable=countBusinessDays(start+'T00:00:00',end+'T00:00:00'); 
+        if(daysNeeded>daysAvailable){ status.value="ATRASO"; alertBox.style.display='block'; alertBox.className='alert-box alert-danger'; alertBox.innerHTML=`Falta Prazo. Necessário: ${daysNeeded} dias. Disp: ${daysAvailable} dias.`; }
+        else { status.value="VIÁVEL"; alertBox.style.display='block'; alertBox.className='alert-box alert-success'; alertBox.innerHTML=`OK. Folga: ${daysAvailable-daysNeeded} dias.`; btn.disabled=false; }
+    }
+    function addTask() { db.tasks.push({id:Date.now(), desc:document.getElementById('t-desc').value, svcId:document.getElementById('t-svc').value, teamId:document.getElementById('t-team').value, qtd:document.getElementById('t-qtd').value || 1, start:document.getElementById('t-start').value, end:document.getElementById('t-end').value}); save(); document.getElementById('t-desc').value=''; renderTasksVisual(); }
+    function delTask(id){ db.tasks=db.tasks.filter(t=>t.id!==id); save(); renderTasksVisual(); }
+    function renderTasksVisual(){ const c=document.getElementById('task-list-visual'); if(db.tasks.length===0){c.innerHTML="<p style='text-align:center; color:#999'>Vazio</p>";return;} c.innerHTML=db.tasks.map(t=>{ let tm=db.teams.find(x=>x.id==t.teamId); let svc=db.svc.find(x=>x.id==t.svcId); return `<div class="team-card" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;"><div><strong>${t.desc}</strong><br><small>${svc?svc.name:'?'} | ${tm?tm.name:'?'}</small></div><button class="btn btn-danger" onclick="delTask(${t.id})"><i class="fas fa-trash"></i></button></div>`}).join(''); }
+
+    // --- GERAIS ---
     function addRes(){ db.res.push({id:Date.now(), name:document.getElementById('res-name').value, type:document.getElementById('res-type').value, cost:parseFloat(document.getElementById('res-cost').value)}); save(); document.getElementById('res-name').value=''; }
+    function createTeam(){ db.teams.push({id:Date.now(), name:document.getElementById('team-name').value, members:[]}); save(); document.getElementById('team-name').value=''; }
+    function editTeam(id){ document.getElementById('edit-box').style.display='block'; let t=db.teams.find(x=>x.id==id); document.getElementById('edit-id').value=t.id; document.getElementById('edit-name-input').value=t.name; renderMemEdit(t); document.getElementById('edit-res-sel').innerHTML=db.res.map(r=>`<option value="${r.id}">${r.name}</option>`).join(''); }
+    function renderMemEdit(t){ document.getElementById('edit-list').innerHTML=t.members.map((m,i)=>{ let r=db.res.find(x=>x.id==m.resId); return `<span class="member-badge">${m.qty}x ${r?r.name:'?'} <i class="fas fa-times" onclick="remMem(${i})" style="color:red;cursor:pointer"></i></span>` }).join(''); }
+    function addMemEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.push({resId:parseInt(document.getElementById('edit-res-sel').value), qty:parseInt(document.getElementById('edit-res-qty').value)}); renderMemEdit(t); }
+    function remMem(i){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.splice(i,1); renderMemEdit(t); }
+    function saveEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.name=document.getElementById('edit-name-input').value; save(); cancelEdit(); }
+    function cancelEdit(){ document.getElementById('edit-box').style.display='none'; }
     function renderProd(){ let h=`<thead><tr><th>Cargo</th>${db.svc.map(s=>`<th>${s.name}</th>`).join('')}</tr></thead><tbody>`; db.res.forEach(r=>{ let isAdm=r.type==='adm'; h+=`<tr style="${isAdm?'background:#f9f9f9':''}"><td>${r.name}</td>`; db.svc.forEach(s=>{ if(s.type==='adm'||isAdm) h+=`<td style="background:#eee">-</td>`; else { let v=(db.prod[r.id]&&db.prod[r.id][s.id])||0; h+=`<td><input type="number" style="width:60px" value="${v}" onchange="if(!db.prod[${r.id}])db.prod[${r.id}]={};db.prod[${r.id}][${s.id}]=parseFloat(this.value)"></td>`; } }); h+='</tr>'; }); document.getElementById('prod-table').innerHTML=h+'</tbody>'; }
     function updateSelects(){ const f=(id,l)=>document.getElementById(id).innerHTML='<option value="">...</option>'+l.map(i=>`<option value="${i.id}">${i.name}</option>`).join(''); f('t-svc',db.svc); f('t-team',db.teams); }
     function renderAll(){ renderServicesTable(); renderTeamsCards(); document.getElementById('res-list').innerHTML=db.res.map(s=>`<div style="padding:5px;border-bottom:1px solid #eee"><b>${s.name}</b> (${s.type})</div>`).join(''); renderTasksVisual(); updateSelects(); }
