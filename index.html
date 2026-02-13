@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planner PRO v17 - Mobile & Equipamentos</title>
+    <title>Bravo Planner - Completo Mobile</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -11,55 +11,43 @@
         :root { 
             --primary: #2c3e50; --accent: #0984e3; --bg: #f0f2f5; --white: #ffffff; 
             --danger: #ff4757; --success: #2ed573; --warning: #ffa502; --text: #2f3542;
-            --equip: #ff6b81; /* Cor para equipamentos */
+            --equip: #ff6b81;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text); }
         
-        /* --- LAYOUT RESPONSIVO --- */
-        
-        /* Desktop (Padrão) */
+        /* Layout Mobile-First */
         aside { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; z-index: 20; transition: 0.3s; }
         main { flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth; position: relative; }
-        .bottom-nav { display: none; } /* Escondido no Desktop */
+        .bottom-nav { display: none; }
 
-        /* Mobile (Telas menores que 768px) */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            aside { display: none; } /* Esconde sidebar */
-            main { padding: 15px; padding-bottom: 80px; /* Espaço para menu inferior */ }
-            
+            aside { display: none; }
+            main { padding: 15px; padding-bottom: 80px; }
             .bottom-nav {
                 display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
                 background: var(--white); box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 justify-content: space-around; align-items: center; z-index: 1000;
             }
-            .nav-item {
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                color: #a4b0be; font-size: 0.7rem; flex: 1; height: 100%; text-decoration: none;
-            }
+            .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a4b0be; font-size: 0.65rem; flex: 1; height: 100%; text-decoration: none; }
             .nav-item i { font-size: 1.2rem; margin-bottom: 4px; }
             .nav-item.active { color: var(--accent); border-top: 3px solid var(--accent); }
             
-            /* Ajustes de Grid para Mobile */
             .form-row { flex-direction: column; gap: 10px !important; }
             .kpi-row { grid-template-columns: 1fr 1fr !important; }
             .team-grid { grid-template-columns: 1fr !important; }
-            
             h2 { font-size: 1.2rem; }
             .btn { width: 100%; justify-content: center; padding: 15px; }
         }
 
-        /* --- ESTILOS GERAIS --- */
-        .brand { padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        /* UI Elements */
+        .brand { padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
         .save-indicator { font-size: 0.7rem; color: var(--success); opacity: 0; transition: opacity 0.5s; }
-
-        /* Menu Lateral (Desktop) */
         .nav-btn { padding: 12px 20px; cursor: pointer; color: #dfe6e9; display: flex; gap: 10px; align-items: center; transition: 0.2s; }
         .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
         .nav-category { padding: 20px 20px 5px; font-size: 0.7rem; text-transform: uppercase; color: #b2bec3; font-weight: bold; }
 
-        /* Cards e Paineis */
         .screen { display: none; animation: fadeIn 0.3s ease-out; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -67,122 +55,134 @@
         .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; margin-bottom: 20px; }
 
-        /* Forms */
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-group { flex: 1; width: 100%; }
         label { display: block; font-size: 0.8rem; color: #747d8c; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ced6e0; border-radius: 8px; font-size: 1rem; background: #fff; appearance: none; }
         input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.1); }
-
-        /* Botões */
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--accent); color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--accent); color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .btn:disabled { background: #b2bec3; cursor: not-allowed; }
         .btn-danger { background: var(--danger); }
         .btn-warning { background: var(--warning); color: #2f3542; }
 
-        /* Equipamentos vs Pessoas Tags */
+        /* Toggles (Dias Trabalhados) */
+        .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .toggle-btn { flex: 1; padding: 10px; border: 1px solid #ced6e0; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.9rem; background: white; transition: 0.2s; }
+        .toggle-btn.active { background: var(--success); color: white; border-color: var(--success); font-weight: bold; }
+
+        /* Team & Resource UI */
         .type-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         .tag-human { background: #dfe4ea; color: #2f3542; }
-        .tag-equip { background: #ff6b81; color: white; } /* Vermelho suave para máquinas */
+        .tag-equip { background: #ff6b81; color: white; }
 
-        /* Equipes Cards */
         .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .team-card { background: white; border: 1px solid #dfe6e9; border-radius: 10px; padding: 15px; border-left: 5px solid var(--accent); position: relative; }
+        .team-card { background: white; border: 1px solid #dfe6e9; border-radius: 10px; padding: 15px; border-left: 5px solid var(--accent); }
         .member-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; margin: 2px; border: 1px solid #f1f2f6; }
         
-        /* KPIs */
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-box { background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 3px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
-        .kpi-lbl { font-size: 0.7rem; text-transform: uppercase; color: #747d8c; }
+        /* Table (Productivity) */
+        table { width: 100%; border-collapse: collapse; min-width: 600px; } /* Min width for scrolling */
+        th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.8rem; color: #636e72; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
 
-        /* Tasks Visual */
-        .task-list { display: flex; flex-direction: column; gap: 10px; }
-        .task-item { background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; }
-        .status-ok { border-left-color: var(--success); }
-        .status-late { border-left-color: var(--danger); }
-        
-        .edit-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .edit-modal { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        /* Alerts */
+        .alert-box { padding: 15px; border-radius: 8px; margin-top: 15px; display: none; font-size: 0.9rem; }
+        .alert-danger { background: #ff7675; color: white; }
+        .alert-success { background: #55efc4; color: #006266; }
+
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .kpi-box { background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 3px solid #ccc; }
+        .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
     </style>
 </head>
 <body>
 
 <aside>
     <div class="brand">
-        <span><i class="fas fa-hammer"></i> PLANNER v17</span>
+        <span><i class="fas fa-hammer"></i> PLANNER v18</span>
         <div class="save-indicator" id="save-status-desk"><i class="fas fa-check"></i></div>
     </div>
     <div class="nav-category">Geral</div>
     <div class="nav-btn active" onclick="nav('dash')"><i class="fas fa-chart-pie"></i> Dashboard</div>
     <div class="nav-btn" onclick="nav('schedule')"><i class="fas fa-calendar-alt"></i> Cronograma</div>
-    <div class="nav-category">Recursos</div>
+    <div class="nav-category">Engenharia</div>
+    <div class="nav-btn" onclick="nav('productivity')"><i class="fas fa-tachometer-alt"></i> Produtividade (RUP)</div>
     <div class="nav-btn" onclick="nav('teams')"><i class="fas fa-users-cog"></i> Equipes</div>
-    <div class="nav-btn" onclick="nav('resources')"><i class="fas fa-truck-pickup"></i> Recursos (Cargos/Eqp)</div>
+    <div class="nav-btn" onclick="nav('resources')"><i class="fas fa-truck-pickup"></i> Recursos</div>
     <div class="nav-btn" onclick="nav('services')"><i class="fas fa-cubes"></i> Serviços</div>
-    <div style="margin-top:auto; padding:20px;">
-        <button class="btn btn-danger" style="width:100%" onclick="resetData()">Resetar</button>
-    </div>
 </aside>
 
 <nav class="bottom-nav">
     <a href="#" class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i>Dash</a>
-    <a href="#" class="nav-item" onclick="nav('schedule', this)"><i class="fas fa-calendar-alt"></i>Crono</a>
+    <a href="#" class="nav-item" onclick="nav('schedule', this)"><i class="fas fa-calendar-check"></i>Crono</a>
+    <a href="#" class="nav-item" onclick="nav('productivity', this)"><i class="fas fa-tachometer-alt"></i>RUP</a>
     <a href="#" class="nav-item" onclick="nav('teams', this)"><i class="fas fa-users"></i>Equipes</a>
-    <a href="#" class="nav-item" onclick="nav('resources', this)"><i class="fas fa-truck"></i>Recursos</a>
-    <a href="#" class="nav-item" onclick="nav('services', this)"><i class="fas fa-cubes"></i>Serviços</a>
+    <a href="#" class="nav-item" onclick="nav('resources', this)"><i class="fas fa-truck"></i>Recus</a>
 </nav>
 
 <main>
     <div id="dash" class="screen active">
         <h2>Dashboard</h2>
         <div class="kpi-row">
-            <div class="kpi-box" style="border-color:var(--primary)"><div class="kpi-val" id="kpi-cost">0</div><div class="kpi-lbl">Custo Total</div></div>
-            <div class="kpi-box" style="border-color:var(--equip)"><div class="kpi-val" id="kpi-equip">0</div><div class="kpi-lbl">Custo Equip.</div></div>
-            <div class="kpi-box" style="border-color:var(--warning)"><div class="kpi-val" id="kpi-peak">0</div><div class="kpi-lbl">Pico Pessoas</div></div>
-            <div class="kpi-box" style="border-color:var(--success)"><div class="kpi-val" id="kpi-tasks">0</div><div class="kpi-lbl">Tarefas</div></div>
+            <div class="kpi-box" style="border-color:var(--primary)"><div class="kpi-val" id="kpi-cost">0</div><div style="font-size:0.7rem">Total</div></div>
+            <div class="kpi-box" style="border-color:var(--equip)"><div class="kpi-val" id="kpi-equip">0</div><div style="font-size:0.7rem">Equip.</div></div>
+            <div class="kpi-box" style="border-color:var(--warning)"><div class="kpi-val" id="kpi-peak">0</div><div style="font-size:0.7rem">Pico</div></div>
+            <div class="kpi-box" style="border-color:var(--success)"><div class="kpi-val" id="kpi-tasks">0</div><div style="font-size:0.7rem">Tarefas</div></div>
         </div>
         <div class="card">
-            <h3><i class="fas fa-money-bill-wave"></i> Custo: Pessoas vs Equipamentos</h3>
+            <h3><i class="fas fa-coins"></i> Fluxo Financeiro</h3>
             <div id="chart-finance" style="height:350px;"></div>
         </div>
         <div class="card">
-            <h3><i class="fas fa-users"></i> Histograma de Equipes</h3>
+            <h3><i class="fas fa-users"></i> Histograma</h3>
             <div id="chart-manpower" style="height:300px;"></div>
         </div>
-        <button class="btn" onclick="calcDash()">Atualizar Gráficos</button>
+        <button class="btn" style="width:100%" onclick="calcDash()">Atualizar</button>
     </div>
 
-    <div id="resources" class="screen">
+    <div id="schedule" class="screen">
         <div class="card">
-            <h2>Cargos & Equipamentos</h2>
+            <h2>Cronograma Executivo</h2>
+            
+            <label style="margin-bottom:10px">Dias Trabalhados:</label>
+            <div class="toggle-group">
+                <div class="toggle-btn active" id="btn-sat" onclick="toggleDay('sat')">Sábado</div>
+                <div class="toggle-btn" id="btn-sun" onclick="toggleDay('sun')">Domingo</div>
+            </div>
+
             <div class="form-row">
-                <div class="form-group">
-                    <label>Nome (Ex: Pedreiro, Retroescavadeira)</label>
-                    <input type="text" id="res-name">
-                </div>
-                <div class="form-group">
-                    <label>Categoria</label>
-                    <select id="res-cat">
-                        <option value="human">Mão de Obra (Humano)</option>
-                        <option value="equip">Equipamento (Máquina)</option>
-                        <option value="adm">Administrativo</option>
-                    </select>
-                </div>
+                <div class="form-group" style="flex:2"><label>Descrição</label><input type="text" id="t-desc"></div>
             </div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Custo Mensal (R$)</label>
-                    <input type="number" id="res-cost" placeholder="0.00">
-                </div>
-                <div class="form-group" style="flex:0">
-                    <label>&nbsp;</label>
-                    <button class="btn" onclick="addRes()"><i class="fas fa-plus"></i> Adicionar</button>
-                </div>
+                <div class="form-group"><label>Serviço</label><select id="t-svc" onchange="validate()"></select></div>
+                <div class="form-group"><label>Equipe</label><select id="t-team" onchange="validate()"></select></div>
+                <div class="form-group"><label>Qtd Total</label><input type="number" id="t-qtd" placeholder="0" oninput="validate()"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Início</label><input type="date" id="t-start" onchange="validate()"></div>
+                <div class="form-group"><label>Fim</label><input type="date" id="t-end" onchange="validate()"></div>
+                <div class="form-group"><label>Status</label><input type="text" id="t-status" readonly style="font-weight:bold; background:#eee"></div>
             </div>
             
-            <h3>Lista de Recursos</h3>
-            <div id="res-list" style="display:grid; gap:10px;"></div>
+            <div id="alert-box" class="alert-box"></div>
+            <button id="btn-add" class="btn" style="width:100%" disabled onclick="addTask()">+ Adicionar Tarefa</button>
+
+            <h3 style="margin-top:20px">Lista de Tarefas</h3>
+            <div id="task-list" class="task-list"></div>
+        </div>
+    </div>
+
+    <div id="productivity" class="screen">
+        <div class="card">
+            <h2>Matriz de Produtividade (RUP)</h2>
+            <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">
+                Defina quanto cada <strong>Recurso</strong> (Humano ou Máquina) produz por dia em cada serviço.
+            </p>
+            <div class="table-scroll">
+                <table id="prod-table"></table>
+            </div>
+            <button class="btn btn-success" style="width:100%" onclick="save()">Salvar Alterações</button>
         </div>
     </div>
 
@@ -190,60 +190,29 @@
         <div class="card">
             <h2>Composição de Equipes</h2>
             <div class="form-row">
-                <div class="form-group"><label>Nova Equipe</label><input type="text" id="team-name" placeholder="Nome da Equipe"></div>
+                <div class="form-group"><label>Nova Equipe</label><input type="text" id="team-name" placeholder="Nome"></div>
                 <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn" onclick="createTeam()">Criar</button></div>
             </div>
             <div id="teams-grid" class="team-grid"></div>
         </div>
     </div>
 
-    <div id="edit-overlay" class="edit-overlay">
-        <div class="edit-modal">
-            <h3 style="margin-top:0">Editar Equipe</h3>
-            <input type="hidden" id="edit-id">
-            <div class="form-row">
-                <div class="form-group"><label>Nome</label><input id="edit-name-input"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Adicionar Recurso</label>
-                    <select id="edit-res-sel"></select>
-                </div>
-                <div class="form-group" style="flex:0.4">
-                    <label>Qtd</label>
-                    <input type="number" id="edit-res-qty" value="1">
-                </div>
-                <div class="form-group" style="flex:0">
-                    <label>&nbsp;</label>
-                    <button class="btn btn-warning" onclick="addMemEdit()"><i class="fas fa-plus"></i></button>
-                </div>
-            </div>
-            <div id="edit-list" style="margin-bottom:20px; background:#f5f6fa; padding:10px; border-radius:8px;"></div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-success" style="flex:1" onclick="saveEdit()">Salvar</button>
-                <button class="btn btn-danger" style="flex:1" onclick="closeEdit()">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="schedule" class="screen">
+    <div id="resources" class="screen">
         <div class="card">
-            <h2>Cronograma</h2>
+            <h2>Recursos</h2>
             <div class="form-row">
-                <div class="form-group"><label>Descrição</label><input type="text" id="t-desc"></div>
+                <div class="form-group"><label>Nome</label><input type="text" id="res-name"></div>
+                <div class="form-group"><label>Tipo</label>
+                    <select id="res-cat">
+                        <option value="human">Mão de Obra</option>
+                        <option value="equip">Equipamento</option>
+                        <option value="adm">Administrativo</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Custo/Mês</label><input type="number" id="res-cost"></div>
+                <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn" onclick="addRes()">Add</button></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>Serviço</label><select id="t-svc"></select></div>
-                <div class="form-group"><label>Equipe</label><select id="t-team"></select></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Início</label><input type="date" id="t-start"></div>
-                <div class="form-group"><label>Fim</label><input type="date" id="t-end"></div>
-            </div>
-            <button class="btn" style="width:100%" onclick="addTask()"><i class="fas fa-plus"></i> Adicionar Tarefa</button>
-            
-            <h3 style="margin-top:20px">Lista de Tarefas</h3>
-            <div id="task-list" class="task-list"></div>
+            <div id="res-list" style="display:grid; gap:10px"></div>
         </div>
     </div>
 
@@ -259,257 +228,291 @@
         </div>
     </div>
 
+    <div id="edit-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:none; justify-content:center; align-items:center; padding:20px;">
+        <div style="background:white; width:100%; max-width:500px; padding:20px; border-radius:12px; max-height:90vh; overflow-y:auto;">
+            <h3>Editar Equipe</h3>
+            <input type="hidden" id="edit-id">
+            <div class="form-row"><input id="edit-name-input" placeholder="Nome"></div>
+            <div class="form-row">
+                <select id="edit-res-sel"></select>
+                <input type="number" id="edit-res-qty" value="1" style="width:80px">
+                <button class="btn btn-warning" onclick="addMemEdit()">Add</button>
+            </div>
+            <div id="edit-list" style="margin-bottom:20px; background:#f5f6fa; padding:10px; border-radius:8px;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-success" style="flex:1" onclick="saveEdit()">Salvar</button>
+                <button class="btn btn-danger" style="flex:1" onclick="document.getElementById('edit-overlay').style.display='none'">Fechar</button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
     // --- DADOS ---
     let db = {
-        // Categoria adicionada ao recurso: 'human' ou 'equip' ou 'adm'
-        res: JSON.parse(localStorage.getItem('p17_res')) || [
-            {id:1, name:'Pedreiro', cat:'human', cost:3500},
-            {id:2, name:'Retroescavadeira', cat:'equip', cost:15000},
-            {id:3, name:'Engenheiro', cat:'adm', cost:12000}
-        ],
-        teams: JSON.parse(localStorage.getItem('p17_teams')) || [
-            {id:1, name:'Eq. Terraplanagem', members:[{resId:1, qty:1}, {resId:2, qty:1}]} // 1 Pedreiro + 1 Retro
-        ],
-        svc: JSON.parse(localStorage.getItem('p17_svc')) || [{id:1, name:'Escavação', unit:'m³'}],
-        tasks: JSON.parse(localStorage.getItem('p17_tasks')) || []
+        res: JSON.parse(localStorage.getItem('p18_res')) || [{id:1, name:'Pedreiro', cat:'human', cost:3500}, {id:2, name:'Retroescavadeira', cat:'equip', cost:15000}],
+        teams: JSON.parse(localStorage.getItem('p18_teams')) || [{id:1, name:'Eq. Terraplanagem', members:[{resId:1, qty:1}, {resId:2, qty:1}]}],
+        svc: JSON.parse(localStorage.getItem('p18_svc')) || [{id:1, name:'Escavação', unit:'m³'}],
+        tasks: JSON.parse(localStorage.getItem('p18_tasks')) || [],
+        prod: JSON.parse(localStorage.getItem('p18_prod')) || {1:{1:5}, 2:{1:50}}, // Produtividade: Pedreiro faz 5, Retro faz 50
+        config: JSON.parse(localStorage.getItem('p18_config')) || {sat:true, sun:false} // Configurações de Dias
     };
 
     function save() {
-        localStorage.setItem('p17_res', JSON.stringify(db.res));
-        localStorage.setItem('p17_teams', JSON.stringify(db.teams));
-        localStorage.setItem('p17_svc', JSON.stringify(db.svc));
-        localStorage.setItem('p17_tasks', JSON.stringify(db.tasks));
-        document.getElementById('save-status-desk').style.opacity = '1';
-        setTimeout(() => document.getElementById('save-status-desk').style.opacity='0', 1000);
+        localStorage.setItem('p18_res', JSON.stringify(db.res));
+        localStorage.setItem('p18_teams', JSON.stringify(db.teams));
+        localStorage.setItem('p18_svc', JSON.stringify(db.svc));
+        localStorage.setItem('p18_tasks', JSON.stringify(db.tasks));
+        localStorage.setItem('p18_prod', JSON.stringify(db.prod));
+        localStorage.setItem('p18_config', JSON.stringify(db.config));
+        
+        let el = document.getElementById('save-status-desk');
+        el.style.opacity = '1'; setTimeout(()=>el.style.opacity='0', 1000);
         renderAll();
     }
-    
-    function resetData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
+    function resetData(){ if(confirm("Apagar tudo?")){ localStorage.clear(); location.reload(); } }
 
     function nav(id, el) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        
-        // Atualiza botões do mobile e desktop
-        document.querySelectorAll('.nav-btn, .nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn, .nav-item').forEach(b=>b.classList.remove('active'));
         if(el) el.classList.add('active');
         
-        if(id === 'dash') setTimeout(calcDash, 200);
+        if(id==='dash') setTimeout(calcDash, 200);
+        if(id==='productivity') renderProdTable();
+        if(id==='schedule') initSchedule();
         updateSelects();
     }
 
-    // --- RECURSOS (PESSOAS & MAQUINAS) ---
-    function addRes() {
-        const name = document.getElementById('res-name').value;
-        const cat = document.getElementById('res-cat').value;
-        const cost = parseFloat(document.getElementById('res-cost').value);
-        if(name && cost) {
-            db.res.push({id:Date.now(), name, cat, cost});
-            save();
-            document.getElementById('res-name').value='';
-            document.getElementById('res-cost').value='';
-        }
+    // --- CONFIGURAÇÃO DE CALENDÁRIO ---
+    function initSchedule() {
+        updateToggle('sat', db.config.sat);
+        updateToggle('sun', db.config.sun);
+    }
+    function toggleDay(day) {
+        db.config[day] = !db.config[day];
+        updateToggle(day, db.config[day]);
+        save();
+        validate(); // Re-validar se datas mudarem
+    }
+    function updateToggle(id, active) {
+        const btn = document.getElementById('btn-'+id);
+        if(active) btn.classList.add('active'); else btn.classList.remove('active');
     }
 
-    function renderRes() {
-        const list = document.getElementById('res-list');
-        list.innerHTML = db.res.map(r => {
-            let icon = r.cat==='equip' ? '<i class="fas fa-truck-pickup"></i>' : (r.cat==='adm'?'<i class="fas fa-user-tie"></i>':'<i class="fas fa-hard-hat"></i>');
-            let color = r.cat==='equip' ? 'border-left:4px solid #ff6b81' : 'border-left:4px solid #747d8c';
-            return `
-            <div style="background:white; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; ${color}; border:1px solid #eee;">
-                <div>${icon} <strong>${r.name}</strong></div>
-                <div>R$ ${r.cost.toLocaleString('pt-BR')}</div>
-                <button class="btn btn-danger" style="padding:5px 10px" onclick="delRes(${r.id})"><i class="fas fa-trash"></i></button>
-            </div>`;
-        }).join('');
-    }
-    function delRes(id) { db.res = db.res.filter(r => r.id !== id); save(); }
-
-    // --- EQUIPES (COMPOSTAS) ---
-    function createTeam() {
-        const name = document.getElementById('team-name').value;
-        if(name) { db.teams.push({id:Date.now(), name, members:[]}); save(); document.getElementById('team-name').value=''; }
-    }
-
-    function renderTeams() {
-        document.getElementById('teams-grid').innerHTML = db.teams.map(t => {
-            let totalCost = 0;
-            let membersHtml = t.members.map(m => {
-                let r = db.res.find(x => x.id == m.resId);
-                if(!r) return '';
-                totalCost += r.cost * m.qty;
-                let bg = r.cat === 'equip' ? 'background:#ffecf0; color:#ff6b81; border-color:#ff6b81' : 'background:#f1f2f6; color:#333';
-                let icon = r.cat === 'equip' ? '<i class="fas fa-truck"></i>' : '<i class="fas fa-user"></i>';
-                return `<span class="member-badge" style="${bg}">${m.qty}x ${icon} ${r.name}</span>`;
-            }).join('');
+    // --- CÁLCULO DE DIAS ÚTEIS (Considerando Config) ---
+    function countWorkDays(start, end) {
+        let count = 0;
+        let d = new Date(start);
+        let z = new Date(end);
+        
+        // Ajuste fuso horário para garantir contagem correta
+        d.setHours(0,0,0,0); z.setHours(0,0,0,0);
+        
+        while(d <= z) {
+            let w = d.getDay();
+            let isWork = true;
+            if(w === 0 && !db.config.sun) isWork = false; // Domingo
+            if(w === 6 && !db.config.sat) isWork = false; // Sábado
             
-            return `
-            <div class="team-card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <strong>${t.name}</strong>
-                    <button class="btn btn-warning" style="padding:4px 8px; font-size:0.7rem" onclick="openEdit(${t.id})"><i class="fas fa-edit"></i></button>
-                </div>
-                <div style="margin-bottom:10px;">${membersHtml || '<small>Vazio</small>'}</div>
-                <div style="border-top:1px solid #eee; padding-top:5px; font-weight:bold; color:var(--success)">
-                    Custo: R$ ${totalCost.toLocaleString('pt-BR')} /mês
-                </div>
-            </div>`;
-        }).join('');
+            if(isWork) count++;
+            d.setDate(d.getDate() + 1);
+        }
+        return count;
     }
 
-    // Modal Edit Team
-    function openEdit(id) {
-        document.getElementById('edit-overlay').style.display = 'flex';
-        let t = db.teams.find(x => x.id == id);
-        document.getElementById('edit-id').value = t.id;
-        document.getElementById('edit-name-input').value = t.name;
-        updateEditList(t);
-        // Preenche select com ícones
-        document.getElementById('edit-res-sel').innerHTML = db.res.map(r => {
-            let type = r.cat==='equip' ? '[MAQ]' : '[PES]';
-            return `<option value="${r.id}">${type} ${r.name}</option>`;
-        }).join('');
-    }
-    
-    function closeEdit() { document.getElementById('edit-overlay').style.display = 'none'; }
-    
-    function updateEditList(t) {
-        document.getElementById('edit-list').innerHTML = t.members.map((m, i) => {
-            let r = db.res.find(x => x.id == m.resId);
-            return `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #e1e1e1; padding-bottom:5px;">
-                <span>${m.qty}x ${r?r.name:'?'}</span>
-                <i class="fas fa-times" style="color:red; cursor:pointer" onclick="remMem(${i})"></i>
-            </div>`;
-        }).join('');
-    }
-    
-    function addMemEdit() {
-        let t = db.teams.find(x => x.id == document.getElementById('edit-id').value);
-        let rid = parseInt(document.getElementById('edit-res-sel').value);
-        let qty = parseInt(document.getElementById('edit-res-qty').value);
-        t.members.push({resId: rid, qty: qty});
-        updateEditList(t);
-    }
-    function remMem(i) {
-        let t = db.teams.find(x => x.id == document.getElementById('edit-id').value);
-        t.members.splice(i, 1);
-        updateEditList(t);
-    }
-    function saveEdit() {
-        let t = db.teams.find(x => x.id == document.getElementById('edit-id').value);
-        t.name = document.getElementById('edit-name-input').value;
-        save(); closeEdit();
-    }
-
-    // --- CRONOGRAMA ---
-    function addTask() {
-        const desc = document.getElementById('t-desc').value;
+    // --- VALIDAÇÃO INTELIGENTE (RUP + CALENDÁRIO) ---
+    function validate() {
+        const svcId = document.getElementById('t-svc').value;
+        const teamId = document.getElementById('t-team').value;
+        const qtd = document.getElementById('t-qtd').value;
         const start = document.getElementById('t-start').value;
         const end = document.getElementById('t-end').value;
-        if(desc && start && end) {
-            db.tasks.push({
-                id:Date.now(), desc, 
-                svcId:document.getElementById('t-svc').value, 
-                teamId:document.getElementById('t-team').value,
-                start, end
-            });
-            save(); document.getElementById('t-desc').value='';
+        const status = document.getElementById('t-status');
+        const alertBox = document.getElementById('alert-box');
+        const btn = document.getElementById('btn-add');
+        
+        btn.disabled = true; alertBox.style.display='none'; status.value='...';
+
+        if(!svcId || !teamId || !qtd || !start || !end) return;
+        if(new Date(end) < new Date(start)) { status.value="Data Inválida"; return; }
+
+        // 1. Calcular Capacidade Diária da Equipe (Somando Humanos + Máquinas)
+        let team = db.teams.find(x => x.id == teamId);
+        let dailyProd = 0;
+        
+        team.members.forEach(m => {
+            // Verifica se tem RUP cadastrada para este recurso neste serviço
+            let p = (db.prod[m.resId] && db.prod[m.resId][svcId]) || 0;
+            dailyProd += p * m.qty;
+        });
+
+        if(dailyProd === 0) {
+            status.value = "Sem Produtividade";
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert-box alert-danger';
+            alertBox.innerHTML = "<strong>Erro:</strong> A equipe selecionada não tem produtividade cadastrada para este serviço. Vá na aba 'Produtividade' e preencha.";
+            return;
+        }
+
+        // 2. Calcular Dias Necessários vs Disponíveis
+        let daysNeeded = Math.ceil(qtd / dailyProd);
+        let daysAvailable = countWorkDays(start+'T00:00:00', end+'T00:00:00'); // Força T00 para evitar timezone issues
+        
+        if(daysNeeded > daysAvailable) {
+            status.value = "ATRASO";
+            status.style.color = "red";
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert-box alert-danger';
+            alertBox.innerHTML = `
+                <strong>Prazo Insuficiente!</strong><br>
+                Produção Diária: ${dailyProd} /dia.<br>
+                Necessário: <strong>${daysNeeded} dias</strong> de trabalho.<br>
+                Disponível: <strong>${daysAvailable} dias</strong> (conforme calendário).<br>
+                Aumente a equipe, adicione máquinas ou estenda o prazo.
+            `;
+        } else {
+            status.value = "VIÁVEL";
+            status.style.color = "green";
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert-box alert-success';
+            alertBox.innerHTML = `
+                <strong>Planejamento OK!</strong><br>
+                Dias Necessários: ${daysNeeded}.<br>
+                Folga: <strong>${daysAvailable - daysNeeded} dias</strong>.<br>
+                Média Real: ${(qtd/daysAvailable).toFixed(1)} /dia.
+            `;
+            btn.disabled = false;
         }
     }
-    function delTask(id) { db.tasks = db.tasks.filter(t => t.id!==id); save(); }
+
+    function addTask() {
+        db.tasks.push({
+            id:Date.now(),
+            desc:document.getElementById('t-desc').value,
+            svcId:document.getElementById('t-svc').value,
+            teamId:document.getElementById('t-team').value,
+            qtd:document.getElementById('t-qtd').value,
+            start:document.getElementById('t-start').value,
+            end:document.getElementById('t-end').value
+        });
+        save(); document.getElementById('t-desc').value=''; validate(); renderTasks();
+    }
+
+    // --- MATRIZ DE PRODUTIVIDADE ---
+    function renderProdTable() {
+        const table = document.getElementById('prod-table');
+        // Cabeçalho: Recurso | Serviço 1 | Serviço 2 ...
+        let html = `<thead><tr><th>Recurso</th>${db.svc.map(s => `<th>${s.name} (${s.unit})</th>`).join('')}</tr></thead><tbody>`;
+        
+        db.res.forEach(r => {
+            // Apenas Humanos e Máquinas têm produtividade física
+            if(r.cat === 'human' || r.cat === 'equip') {
+                html += `<tr><td><strong>${r.name}</strong> <small>(${r.cat==='equip'?'Eqp':'MO'})</small></td>`;
+                db.svc.forEach(s => {
+                    let val = (db.prod[r.id] && db.prod[r.id][s.id]) || 0;
+                    html += `<td><input type="number" style="width:70px; text-align:center" value="${val}" onchange="updProd(${r.id}, ${s.id}, this.value)"></td>`;
+                });
+                html += `</tr>`;
+            }
+        });
+        html += `</tbody>`;
+        table.innerHTML = html;
+    }
+    
+    function updProd(resId, svcId, val) {
+        if(!db.prod[resId]) db.prod[resId] = {};
+        db.prod[resId][svcId] = parseFloat(val);
+    }
+
+    // --- FUNÇÕES DE APOIO (CRUD) ---
+    function renderRes() {
+        document.getElementById('res-list').innerHTML = db.res.map(r => {
+            let c = r.cat==='equip'?'#ff6b81':(r.cat==='adm'?'#2ed573':'#747d8c');
+            let i = r.cat==='equip'?'truck':(r.cat==='adm'?'user-tie':'user');
+            return `<div style="background:white;padding:10px;border-radius:8px;border-left:4px solid ${c};display:flex;justify-content:space-between;border:1px solid #eee">
+                <span><i class="fas fa-${i}"></i> ${r.name}</span>
+                <span>R$ ${r.cost}</span>
+                <button class="btn btn-danger" style="padding:5px" onclick="db.res=db.res.filter(x=>x.id!=${r.id});save()"><i class="fas fa-trash"></i></button>
+            </div>`;
+        }).join('');
+    }
+    
+    function renderTeams() {
+        document.getElementById('teams-grid').innerHTML = db.teams.map(t => {
+            let cost=0;
+            let mems = t.members.map(m => {
+                let r=db.res.find(x=>x.id==m.resId);
+                if(r) { cost+=r.cost*m.qty; return `<span class="member-badge" style="${r.cat==='equip'?'background:#ffeaa7':''}">${m.qty}x ${r.name}</span>`; }
+            }).join('');
+            return `<div class="team-card">
+                <div style="display:flex;justify-content:space-between"><b>${t.name}</b><button class="btn btn-warning" style="padding:2px 8px;font-size:0.7rem" onclick="editTeam(${t.id})"><i class="fas fa-edit"></i></button></div>
+                <div style="margin:10px 0">${mems}</div>
+                <div style="font-size:0.9rem;color:green;border-top:1px solid #eee;padding-top:5px">R$ ${cost.toLocaleString('pt-BR')} /mês</div>
+            </div>`;
+        }).join('');
+    }
+
+    function editTeam(id){ document.getElementById('edit-overlay').style.display='flex'; let t=db.teams.find(x=>x.id==id); document.getElementById('edit-id').value=t.id; document.getElementById('edit-name-input').value=t.name; updateEditList(t); document.getElementById('edit-res-sel').innerHTML=db.res.map(r=>`<option value="${r.id}">${r.name}</option>`).join(''); }
+    function updateEditList(t){ document.getElementById('edit-list').innerHTML=t.members.map((m,i)=>{ let r=db.res.find(x=>x.id==m.resId); return `<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span>${m.qty}x ${r?r.name:'?'}</span><i class="fas fa-times" style="color:red" onclick="remMem(${i})"></i></div>`}).join(''); }
+    function addMemEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.push({resId:parseInt(document.getElementById('edit-res-sel').value), qty:parseInt(document.getElementById('edit-res-qty').value)}); updateEditList(t); }
+    function remMem(i){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.splice(i,1); updateEditList(t); }
+    function saveEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.name=document.getElementById('edit-name-input').value; save(); document.getElementById('edit-overlay').style.display='none'; }
+
+    function addSvc(){ db.svc.push({id:Date.now(), name:document.getElementById('svc-name').value, unit:document.getElementById('svc-unit').value}); save(); }
+    function addRes(){ db.res.push({id:Date.now(), name:document.getElementById('res-name').value, cat:document.getElementById('res-cat').value, cost:parseFloat(document.getElementById('res-cost').value)}); save(); }
+    function createTeam(){ db.teams.push({id:Date.now(), name:document.getElementById('team-name').value, members:[]}); save(); }
+
     function renderTasks() {
         document.getElementById('task-list').innerHTML = db.tasks.map(t => {
             let tm = db.teams.find(x=>x.id==t.teamId);
-            return `<div class="task-item">
-                <div><strong>${t.desc}</strong><br><small>${tm?tm.name:'?'}</small></div>
-                <div style="font-size:0.8rem">${t.start.slice(5)} a ${t.end.slice(5)}</div>
-                <button class="btn btn-danger" style="padding:5px" onclick="delTask(${t.id})"><i class="fas fa-trash"></i></button>
+            return `<div style="background:white;padding:15px;border-radius:8px;border-left:4px solid #ccc;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05)">
+                <div><strong>${t.desc}</strong><br><small>${tm?tm.name:'?'}</small><br><small>Qtd: ${t.qtd}</small></div>
+                <div style="text-align:right; font-size:0.8rem">${t.start.slice(5)}<br>a ${t.end.slice(5)}</div>
+                <button class="btn btn-danger" style="padding:5px" onclick="db.tasks=db.tasks.filter(x=>x.id!=${t.id});save();renderTasks()"><i class="fas fa-trash"></i></button>
             </div>`;
         }).join('');
     }
 
-    // --- SERVIÇOS ---
-    function addSvc() { db.svc.push({id:Date.now(), name:document.getElementById('svc-name').value, unit:document.getElementById('svc-unit').value}); save(); }
-    function renderSvc() { document.getElementById('svc-list').innerHTML=db.svc.map(s=>`<div style="background:white;padding:10px;margin-bottom:5px;border-radius:4px">${s.name} (${s.unit})</div>`).join(''); }
-
-    // --- DASHBOARD ---
-    function calcDash() {
+    function calcDash(){
+        // Lógica de Dashboard mantida e ajustada
         if(db.tasks.length===0) return;
-        
         let dMin=new Date(db.tasks[0].start); let dMax=new Date(db.tasks[0].end);
-        db.tasks.forEach(t=>{ if(new Date(t.start)<dMin) dMin=new Date(t.start); if(new Date(t.end)>dMax) dMax=new Date(t.end); });
+        db.tasks.forEach(t=>{ if(new Date(t.start)<dMin)dMin=new Date(t.start); if(new Date(t.end)>dMax)dMax=new Date(t.end); });
         let months=[]; let cur=new Date(dMin.getFullYear(), dMin.getMonth(), 1); let end=new Date(dMax.getFullYear(), dMax.getMonth()+1, 0);
         while(cur<=end){ months.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
-        let labels = months.map(d=>d.toLocaleString('pt-BR',{month:'short',year:'2-digit'}));
+        let labels=months.map(d=>d.toLocaleString('pt-BR',{month:'short',year:'2-digit'}));
         
-        // Arrays de dados
-        let laborCost = new Array(months.length).fill(0);
-        let equipCost = new Array(months.length).fill(0);
-        let teamStack = {}; 
+        let laborCost=new Array(months.length).fill(0); let equipCost=new Array(months.length).fill(0); let teamStack={};
         
-        db.tasks.forEach(t => {
-            let tm = db.teams.find(x=>x.id==t.teamId);
-            if(!tm) return;
-            if(!teamStack[tm.name]) teamStack[tm.name] = new Array(months.length).fill(0);
-
-            // Calcula custo mensal da equipe SEPARANDO MO de EQUIP
-            let moMonth = 0;
-            let eqMonth = 0;
-            let peopleCount = 0;
-
-            tm.members.forEach(m => {
-                let r = db.res.find(x=>x.id==m.resId);
-                if(r) {
-                    if(r.cat === 'equip') eqMonth += r.cost * m.qty;
-                    else { moMonth += r.cost * m.qty; peopleCount += m.qty; }
-                }
-            });
-
-            // Distribui nos meses
+        db.tasks.forEach(t=>{
+            let tm=db.teams.find(x=>x.id==t.teamId); if(!tm)return;
+            if(!teamStack[tm.name]) teamStack[tm.name]=new Array(months.length).fill(0);
+            
+            let moM=0; let eqM=0; let count=0;
+            tm.members.forEach(m=>{ let r=db.res.find(x=>x.id==m.resId); if(r){ if(r.cat==='equip') eqM+=r.cost*m.qty; else { moM+=r.cost*m.qty; count+=m.qty; } } });
+            
             let tS=new Date(t.start); let tE=new Date(t.end);
-            months.forEach((mDate, i) => {
-                let mS=new Date(mDate.getFullYear(), mDate.getMonth(), 1);
-                let mE=new Date(mDate.getFullYear(), mDate.getMonth()+1, 0);
-                if(tS<=mE && tE>=mS) {
-                    laborCost[i] += moMonth;
-                    equipCost[i] += eqMonth;
-                    teamStack[tm.name][i] += peopleCount;
-                }
+            months.forEach((mDate,i)=>{
+                let mS=new Date(mDate.getFullYear(), mDate.getMonth(), 1); let mE=new Date(mDate.getFullYear(), mDate.getMonth()+1, 0);
+                if(tS<=mE && tE>=mS){ laborCost[i]+=moM; equipCost[i]+=eqM; teamStack[tm.name][i]+=count; }
             });
         });
-
-        // Totais
-        let totLab = laborCost.reduce((a,b)=>a+b,0);
-        let totEq = equipCost.reduce((a,b)=>a+b,0);
         
-        document.getElementById('kpi-cost').innerText = "R$ " + (totLab+totEq).toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
-        document.getElementById('kpi-equip').innerText = "R$ " + totEq.toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
-        document.getElementById('kpi-tasks').innerText = db.tasks.length;
-
-        // Gráfico Financeiro
-        Plotly.newPlot('chart-finance', [
-            {x:labels, y:laborCost, name:'Mão de Obra', type:'bar', marker:{color:'#2c3e50'}},
-            {x:labels, y:equipCost, name:'Equipamentos', type:'bar', marker:{color:'#ff6b81'}}
-        ], {barmode:'stack', margin:{t:30,l:30,r:30,b:30}, legend:{orientation:'h',y:-0.2}});
-
-        // Gráfico MO
-        let traces=[];
-        for(let k in teamStack) traces.push({x:labels, y:teamStack[k], name:k, type:'bar'});
-        Plotly.newPlot('chart-manpower', traces, {barmode:'stack', margin:{t:30,l:30,r:30,b:30}, legend:{orientation:'h',y:-0.2}});
+        document.getElementById('kpi-cost').innerText="R$ "+(laborCost.reduce((a,b)=>a+b,0)+equipCost.reduce((a,b)=>a+b,0)).toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
+        document.getElementById('kpi-equip').innerText="R$ "+equipCost.reduce((a,b)=>a+b,0).toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
+        
+        Plotly.newPlot('chart-finance', [{x:labels,y:laborCost,name:'MO',type:'bar'}, {x:labels,y:equipCost,name:'Equip',type:'bar',marker:{color:'#ff6b81'}}], {barmode:'stack',margin:{t:30,b:30,l:30,r:30}});
+        let traces=[]; for(let k in teamStack) traces.push({x:labels, y:teamStack[k], name:k, type:'bar'});
+        Plotly.newPlot('chart-manpower', traces, {barmode:'stack',margin:{t:30,b:30,l:30,r:30}});
     }
 
-    function updateSelects(){
-        const f=(id,l)=>document.getElementById(id).innerHTML='<option value="">...</option>'+l.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
-        f('t-svc', db.svc); f('t-team', db.teams);
-    }
+    function renderSvc(){ document.getElementById('svc-list').innerHTML=db.svc.map(s=>`<div style="padding:10px;background:white;margin-bottom:5px;border-radius:4px">${s.name} (${s.unit})</div>`).join(''); }
+    function updateSelects(){ const f=(id,l)=>document.getElementById(id).innerHTML='<option value="">...</option>'+l.map(i=>`<option value="${i.id}">${i.name}</option>`).join(''); f('t-svc',db.svc); f('t-team',db.teams); f('edit-res-sel',db.res); }
     function renderAll(){ renderRes(); renderTeams(); renderTasks(); renderSvc(); updateSelects(); }
 
-    renderAll();
-    setTimeout(calcDash, 500);
+    renderAll(); setTimeout(calcDash, 500);
 </script>
 </body>
 </html>
