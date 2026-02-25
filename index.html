@@ -1,518 +1,523 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bravo Planner - Completo Mobile</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Bravo CIVIL - Executive 5D (EVM & Cronograma Fiel)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
+        }
+      }
+    </script>
+
     <style>
-        :root { 
-            --primary: #2c3e50; --accent: #0984e3; --bg: #f0f2f5; --white: #ffffff; 
-            --danger: #ff4757; --success: #2ed573; --warning: #ffa502; --text: #2f3542;
-            --equip: #ff6b81;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        :root { --primary: #0A192F; --secondary: #1E293B; --accent: #2563EB; --bg: #F1F5F9; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; color: #334155; overflow-x: hidden; }
         
-        /* Layout Mobile-First */
-        aside { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; z-index: 20; transition: 0.3s; }
-        main { flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth; position: relative; }
-        .bottom-nav { display: none; }
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            aside { display: none; }
-            main { padding: 15px; padding-bottom: 80px; }
-            .bottom-nav {
-                display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
-                background: var(--white); box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-                justify-content: space-around; align-items: center; z-index: 1000;
-            }
-            .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a4b0be; font-size: 0.65rem; flex: 1; height: 100%; text-decoration: none; }
-            .nav-item i { font-size: 1.2rem; margin-bottom: 4px; }
-            .nav-item.active { color: var(--accent); border-top: 3px solid var(--accent); }
-            
-            .form-row { flex-direction: column; gap: 10px !important; }
-            .kpi-row { grid-template-columns: 1fr 1fr !important; }
-            .team-grid { grid-template-columns: 1fr !important; }
-            h2 { font-size: 1.2rem; }
-            .btn { width: 100%; justify-content: center; padding: 15px; }
-        }
-
-        /* UI Elements */
-        .brand { padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        .save-indicator { font-size: 0.7rem; color: var(--success); opacity: 0; transition: opacity 0.5s; }
-        .nav-btn { padding: 12px 20px; cursor: pointer; color: #dfe6e9; display: flex; gap: 10px; align-items: center; transition: 0.2s; }
-        .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
-        .nav-category { padding: 20px 20px 5px; font-size: 0.7rem; text-transform: uppercase; color: #b2bec3; font-weight: bold; }
-
-        .screen { display: none; animation: fadeIn 0.3s ease-out; }
-        .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; margin-bottom: 20px; }
-
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-group { flex: 1; width: 100%; }
-        label { display: block; font-size: 0.8rem; color: #747d8c; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ced6e0; border-radius: 8px; font-size: 1rem; background: #fff; appearance: none; }
-        input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.1); }
+        /* Topbar */
+        .top-navbar { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000; position: sticky; top: 0; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; color: #38BDF8; font-size: 1.5rem; }
         
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--accent); color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
-        .btn:disabled { background: #b2bec3; cursor: not-allowed; }
-        .btn-danger { background: var(--danger); }
-        .btn-warning { background: var(--warning); color: #2f3542; }
-
-        /* Toggles (Dias Trabalhados) */
-        .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .toggle-btn { flex: 1; padding: 10px; border: 1px solid #ced6e0; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.9rem; background: white; transition: 0.2s; }
-        .toggle-btn.active { background: var(--success); color: white; border-color: var(--success); font-weight: bold; }
-
-        /* Team & Resource UI */
-        .type-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .tag-human { background: #dfe4ea; color: #2f3542; }
-        .tag-equip { background: #ff6b81; color: white; }
-
-        .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .team-card { background: white; border: 1px solid #dfe6e9; border-radius: 10px; padding: 15px; border-left: 5px solid var(--accent); }
-        .member-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; margin: 2px; border: 1px solid #f1f2f6; }
+        /* Cards & Panels */
+        .glass-card { background: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative;}
+        .glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #38BDF8; border-radius: 10px 0 0 10px; }
+        .glass-card.real-mode::before { background: var(--warning); }
+        .glass-panel { background: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; }
+        .panel-title { font-size: 0.85rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px; }
         
-        /* Table (Productivity) */
-        table { width: 100%; border-collapse: collapse; min-width: 600px; } /* Min width for scrolling */
-        th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.8rem; color: #636e72; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+        /* Typography */
+        .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; font-weight: 700; margin-bottom: 5px; }
+        .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 5px; }
+        .kpi-sub { font-size: 0.75rem; font-weight: 600; color: #94A3B8; }
+        
+        /* 3D Viewer */
+        #viewer-container { border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0F172A 0%, #020617 100%); position: relative; min-height: 520px; display: flex; flex-direction: column; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); }
+        .viewer-controls { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%); display: flex; align-items: center; gap: 15px; z-index: 10; }
+        
+        /* Gantt (Fiel) */
+        .gantt-wrapper { display: flex; flex-direction: column; height: 100%; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
+        .gantt-header { display: flex; margin-left: 140px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px; margin-bottom: 10px; }
+        .gantt-month { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 700; color: #94A3B8; border-left: 1px dashed #F1F5F9; }
+        .gantt-body { position: relative; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        .gantt-row { display: flex; align-items: center; height: 26px; }
+        .gantt-label { width: 140px; flex-shrink: 0; font-size: 0.75rem; font-weight: 600; color: #334155; padding-right: 15px; text-align: right; }
+        .gantt-track { position: relative; flex-grow: 1; height: 100%; background: #F8FAFC; border-radius: 4px; border: 1px solid #E2E8F0; overflow: hidden; }
+        .gantt-bar-plan { position: absolute; top: 2px; height: 8px; background: rgba(148, 163, 184, 0.4); border-radius: 3px; border: 1px dashed #94A3B8; }
+        .gantt-bar-real { position: absolute; bottom: 2px; height: 10px; border-radius: 3px; transition: width 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .gantt-time-line { position: absolute; top: -10px; bottom: -10px; width: 2px; background: #EF4444; z-index: 20; box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); pointer-events: none; }
+        
+        /* Toggle & Inputs */
+        .exec-toggle { background: rgba(255,255,255,0.1); padding: 4px; border-radius: 6px; display: flex; gap: 4px; border: 1px solid rgba(255,255,255,0.2); }
+        .toggle-btn { border: none; background: transparent; color: #CBD5E1; font-size: 0.8rem; font-weight: 600; padding: 6px 15px; border-radius: 4px; transition: 0.3s; }
+        .toggle-btn.active { background: #38BDF8; color: #0F172A; }
+        .toggle-btn.active-real { background: var(--warning); color: #0F172A; }
 
-        /* Alerts */
-        .alert-box { padding: 15px; border-radius: 8px; margin-top: 15px; display: none; font-size: 0.9rem; }
-        .alert-danger { background: #ff7675; color: white; }
-        .alert-success { background: #55efc4; color: #006266; }
+        input[type=range] { -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #38BDF8; cursor: pointer; }
+        input[type=range]:disabled::-webkit-slider-thumb { background: var(--warning); }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-box { background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 3px solid #ccc; }
-        .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .floor-tag { position: absolute; background: rgba(15,23,42,0.8); color: #94A3B8; padding: 3px 8px; font-size: 0.65rem; font-weight: 700; border-radius: 4px; border-left: 2px solid #475569; transition: all 0.3s; opacity: 0; backdrop-filter: blur(4px); text-transform: uppercase; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+        .floor-tag.active { opacity: 1; border-left-color: #38BDF8; color: #fff; }
+        .floor-tag.done { border-left-color: var(--success); color: var(--success); }
+
+        /* Tabela EVM Analítica */
+        .eap-table { font-size: 0.75rem; color: #334155; width: 100%; border-collapse: collapse; }
+        .eap-table th { background: #F8FAFC; padding: 10px; font-weight: 700; border-bottom: 2px solid #E2E8F0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .eap-table td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .badge-cpi { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.7rem; }
     </style>
 </head>
-<body>
+<body class="pb-5">
 
-<aside>
-    <div class="brand">
-        <span><i class="fas fa-hammer"></i> PLANNER v18</span>
-        <div class="save-indicator" id="save-status-desk"><i class="fas fa-check"></i></div>
-    </div>
-    <div class="nav-category">Geral</div>
-    <div class="nav-btn active" onclick="nav('dash')"><i class="fas fa-chart-pie"></i> Dashboard</div>
-    <div class="nav-btn" onclick="nav('schedule')"><i class="fas fa-calendar-alt"></i> Cronograma</div>
-    <div class="nav-category">Engenharia</div>
-    <div class="nav-btn" onclick="nav('productivity')"><i class="fas fa-tachometer-alt"></i> Produtividade (RUP)</div>
-    <div class="nav-btn" onclick="nav('teams')"><i class="fas fa-users-cog"></i> Equipes</div>
-    <div class="nav-btn" onclick="nav('resources')"><i class="fas fa-truck-pickup"></i> Recursos</div>
-    <div class="nav-btn" onclick="nav('services')"><i class="fas fa-cubes"></i> Serviços</div>
-</aside>
-
-<nav class="bottom-nav">
-    <a href="#" class="nav-item active" onclick="nav('dash', this)"><i class="fas fa-chart-pie"></i>Dash</a>
-    <a href="#" class="nav-item" onclick="nav('schedule', this)"><i class="fas fa-calendar-check"></i>Crono</a>
-    <a href="#" class="nav-item" onclick="nav('productivity', this)"><i class="fas fa-tachometer-alt"></i>RUP</a>
-    <a href="#" class="nav-item" onclick="nav('teams', this)"><i class="fas fa-users"></i>Equipes</a>
-    <a href="#" class="nav-item" onclick="nav('resources', this)"><i class="fas fa-truck"></i>Recus</a>
-</nav>
-
-<main>
-    <div id="dash" class="screen active">
-        <h2>Dashboard</h2>
-        <div class="kpi-row">
-            <div class="kpi-box" style="border-color:var(--primary)"><div class="kpi-val" id="kpi-cost">0</div><div style="font-size:0.7rem">Total</div></div>
-            <div class="kpi-box" style="border-color:var(--equip)"><div class="kpi-val" id="kpi-equip">0</div><div style="font-size:0.7rem">Equip.</div></div>
-            <div class="kpi-box" style="border-color:var(--warning)"><div class="kpi-val" id="kpi-peak">0</div><div style="font-size:0.7rem">Pico</div></div>
-            <div class="kpi-box" style="border-color:var(--success)"><div class="kpi-val" id="kpi-tasks">0</div><div style="font-size:0.7rem">Tarefas</div></div>
+    <div class="top-navbar">
+        <div class="logo-area">
+            <div class="logo-icon"><i class="ri-building-3-line"></i></div>
+            <div>
+                <div class="fw-bold fs-5 lh-1" style="letter-spacing: 1px;">BRAVO CIVIL</div>
+                <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 600; letter-spacing: 2px;">EVM: PERFORMANCE & PROJEÇÃO</div>
+            </div>
         </div>
-        <div class="card">
-            <h3><i class="fas fa-coins"></i> Fluxo Financeiro</h3>
-            <div id="chart-finance" style="height:350px;"></div>
-        </div>
-        <div class="card">
-            <h3><i class="fas fa-users"></i> Histograma</h3>
-            <div id="chart-manpower" style="height:300px;"></div>
-        </div>
-        <button class="btn" style="width:100%" onclick="calcDash()">Atualizar</button>
-    </div>
-
-    <div id="schedule" class="screen">
-        <div class="card">
-            <h2>Cronograma Executivo</h2>
-            
-            <label style="margin-bottom:10px">Dias Trabalhados:</label>
-            <div class="toggle-group">
-                <div class="toggle-btn active" id="btn-sat" onclick="toggleDay('sat')">Sábado</div>
-                <div class="toggle-btn" id="btn-sun" onclick="toggleDay('sun')">Domingo</div>
+        <div class="d-flex align-items-center gap-4">
+            <div class="exec-toggle" id="modeToggle">
+                <button class="toggle-btn active" data-mode="planned"><i class="ri-history-line me-1"></i> Simulação Fiel</button>
+                <button class="toggle-btn" data-mode="real"><i class="ri-shield-check-fill me-1"></i> Medição Real & Financeira</button>
             </div>
-
-            <div class="form-row">
-                <div class="form-group" style="flex:2"><label>Descrição</label><input type="text" id="t-desc"></div>
+            <div class="text-end border-start border-secondary ps-4">
+                <div style="font-size: 0.65rem; color: #94A3B8; font-weight: 700; letter-spacing: 1px;">ORÇAMENTO APROVADO</div>
+                <div class="fs-4 fw-bold text-white">R$ 8.615.100</div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>Serviço</label><select id="t-svc" onchange="validate()"></select></div>
-                <div class="form-group"><label>Equipe</label><select id="t-team" onchange="validate()"></select></div>
-                <div class="form-group"><label>Qtd Total</label><input type="number" id="t-qtd" placeholder="0" oninput="validate()"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Início</label><input type="date" id="t-start" onchange="validate()"></div>
-                <div class="form-group"><label>Fim</label><input type="date" id="t-end" onchange="validate()"></div>
-                <div class="form-group"><label>Status</label><input type="text" id="t-status" readonly style="font-weight:bold; background:#eee"></div>
-            </div>
-            
-            <div id="alert-box" class="alert-box"></div>
-            <button id="btn-add" class="btn" style="width:100%" disabled onclick="addTask()">+ Adicionar Tarefa</button>
-
-            <h3 style="margin-top:20px">Lista de Tarefas</h3>
-            <div id="task-list" class="task-list"></div>
         </div>
     </div>
 
-    <div id="productivity" class="screen">
-        <div class="card">
-            <h2>Matriz de Produtividade (RUP)</h2>
-            <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">
-                Defina quanto cada <strong>Recurso</strong> (Humano ou Máquina) produz por dia em cada serviço.
-            </p>
-            <div class="table-scroll">
-                <table id="prod-table"></table>
-            </div>
-            <button class="btn btn-success" style="width:100%" onclick="save()">Salvar Alterações</button>
-        </div>
-    </div>
-
-    <div id="teams" class="screen">
-        <div class="card">
-            <h2>Composição de Equipes</h2>
-            <div class="form-row">
-                <div class="form-group"><label>Nova Equipe</label><input type="text" id="team-name" placeholder="Nome"></div>
-                <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn" onclick="createTeam()">Criar</button></div>
-            </div>
-            <div id="teams-grid" class="team-grid"></div>
-        </div>
-    </div>
-
-    <div id="resources" class="screen">
-        <div class="card">
-            <h2>Recursos</h2>
-            <div class="form-row">
-                <div class="form-group"><label>Nome</label><input type="text" id="res-name"></div>
-                <div class="form-group"><label>Tipo</label>
-                    <select id="res-cat">
-                        <option value="human">Mão de Obra</option>
-                        <option value="equip">Equipamento</option>
-                        <option value="adm">Administrativo</option>
-                    </select>
+    <div class="container-fluid px-4 mt-4">
+        
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="glass-card" id="card-1">
+                    <div class="kpi-label">Progresso Físico (EV)</div>
+                    <div class="kpi-value text-success" id="kpi-progresso">0.0%</div>
+                    <div class="kpi-sub mt-2"><i class="ri-check-double-line"></i> Valor Agregado: <span id="kpi-ev" class="fw-bold text-dark">R$ 0,00</span></div>
                 </div>
-                <div class="form-group"><label>Custo/Mês</label><input type="number" id="res-cost"></div>
-                <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn" onclick="addRes()">Add</button></div>
             </div>
-            <div id="res-list" style="display:grid; gap:10px"></div>
+            <div class="col-md-3">
+                <div class="glass-card" id="card-2">
+                    <div class="kpi-label">Desembolso Realizado (AC)</div>
+                    <div class="kpi-value" id="kpi-ac" style="color: #F59E0B;">R$ 0,00</div>
+                    <div class="kpi-sub mt-2" id="kpi-cpi-text"><i class="ri-wallet-3-line"></i> Sincronizado do CSV</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card" id="card-3">
+                    <div class="kpi-label">Projeção Final de Custo (EAC)</div>
+                    <div class="kpi-value text-primary" id="kpi-eac">R$ 8.615.100</div>
+                    <div class="kpi-sub mt-2" id="kpi-variacao">Tendência de Término no Orçamento</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card" style="background: #0F172A; border-color: #1E293B;">
+                    <div class="kpi-label" style="color: #94A3B8;">Falta Gastar Projetado (ETC)</div>
+                    <div class="kpi-value text-white" id="kpi-etc">R$ 8.615.100</div>
+                    <div class="kpi-sub mt-2" style="color: #64748B;">Baseado na Eficiência Atual (CPI)</div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="row g-3 mb-3">
+            <div class="col-lg-5">
+                <div class="glass-panel p-0 overflow-hidden" style="border: none;">
+                    <div id="viewer-container">
+                        <div id="labels-container"></div>
+                        <div class="viewer-controls" id="viewerControls">
+                            <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" id="playBtn" style="width: 45px; height: 45px; border: none; background: #38BDF8; color: #0F172A; transition: 0.3s;">
+                                <i class="ri-play-fill fs-4" id="playIcon"></i>
+                            </button>
+                            <input type="range" class="form-range flex-fill mx-3" id="timelineSlider" min="0" max="600" value="0">
+                            <div class="bg-dark text-white rounded px-3 py-1 fw-bold text-center" style="font-size: 0.85rem; min-width: 90px; border: 1px solid #334155; transition: 0.3s;" id="timeDisplay">Dia 0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="glass-panel" style="min-height: 520px;">
+                    <div class="panel-title d-flex justify-content-between">
+                        <span><i class="ri-bar-chart-horizontal-line fs-5"></i> Cronograma Global (Fiel ao MS Project)</span>
+                        <span class="badge" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;"><i class="ri-ruler-fill"></i> O 3D segue o físico, não os R$</span>
+                    </div>
+                    <div class="gantt-wrapper">
+                        <div class="gantt-header" id="gantt-months"></div>
+                        <div class="gantt-body" id="gantt-container">
+                            <div class="gantt-time-line" id="gantt-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-12">
+                <div class="glass-panel">
+                    <div class="panel-title"><i class="ri-file-chart-line fs-5 text-primary"></i> Análise Financeira por Pacote (EVM)</div>
+                    <div class="table-responsive">
+                        <table class="eap-table">
+                            <thead>
+                                <tr>
+                                    <th>Pacote de Trabalho</th>
+                                    <th>Orçado (BAC)</th>
+                                    <th>Agregado Físico (EV)</th>
+                                    <th style="color: #D97706;">Custo Realizado (AC)</th>
+                                    <th>CPI</th>
+                                    <th class="text-primary">Custo Final Projetado (EAC)</th>
+                                    <th class="text-danger">Falta Gastar (ETC)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evmTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="services" class="screen">
-        <div class="card">
-            <h2>Serviços</h2>
-            <div class="form-row">
-                <div class="form-group"><label>Nome</label><input type="text" id="svc-name"></div>
-                <div class="form-group"><label>Unidade</label><input type="text" id="svc-unit"></div>
-                <div class="form-group" style="flex:0"><label>&nbsp;</label><button class="btn" onclick="addSvc()">Add</button></div>
-            </div>
-            <div id="svc-list"></div>
-        </div>
-    </div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    <div id="edit-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:none; justify-content:center; align-items:center; padding:20px;">
-        <div style="background:white; width:100%; max-width:500px; padding:20px; border-radius:12px; max-height:90vh; overflow-y:auto;">
-            <h3>Editar Equipe</h3>
-            <input type="hidden" id="edit-id">
-            <div class="form-row"><input id="edit-name-input" placeholder="Nome"></div>
-            <div class="form-row">
-                <select id="edit-res-sel"></select>
-                <input type="number" id="edit-res-qty" value="1" style="width:80px">
-                <button class="btn btn-warning" onclick="addMemEdit()">Add</button>
-            </div>
-            <div id="edit-list" style="margin-bottom:20px; background:#f5f6fa; padding:10px; border-radius:8px;"></div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-success" style="flex:1" onclick="saveEdit()">Salvar</button>
-                <button class="btn btn-danger" style="flex:1" onclick="document.getElementById('edit-overlay').style.display='none'">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-</main>
-
-<script>
-    // --- DADOS ---
-    let db = {
-        res: JSON.parse(localStorage.getItem('p18_res')) || [{id:1, name:'Pedreiro', cat:'human', cost:3500}, {id:2, name:'Retroescavadeira', cat:'equip', cost:15000}],
-        teams: JSON.parse(localStorage.getItem('p18_teams')) || [{id:1, name:'Eq. Terraplanagem', members:[{resId:1, qty:1}, {resId:2, qty:1}]}],
-        svc: JSON.parse(localStorage.getItem('p18_svc')) || [{id:1, name:'Escavação', unit:'m³'}],
-        tasks: JSON.parse(localStorage.getItem('p18_tasks')) || [],
-        prod: JSON.parse(localStorage.getItem('p18_prod')) || {1:{1:5}, 2:{1:50}}, // Produtividade: Pedreiro faz 5, Retro faz 50
-        config: JSON.parse(localStorage.getItem('p18_config')) || {sat:true, sun:false} // Configurações de Dias
-    };
-
-    function save() {
-        localStorage.setItem('p18_res', JSON.stringify(db.res));
-        localStorage.setItem('p18_teams', JSON.stringify(db.teams));
-        localStorage.setItem('p18_svc', JSON.stringify(db.svc));
-        localStorage.setItem('p18_tasks', JSON.stringify(db.tasks));
-        localStorage.setItem('p18_prod', JSON.stringify(db.prod));
-        localStorage.setItem('p18_config', JSON.stringify(db.config));
+        // 1. CONFIGURAÇÕES GERAIS
+        const TOTAL_DAYS = 600; 
+        const BUDGET_TOTAL = 8615100;
+        const DATA_MEDICAO_REAL = 215; // O dia que corta exatamente na 5ª Laje 100%
         
-        let el = document.getElementById('save-status-desk');
-        el.style.opacity = '1'; setTimeout(()=>el.style.opacity='0', 1000);
-        renderAll();
-    }
-    function resetData(){ if(confirm("Apagar tudo?")){ localStorage.clear(); location.reload(); } }
+        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
-    function nav(id, el) {
-        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-btn, .nav-item').forEach(b=>b.classList.remove('active'));
-        if(el) el.classList.add('active');
-        
-        if(id==='dash') setTimeout(calcDash, 200);
-        if(id==='productivity') renderProdTable();
-        if(id==='schedule') initSchedule();
-        updateSelects();
-    }
-
-    // --- CONFIGURAÇÃO DE CALENDÁRIO ---
-    function initSchedule() {
-        updateToggle('sat', db.config.sat);
-        updateToggle('sun', db.config.sun);
-    }
-    function toggleDay(day) {
-        db.config[day] = !db.config[day];
-        updateToggle(day, db.config[day]);
-        save();
-        validate(); // Re-validar se datas mudarem
-    }
-    function updateToggle(id, active) {
-        const btn = document.getElementById('btn-'+id);
-        if(active) btn.classList.add('active'); else btn.classList.remove('active');
-    }
-
-    // --- CÁLCULO DE DIAS ÚTEIS (Considerando Config) ---
-    function countWorkDays(start, end) {
-        let count = 0;
-        let d = new Date(start);
-        let z = new Date(end);
-        
-        // Ajuste fuso horário para garantir contagem correta
-        d.setHours(0,0,0,0); z.setHours(0,0,0,0);
-        
-        while(d <= z) {
-            let w = d.getDay();
-            let isWork = true;
-            if(w === 0 && !db.config.sun) isWork = false; // Domingo
-            if(w === 6 && !db.config.sat) isWork = false; // Sábado
+        // 2. O CRONOGRAMA EXATO (Físico Fiel - Restaurado)
+        const cronogramaExato = [
+            { name: "Subsolo -2", isSub: true, isTipo: false, isCaixa: false, est: [45, 60], alv: [280, 295], skin: null, rEst: [50, 70], rAlv: [290, 310], rSkin: null },
+            { name: "Subsolo -1", isSub: true, isTipo: false, isCaixa: false, est: [60, 75], alv: [295, 310], skin: null, rEst: [70, 90], rAlv: [310, 330], rSkin: null },
+            { name: "Térreo", isSub: false, isTipo: false, isCaixa: false, est: [75, 95], alv: [310, 325], skin: null, rEst: [90, 115], rAlv: [330, 350], rSkin: null },
             
-            if(isWork) count++;
-            d.setDate(d.getDate() + 1);
-        }
-        return count;
-    }
+            { name: "1º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [95, 110], alv: [115, 130], skin: [145, 165], rEst: [115, 135], rAlv: [140, 160], rSkin: [175, 200] },
+            { name: "2º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [110, 125], alv: [130, 145], skin: [165, 185], rEst: [135, 155], rAlv: [160, 180], rSkin: [200, 225] },
+            { name: "3º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [125, 140], alv: [145, 160], skin: [185, 205], rEst: [155, 175], rAlv: [180, 200], rSkin: [225, 250] },
+            { name: "4º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [140, 155], alv: [160, 175], skin: [205, 225], rEst: [175, 195], rAlv: [200, 220], rSkin: [250, 275] },
+            
+            // O 5º ANDAR CORTA NO DIA 215 A 100%
+            { name: "5º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [155, 170], alv: [175, 190], skin: [225, 245], rEst: [195, 215], rAlv: [220, 240], rSkin: [275, 300] },
+            
+            { name: "6º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [170, 185], alv: [190, 205], skin: [245, 265], rEst: [215, 235], rAlv: [240, 260], rSkin: [300, 325] },
+            { name: "7º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [185, 200], alv: [205, 220], skin: [265, 285], rEst: [235, 255], rAlv: [260, 280], rSkin: [325, 350] },
+            { name: "8º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [200, 215], alv: [220, 235], skin: [285, 305], rEst: [255, 275], rAlv: [280, 300], rSkin: [350, 375] },
+            { name: "9º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [215, 230], alv: [235, 250], skin: [305, 325], rEst: [275, 295], rAlv: [300, 320], rSkin: [375, 400] },
+            { name: "10º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [230, 245], alv: [250, 265], skin: [325, 345], rEst: [295, 315], rAlv: [320, 340], rSkin: [400, 425] },
+            { name: "11º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [245, 260], alv: [265, 280], skin: [345, 365], rEst: [315, 335], rAlv: [340, 360], rSkin: [425, 450] },
+            { name: "Cobertura", isSub: false, isTipo: false, isCaixa: false, est: [260, 275], alv: [280, 295], skin: [365, 385], rEst: [335, 355], rAlv: [360, 380], rSkin: [450, 475] },
+            { name: "Caixa D'Água", isSub: false, isTipo: false, isCaixa: true, est: [275, 290], alv: [295, 310], skin: null, rEst: [355, 375], rAlv: [380, 400], rSkin: null }
+        ];
 
-    // --- VALIDAÇÃO INTELIGENTE (RUP + CALENDÁRIO) ---
-    function validate() {
-        const svcId = document.getElementById('t-svc').value;
-        const teamId = document.getElementById('t-team').value;
-        const qtd = document.getElementById('t-qtd').value;
-        const start = document.getElementById('t-start').value;
-        const end = document.getElementById('t-end').value;
-        const status = document.getElementById('t-status');
-        const alertBox = document.getElementById('alert-box');
-        const btn = document.getElementById('btn-add');
-        
-        btn.disabled = true; alertBox.style.display='none'; status.value='...';
+        // 3. DICIONÁRIO EVM (Com sua coluna Realizado lida do CSV)
+        const dataEVM = [
+            { id: 'fundacao', name: "Terreno/Fundação", bac: 300000, ac: 220000, start: 0, end: 60, rStart: 10, rEnd: 80, color: '#8b5cf6' },
+            // Estrutura soma Pilares (490k) + Lajes (635k) = 1.125M de Realizado
+            { id: 'estrutura', name: "Estrutura (Pilar/Laje)", bac: 2150000, ac: 1125000, start: 45, end: 290, rStart: 50, rEnd: 375, color: '#3b82f6' },
+            { id: 'alvenaria', name: "Alvenaria", bac: 890000, ac: 127000, start: 115, end: 325, rStart: 140, rEnd: 400, color: '#f59e0b' },
+            { id: 'revestimento', name: "Revestimentos", bac: 2082000, ac: 0, start: 160, end: 390, rStart: 200, rEnd: 440, color: '#10b981' },
+            { id: 'instalacoes', name: "Instalações", bac: 186200, ac: 0, start: 200, end: 420, rStart: 240, rEnd: 470, color: '#64748b' },
+            { id: 'esquadrias', name: "Esquadrias (Vidro)", bac: 1520000, ac: 0, start: 145, end: 385, rStart: 175, rEnd: 475, color: '#ec4899' },
+            { id: 'acabamentos', name: "Acabamentos Int.", bac: 635600, ac: 0, start: 310, end: 510, rStart: 360, rEnd: 560, color: '#06b6d4' },
+            { id: 'finalizacao', name: "Finalização Obra", bac: 851300, ac: 0, start: 480, end: 556, rStart: 530, rEnd: 600, color: '#f43f5e' }
+        ];
 
-        if(!svcId || !teamId || !qtd || !start || !end) return;
-        if(new Date(end) < new Date(start)) { status.value="Data Inválida"; return; }
-
-        // 1. Calcular Capacidade Diária da Equipe (Somando Humanos + Máquinas)
-        let team = db.teams.find(x => x.id == teamId);
-        let dailyProd = 0;
-        
-        team.members.forEach(m => {
-            // Verifica se tem RUP cadastrada para este recurso neste serviço
-            let p = (db.prod[m.resId] && db.prod[m.resId][svcId]) || 0;
-            dailyProd += p * m.qty;
-        });
-
-        if(dailyProd === 0) {
-            status.value = "Sem Produtividade";
-            alertBox.style.display = 'block';
-            alertBox.className = 'alert-box alert-danger';
-            alertBox.innerHTML = "<strong>Erro:</strong> A equipe selecionada não tem produtividade cadastrada para este serviço. Vá na aba 'Produtividade' e preencha.";
-            return;
-        }
-
-        // 2. Calcular Dias Necessários vs Disponíveis
-        let daysNeeded = Math.ceil(qtd / dailyProd);
-        let daysAvailable = countWorkDays(start+'T00:00:00', end+'T00:00:00'); // Força T00 para evitar timezone issues
-        
-        if(daysNeeded > daysAvailable) {
-            status.value = "ATRASO";
-            status.style.color = "red";
-            alertBox.style.display = 'block';
-            alertBox.className = 'alert-box alert-danger';
-            alertBox.innerHTML = `
-                <strong>Prazo Insuficiente!</strong><br>
-                Produção Diária: ${dailyProd} /dia.<br>
-                Necessário: <strong>${daysNeeded} dias</strong> de trabalho.<br>
-                Disponível: <strong>${daysAvailable} dias</strong> (conforme calendário).<br>
-                Aumente a equipe, adicione máquinas ou estenda o prazo.
+        // GANTT HTML
+        const numMonths = Math.ceil(TOTAL_DAYS / 30);
+        let monthHtml = ''; let gridHtml = '';
+        for(let m = 1; m <= numMonths; m++) { monthHtml += `<div class="gantt-month">M${m}</div>`; gridHtml += `<div class="gantt-grid-line"></div>`; }
+        document.getElementById('gantt-months').innerHTML = monthHtml;
+        let ganttLines = '';
+        dataEVM.forEach((task) => {
+            const leftP = (task.start / TOTAL_DAYS) * 100; const widthP = ((task.end - task.start) / TOTAL_DAYS) * 100;
+            const leftR = (task.rStart / TOTAL_DAYS) * 100;
+            ganttLines += `
+                <div class="gantt-row">
+                    <div class="gantt-label">${task.name}</div>
+                    <div class="gantt-track">
+                        ${gridHtml}
+                        <div class="gantt-bar-plan" style="left: ${leftP}%; width: ${widthP}%;"></div>
+                        <div class="gantt-bar-real" id="gline-${task.id}" style="left: ${leftR}%; width: 0%; background-color: ${task.color};"></div>
+                    </div>
+                </div>
             `;
-        } else {
-            status.value = "VIÁVEL";
-            status.style.color = "green";
-            alertBox.style.display = 'block';
-            alertBox.className = 'alert-box alert-success';
-            alertBox.innerHTML = `
-                <strong>Planejamento OK!</strong><br>
-                Dias Necessários: ${daysNeeded}.<br>
-                Folga: <strong>${daysAvailable - daysNeeded} dias</strong>.<br>
-                Média Real: ${(qtd/daysAvailable).toFixed(1)} /dia.
-            `;
-            btn.disabled = false;
-        }
-    }
-
-    function addTask() {
-        db.tasks.push({
-            id:Date.now(),
-            desc:document.getElementById('t-desc').value,
-            svcId:document.getElementById('t-svc').value,
-            teamId:document.getElementById('t-team').value,
-            qtd:document.getElementById('t-qtd').value,
-            start:document.getElementById('t-start').value,
-            end:document.getElementById('t-end').value
         });
-        save(); document.getElementById('t-desc').value=''; validate(); renderTasks();
-    }
+        document.getElementById('gantt-container').innerHTML += ganttLines;
 
-    // --- MATRIZ DE PRODUTIVIDADE ---
-    function renderProdTable() {
-        const table = document.getElementById('prod-table');
-        // Cabeçalho: Recurso | Serviço 1 | Serviço 2 ...
-        let html = `<thead><tr><th>Recurso</th>${db.svc.map(s => `<th>${s.name} (${s.unit})</th>`).join('')}</tr></thead><tbody>`;
-        
-        db.res.forEach(r => {
-            // Apenas Humanos e Máquinas têm produtividade física
-            if(r.cat === 'human' || r.cat === 'equip') {
-                html += `<tr><td><strong>${r.name}</strong> <small>(${r.cat==='equip'?'Eqp':'MO'})</small></td>`;
-                db.svc.forEach(s => {
-                    let val = (db.prod[r.id] && db.prod[r.id][s.id]) || 0;
-                    html += `<td><input type="number" style="width:70px; text-align:center" value="${val}" onchange="updProd(${r.id}, ${s.id}, this.value)"></td>`;
+        // 4. MOTOR 3D PREMIUM (Restaurado: Varandas, Pilares Precisos, Grua e Elevador)
+        const container = document.getElementById('viewer-container');
+        const scene = new THREE.Scene(); scene.background = null; 
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
+        camera.position.set(65, 45, 75);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.insertBefore(renderer.domElement, container.firstChild);
+        const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.target.set(0, 20, 0);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(40, 100, 50); dirLight.castShadow = true;
+        scene.add(dirLight);
+        const grid = new THREE.GridHelper(100, 20, 0x334155, 0x1E293B); grid.position.y = -0.1; scene.add(grid);
+
+        const matConcreto = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.7 });
+        const matAlvenaria = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 1.0 }); 
+        const matVidro = new THREE.MeshPhysicalMaterial({ color: 0x7dd3fc, transmission: 0.8, opacity: 1, transparent: true, roughness: 0.1 });
+        const matVidroVaranda = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.5, transparent: true, roughness: 0.2, side: THREE.DoubleSide });
+
+        const bWidth = 22, bDepth = 16;
+        let floors = []; let currentY = 0;
+        const labelsContainer = document.getElementById('labels-container');
+
+        cronogramaExato.forEach((fSched) => {
+            const h = fSched.isCaixa ? 4.0 : (fSched.isSub ? 3.5 : 3.2);
+            
+            const structGroup = new THREE.Group();
+            if(fSched.isCaixa) {
+                const caixa = new THREE.Mesh(new THREE.BoxGeometry(8, h, 8), matConcreto);
+                caixa.position.y = h/2; caixa.castShadow = true; structGroup.add(caixa);
+            } else {
+                let w = fSched.isSub ? bWidth + 2 : bWidth; let d = fSched.isSub ? bDepth + 2 : bDepth;
+                const slab = new THREE.Mesh(new THREE.BoxGeometry(w, 0.3, d), matConcreto);
+                slab.position.y = 0.15; slab.castShadow = true; slab.receiveShadow = true; structGroup.add(slab);
+                if(fSched.isTipo) {
+                    const balconySlab = new THREE.Mesh(new THREE.BoxGeometry(w - 6, 0.3, 3), matConcreto);
+                    balconySlab.position.set(0, 0.15, d/2 + 1.5); balconySlab.castShadow = true; structGroup.add(balconySlab);
+                }
+                const pillarPositions = [[-w/2+1, -d/2+1], [w/2-1, -d/2+1], [-w/2+1, d/2-1], [w/2-1, d/2-1], [0, -d/2+1], [0, d/2-1]];
+                pillarPositions.forEach(pos => {
+                    const p = new THREE.Mesh(new THREE.BoxGeometry(0.8, h, 0.8), matConcreto); p.position.set(pos[0], h/2, pos[1]); p.castShadow = true; structGroup.add(p);
                 });
-                html += `</tr>`;
             }
+            structGroup.position.y = currentY; structGroup.visible = false; scene.add(structGroup);
+
+            const masonryGroup = new THREE.Group();
+            if(!fSched.isCaixa) {
+                const wallGeo = new THREE.BoxGeometry(bWidth-1.6, h-0.3, bDepth-1.6); wallGeo.translate(0, (h-0.3)/2 + 0.3, 0);
+                const wall = new THREE.Mesh(wallGeo, matAlvenaria); wall.castShadow = true; masonryGroup.add(wall);
+            }
+            masonryGroup.position.y = currentY; masonryGroup.visible = false; scene.add(masonryGroup);
+
+            const skinGroup = new THREE.Group();
+            if(!fSched.isCaixa && !fSched.isSub) {
+                const skinGeo = new THREE.BoxGeometry(bWidth+0.1, h, bDepth+0.1); skinGeo.translate(0, h/2, 0);
+                const skin = new THREE.Mesh(skinGeo, matVidro); skinGroup.add(skin);
+                if(fSched.isTipo) {
+                    const balGeo = new THREE.BoxGeometry(bWidth - 6, 1.1, 0.1); balGeo.translate(0, 0.55, 0);
+                    const balconyGlass = new THREE.Mesh(balGeo, matVidroVaranda); balconyGlass.position.z = bDepth/2 + 2.9; skinGroup.add(balconyGlass);
+                }
+            }
+            skinGroup.position.y = currentY; skinGroup.visible = false; scene.add(skinGroup);
+
+            const tag = document.createElement('div'); tag.className = 'floor-tag'; tag.textContent = fSched.name; labelsContainer.appendChild(tag);
+            floors.push({ structGroup, masonryGroup, skinGroup, sched: fSched, height: h, baseY: currentY, label: tag });
+            currentY += h;
         });
-        html += `</tbody>`;
-        table.innerHTML = html;
-    }
-    
-    function updProd(resId, svcId, val) {
-        if(!db.prod[resId]) db.prod[resId] = {};
-        db.prod[resId][svcId] = parseFloat(val);
-    }
 
-    // --- FUNÇÕES DE APOIO (CRUD) ---
-    function renderRes() {
-        document.getElementById('res-list').innerHTML = db.res.map(r => {
-            let c = r.cat==='equip'?'#ff6b81':(r.cat==='adm'?'#2ed573':'#747d8c');
-            let i = r.cat==='equip'?'truck':(r.cat==='adm'?'user-tie':'user');
-            return `<div style="background:white;padding:10px;border-radius:8px;border-left:4px solid ${c};display:flex;justify-content:space-between;border:1px solid #eee">
-                <span><i class="fas fa-${i}"></i> ${r.name}</span>
-                <span>R$ ${r.cost}</span>
-                <button class="btn btn-danger" style="padding:5px" onclick="db.res=db.res.filter(x=>x.id!=${r.id});save()"><i class="fas fa-trash"></i></button>
-            </div>`;
-        }).join('');
-    }
-    
-    function renderTeams() {
-        document.getElementById('teams-grid').innerHTML = db.teams.map(t => {
-            let cost=0;
-            let mems = t.members.map(m => {
-                let r=db.res.find(x=>x.id==m.resId);
-                if(r) { cost+=r.cost*m.qty; return `<span class="member-badge" style="${r.cat==='equip'?'background:#ffeaa7':''}">${m.qty}x ${r.name}</span>`; }
-            }).join('');
-            return `<div class="team-card">
-                <div style="display:flex;justify-content:space-between"><b>${t.name}</b><button class="btn btn-warning" style="padding:2px 8px;font-size:0.7rem" onclick="editTeam(${t.id})"><i class="fas fa-edit"></i></button></div>
-                <div style="margin:10px 0">${mems}</div>
-                <div style="font-size:0.9rem;color:green;border-top:1px solid #eee;padding-top:5px">R$ ${cost.toLocaleString('pt-BR')} /mês</div>
-            </div>`;
-        }).join('');
-    }
+        // Grua e Elevador (Cremalheira)
+        const craneGroup = new THREE.Group(); craneGroup.position.set(-15, 0, -12);
+        const matEquip = new THREE.MeshStandardMaterial({ color: 0xF59E0B, metalness: 0.5 });
+        const mast = new THREE.Mesh(new THREE.BoxGeometry(1.5, 60, 1.5), matEquip); mast.position.y = 30; mast.castShadow = true; craneGroup.add(mast);
+        const craneJibGroup = new THREE.Group(); craneJibGroup.position.y = 58;
+        const jib = new THREE.Mesh(new THREE.BoxGeometry(45, 1, 1), matEquip); jib.position.x = 18; jib.castShadow = true; craneJibGroup.add(jib);
+        craneGroup.add(craneJibGroup); scene.add(craneGroup);
 
-    function editTeam(id){ document.getElementById('edit-overlay').style.display='flex'; let t=db.teams.find(x=>x.id==id); document.getElementById('edit-id').value=t.id; document.getElementById('edit-name-input').value=t.name; updateEditList(t); document.getElementById('edit-res-sel').innerHTML=db.res.map(r=>`<option value="${r.id}">${r.name}</option>`).join(''); }
-    function updateEditList(t){ document.getElementById('edit-list').innerHTML=t.members.map((m,i)=>{ let r=db.res.find(x=>x.id==m.resId); return `<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span>${m.qty}x ${r?r.name:'?'}</span><i class="fas fa-times" style="color:red" onclick="remMem(${i})"></i></div>`}).join(''); }
-    function addMemEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.push({resId:parseInt(document.getElementById('edit-res-sel').value), qty:parseInt(document.getElementById('edit-res-qty').value)}); updateEditList(t); }
-    function remMem(i){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.members.splice(i,1); updateEditList(t); }
-    function saveEdit(){ let t=db.teams.find(x=>x.id==document.getElementById('edit-id').value); t.name=document.getElementById('edit-name-input').value; save(); document.getElementById('edit-overlay').style.display='none'; }
+        const hoistGroup = new THREE.Group(); hoistGroup.position.set(bWidth/2 + 0.5, 0, 0);
+        const hoistMast = new THREE.Mesh(new THREE.BoxGeometry(0.8, 60, 0.8), matEquip); hoistMast.position.y = 30; hoistGroup.add(hoistMast);
+        const hoistCabin = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 2), new THREE.MeshStandardMaterial({color: 0x38BDF8}));
+        hoistCabin.position.set(1.5, 1.5, 0); hoistGroup.add(hoistCabin); scene.add(hoistGroup);
 
-    function addSvc(){ db.svc.push({id:Date.now(), name:document.getElementById('svc-name').value, unit:document.getElementById('svc-unit').value}); save(); }
-    function addRes(){ db.res.push({id:Date.now(), name:document.getElementById('res-name').value, cat:document.getElementById('res-cat').value, cost:parseFloat(document.getElementById('res-cost').value)}); save(); }
-    function createTeam(){ db.teams.push({id:Date.now(), name:document.getElementById('team-name').value, members:[]}); save(); }
+        // 5. MOTOR DE EXECUÇÃO: INTEGRAÇÃO FÍSICA E FINANCEIRA (EVM)
+        let currentMode = 'planned'; let isPlaying = false;
+        const timelineSlider = document.getElementById('timelineSlider'); const playBtn = document.getElementById('playBtn');
 
-    function renderTasks() {
-        document.getElementById('task-list').innerHTML = db.tasks.map(t => {
-            let tm = db.teams.find(x=>x.id==t.teamId);
-            return `<div style="background:white;padding:15px;border-radius:8px;border-left:4px solid #ccc;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05)">
-                <div><strong>${t.desc}</strong><br><small>${tm?tm.name:'?'}</small><br><small>Qtd: ${t.qtd}</small></div>
-                <div style="text-align:right; font-size:0.8rem">${t.start.slice(5)}<br>a ${t.end.slice(5)}</div>
-                <button class="btn btn-danger" style="padding:5px" onclick="db.tasks=db.tasks.filter(x=>x.id!=${t.id});save();renderTasks()"><i class="fas fa-trash"></i></button>
-            </div>`;
-        }).join('');
-    }
-
-    function calcDash(){
-        // Lógica de Dashboard mantida e ajustada
-        if(db.tasks.length===0) return;
-        let dMin=new Date(db.tasks[0].start); let dMax=new Date(db.tasks[0].end);
-        db.tasks.forEach(t=>{ if(new Date(t.start)<dMin)dMin=new Date(t.start); if(new Date(t.end)>dMax)dMax=new Date(t.end); });
-        let months=[]; let cur=new Date(dMin.getFullYear(), dMin.getMonth(), 1); let end=new Date(dMax.getFullYear(), dMax.getMonth()+1, 0);
-        while(cur<=end){ months.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
-        let labels=months.map(d=>d.toLocaleString('pt-BR',{month:'short',year:'2-digit'}));
-        
-        let laborCost=new Array(months.length).fill(0); let equipCost=new Array(months.length).fill(0); let teamStack={};
-        
-        db.tasks.forEach(t=>{
-            let tm=db.teams.find(x=>x.id==t.teamId); if(!tm)return;
-            if(!teamStack[tm.name]) teamStack[tm.name]=new Array(months.length).fill(0);
+        function updateAll(day) {
+            let activeDay = currentMode === 'real' ? DATA_MEDICAO_REAL : day;
             
-            let moM=0; let eqM=0; let count=0;
-            tm.members.forEach(m=>{ let r=db.res.find(x=>x.id==m.resId); if(r){ if(r.cat==='equip') eqM+=r.cost*m.qty; else { moM+=r.cost*m.qty; count+=m.qty; } } });
+            // UI
+            if(currentMode === 'real') {
+                document.getElementById('timeDisplay').textContent = `MÊS ATUAL (DIA ${DATA_MEDICAO_REAL})`;
+                document.getElementById('timeDisplay').className = "bg-warning text-dark rounded px-3 py-1 fw-bold text-center";
+                document.getElementById('playIcon').className = 'ri-lock-fill fs-4 text-dark';
+                playBtn.style.background = '#FCD34D';
+            } else {
+                document.getElementById('timeDisplay').textContent = `DIA ${Math.floor(activeDay)}`;
+                document.getElementById('timeDisplay').className = "bg-dark text-white rounded px-3 py-1 fw-bold text-center";
+                document.getElementById('playIcon').className = isPlaying ? 'ri-pause-fill fs-4' : 'ri-play-fill fs-4 text-dark';
+                playBtn.style.background = '#38BDF8';
+            }
+            document.getElementById('gantt-line').style.left = `${(activeDay/TOTAL_DAYS)*100}%`;
+
+            // CÁLCULO FÍSICO (Para o 3D e para o EV)
+            let totalEV = 0; let totalAC = 0; let totalEAC = 0;
+            const tableBody = document.getElementById('evmTableBody');
+            tableBody.innerHTML = '';
+
+            dataEVM.forEach(task => {
+                // Progresso Físico Real (da Obra) vs Planejado (Simulação Linear)
+                let pPV = Math.max(0, Math.min(1, (activeDay - task.start) / (task.end - task.start)));
+                let pReal = Math.max(0, Math.min(1, (activeDay - task.rStart) / (task.rEnd - task.rStart)));
+                
+                let physProg = currentMode === 'real' ? pReal : pPV;
+                let ev = task.bac * physProg; // Earned Value = Orçamento x % Físico
+                totalEV += ev;
+
+                // Custo Realizado (AC). No modo Real, pegamos da sua coluna do CSV. Se planejado, simulamos que gastou igual ao PV.
+                let ac = currentMode === 'real' ? task.ac : (task.bac * pPV);
+                totalAC += ac;
+
+                // CÁLCULO DE PROJEÇÃO (EAC e ETC)
+                let cpi = 1.0;
+                let eac = task.bac;
+                
+                if (currentMode === 'real') {
+                    if (ac > 0 && physProg > 0) {
+                        cpi = ev / ac;
+                        // Fórmula Padrão de Engenharia de Custos: EAC = AC + ((BAC - EV) / CPI)
+                        eac = ac + ((task.bac - ev) / cpi);
+                    } else if (ac > 0 && physProg === 0) {
+                        eac = task.bac + ac; // Gastou dinheiro sem andar a obra = Prejuízo direto na projeção
+                    }
+                } else {
+                    eac = task.bac; // Simulação inicial não tem desvios
+                }
+
+                let etc = Math.max(0, eac - ac); // Estimate to Complete (Falta Gastar)
+                totalEAC += eac;
+
+                // Tabela Analítica
+                let cpiBadgeClass = cpi >= 1 ? 'bg-success' : 'bg-danger';
+                let cpiText = cpi.toFixed(2);
+                if (physProg === 0 && ac === 0) { cpiBadgeClass = 'bg-secondary'; cpiText = '-'; }
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold text-dark">${task.name}</td>
+                        <td>${formatBRL(task.bac)}</td>
+                        <td>${formatBRL(ev)} <span class="text-muted small">(${(physProg*100).toFixed(1)}%)</span></td>
+                        <td style="color: #D97706; font-weight: 600;">${formatBRL(ac)}</td>
+                        <td><span class="badge-cpi ${cpiBadgeClass} text-white">${cpiText}</span></td>
+                        <td class="text-primary fw-bold">${formatBRL(eac)}</td>
+                        <td class="text-danger fw-bold">${formatBRL(etc)}</td>
+                    </tr>
+                `;
+
+                // Update Gantt Bar
+                const gline = document.getElementById(`gline-${task.id}`);
+                if(gline) { gline.style.width = `${physProg * 100}%`; gline.style.backgroundColor = currentMode === 'real' ? '#F59E0B' : task.color; }
+            });
+
+            // ATUALIZAÇÃO DOS KPIS
+            let globalPhysical = (totalEV / BUDGET_TOTAL) * 100;
+            document.getElementById('kpi-progresso').textContent = globalPhysical.toFixed(1) + '%';
+            document.getElementById('kpi-ev').textContent = formatBRL(totalEV);
+            document.getElementById('kpi-ac').textContent = formatBRL(totalAC);
+            document.getElementById('kpi-ac').className = currentMode === 'real' ? "kpi-value text-warning" : "kpi-value text-dark";
             
-            let tS=new Date(t.start); let tE=new Date(t.end);
-            months.forEach((mDate,i)=>{
-                let mS=new Date(mDate.getFullYear(), mDate.getMonth(), 1); let mE=new Date(mDate.getFullYear(), mDate.getMonth()+1, 0);
-                if(tS<=mE && tE>=mS){ laborCost[i]+=moM; equipCost[i]+=eqM; teamStack[tm.name][i]+=count; }
+            document.getElementById('kpi-eac').textContent = formatBRL(totalEAC);
+            document.getElementById('kpi-etc').textContent = formatBRL(totalEAC - totalAC);
+            
+            let variacao = totalEAC - BUDGET_TOTAL;
+            if(currentMode === 'real') {
+                document.getElementById('kpi-variacao').innerHTML = variacao > 0 
+                    ? `<span class="text-danger"><i class="ri-arrow-up-circle-fill"></i> +${formatBRL(variacao)} vs Orçamento Original</span>` 
+                    : `<span class="text-success"><i class="ri-check-double-line"></i> Obra dentro do Orçamento</span>`;
+            } else {
+                document.getElementById('kpi-variacao').innerHTML = `Tendência de Término Perfeita na Linha Base`;
+            }
+
+            // ATUALIZAÇÃO 3D (FIEL AO FÍSICO)
+            let maxHeight = 0;
+            floors.forEach(f => {
+                let pEst = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rEst[0]:f.sched.est[0])) / ((currentMode==='real'?f.sched.rEst[1]:f.sched.est[1]) - (currentMode==='real'?f.sched.rEst[0]:f.sched.est[0]))));
+                let pAlv = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rAlv[0]:f.sched.alv[0])) / ((currentMode==='real'?f.sched.rAlv[1]:f.sched.alv[1]) - (currentMode==='real'?f.sched.rAlv[0]:f.sched.alv[0]))));
+                
+                let pSkin = 0;
+                if(f.sched.skin) {
+                    pSkin = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rSkin[0]:f.sched.skin[0])) / ((currentMode==='real'?f.sched.rSkin[1]:f.sched.skin[1]) - (currentMode==='real'?f.sched.rSkin[0]:f.sched.skin[0]))));
+                }
+
+                // REGRA DO MODO REAL: Só aparece se a medição física do pav. for estritamente = 1.0 (100% Concluído)
+                if(currentMode === 'real') {
+                    pEst = pEst >= 1.0 ? 1 : 0;
+                    pAlv = pAlv >= 1.0 ? 1 : 0;
+                    pSkin = pSkin >= 1.0 ? 1 : 0;
+                }
+
+                if (pEst > 0) { f.structGroup.visible = true; f.structGroup.scale.y = Math.max(0.001, pEst); maxHeight = Math.max(maxHeight, f.baseY + f.height); } else f.structGroup.visible = false;
+                if (pAlv > 0) { f.masonryGroup.visible = true; f.masonryGroup.scale.y = Math.max(0.001, pAlv); } else f.masonryGroup.visible = false;
+                if (pSkin > 0) { f.skinGroup.visible = true; f.skinGroup.scale.y = Math.max(0.001, pSkin); } else f.skinGroup.visible = false;
+
+                if(pEst > 0) { f.label.classList.add('active'); if(pSkin >= 1 || (f.sched.isCaixa && pEst >= 1) || (f.sched.isSub && pAlv >= 1)) f.label.classList.add('done'); else f.label.classList.remove('done'); } 
+                else f.label.classList.remove('active', 'done');
+            });
+
+            craneGroup.visible = activeDay > dataEVM[1].start && activeDay < (currentMode === 'planned' ? 530 : 580);
+            craneJibGroup.position.y += (Math.max(30, maxHeight + 10) - craneJibGroup.position.y) * 0.1;
+            mast.scale.y = craneJibGroup.position.y / 60; mast.position.y = craneJibGroup.position.y / 2;
+
+            hoistGroup.visible = activeDay > dataEVM[2].start && activeDay < 550;
+            hoistMast.scale.y = (maxHeight + 5) / 60; hoistMast.position.y = (maxHeight + 5) / 2;
+            window.maxStructureHeight = maxHeight;
+        }
+
+        // EVENTOS
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.toggle-btn').forEach(b => { b.classList.remove('active', 'active-real'); });
+                currentMode = e.target.dataset.mode;
+                if(currentMode === 'real') {
+                    e.target.classList.add('active-real'); isPlaying = false;
+                    timelineSlider.disabled = true; playBtn.disabled = true; document.getElementById('viewerControls').style.opacity = '0.7';
+                    document.getElementById('card-1').classList.add('real-mode'); document.getElementById('card-2').classList.add('real-mode');
+                    updateAll(DATA_MEDICAO_REAL);
+                } else {
+                    e.target.classList.add('active'); timelineSlider.disabled = false; playBtn.disabled = false; document.getElementById('viewerControls').style.opacity = '1';
+                    document.getElementById('card-1').classList.remove('real-mode'); document.getElementById('card-2').classList.remove('real-mode');
+                    updateAll(parseFloat(timelineSlider.value));
+                }
             });
         });
-        
-        document.getElementById('kpi-cost').innerText="R$ "+(laborCost.reduce((a,b)=>a+b,0)+equipCost.reduce((a,b)=>a+b,0)).toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
-        document.getElementById('kpi-equip').innerText="R$ "+equipCost.reduce((a,b)=>a+b,0).toLocaleString('pt-BR',{maximumFractionDigits:0, notations:'compact'});
-        
-        Plotly.newPlot('chart-finance', [{x:labels,y:laborCost,name:'MO',type:'bar'}, {x:labels,y:equipCost,name:'Equip',type:'bar',marker:{color:'#ff6b81'}}], {barmode:'stack',margin:{t:30,b:30,l:30,r:30}});
-        let traces=[]; for(let k in teamStack) traces.push({x:labels, y:teamStack[k], name:k, type:'bar'});
-        Plotly.newPlot('chart-manpower', traces, {barmode:'stack',margin:{t:30,b:30,l:30,r:30}});
-    }
 
-    function renderSvc(){ document.getElementById('svc-list').innerHTML=db.svc.map(s=>`<div style="padding:10px;background:white;margin-bottom:5px;border-radius:4px">${s.name} (${s.unit})</div>`).join(''); }
-    function updateSelects(){ const f=(id,l)=>document.getElementById(id).innerHTML='<option value="">...</option>'+l.map(i=>`<option value="${i.id}">${i.name}</option>`).join(''); f('t-svc',db.svc); f('t-team',db.teams); f('edit-res-sel',db.res); }
-    function renderAll(){ renderRes(); renderTeams(); renderTasks(); renderSvc(); updateSelects(); }
+        playBtn.addEventListener('click', () => { if(currentMode === 'real') return; isPlaying = !isPlaying; updateAll(parseFloat(timelineSlider.value)); });
+        timelineSlider.addEventListener('input', e => updateAll(parseFloat(e.target.value)));
 
-    renderAll(); setTimeout(calcDash, 500);
-</script>
+        window.addEventListener('resize', () => { camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); });
+        
+        const clock = new THREE.Clock(); const tempV = new THREE.Vector3();
+        function animate() {
+            requestAnimationFrame(animate); controls.update(); const time = clock.getElapsedTime();
+            if (isPlaying && currentMode === 'planned') { let v = parseFloat(timelineSlider.value) + 0.6; if (v > TOTAL_DAYS) { v = 0; isPlaying = false; document.getElementById('playIcon').className = 'ri-play-fill fs-4 text-dark'; } timelineSlider.value = v; updateAll(v); }
+            
+            if (craneGroup.visible) craneJibGroup.rotation.y = time * 0.3;
+            if (hoistGroup.visible && window.maxStructureHeight > 10) { hoistCabin.position.y = (Math.sin(time * 1.5) * 0.5 + 0.5) * (window.maxStructureHeight - 3) + 1.5; }
+
+            floors.forEach(f => {
+                if (f.label.classList.contains('active')) {
+                    tempV.set(bWidth/2 + 2, f.baseY + f.height/2, 0); tempV.project(camera);
+                    const rect = container.getBoundingClientRect();
+                    f.label.style.transform = `translate(0, -50%) translate(${(tempV.x * .5 + .5) * rect.width}px, ${(tempV.y * -.5 + .5) * rect.height}px)`;
+                }
+            });
+            renderer.render(scene, camera);
+        }
+        updateAll(0); animate();
+    </script>
 </body>
 </html>
