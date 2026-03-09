@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Bravo CIVIL - Executive 5D (EVM & Cronograma Fiel)</title>
+    <title>Bravo CIVIL - Executive 5D (EVM & Curva S)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
     <script type="importmap">
       {
@@ -22,28 +23,23 @@
         :root { --primary: #0A192F; --secondary: #1E293B; --accent: #2563EB; --bg: #F1F5F9; --success: #10B981; --warning: #F59E0B; --danger: #EF4444; }
         body { background: var(--bg); font-family: 'Inter', sans-serif; color: #334155; overflow-x: hidden; }
         
-        /* Topbar */
         .top-navbar { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000; position: sticky; top: 0; }
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-icon { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; color: #38BDF8; font-size: 1.5rem; }
         
-        /* Cards & Panels */
         .glass-card { background: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative;}
         .glass-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #38BDF8; border-radius: 10px 0 0 10px; }
         .glass-card.real-mode::before { background: var(--warning); }
         .glass-panel { background: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; height: 100%; display: flex; flex-direction: column; }
         .panel-title { font-size: 0.85rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px; }
         
-        /* Typography */
         .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; font-weight: 700; margin-bottom: 5px; }
         .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 5px; }
         .kpi-sub { font-size: 0.75rem; font-weight: 600; color: #94A3B8; }
         
-        /* 3D Viewer */
         #viewer-container { border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0F172A 0%, #020617 100%); position: relative; min-height: 520px; display: flex; flex-direction: column; box-shadow: inset 0 0 40px rgba(0,0,0,0.8); }
         .viewer-controls { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%); display: flex; align-items: center; gap: 15px; z-index: 10; }
         
-        /* Gantt (Fiel) */
         .gantt-wrapper { display: flex; flex-direction: column; height: 100%; overflow-y: auto; overflow-x: hidden; padding-right: 5px; }
         .gantt-header { display: flex; margin-left: 140px; border-bottom: 2px solid #E2E8F0; padding-bottom: 5px; margin-bottom: 10px; }
         .gantt-month { flex: 1; text-align: center; font-size: 0.65rem; font-weight: 700; color: #94A3B8; border-left: 1px dashed #F1F5F9; }
@@ -55,7 +51,6 @@
         .gantt-bar-real { position: absolute; bottom: 2px; height: 10px; border-radius: 3px; transition: width 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .gantt-time-line { position: absolute; top: -10px; bottom: -10px; width: 2px; background: #EF4444; z-index: 20; box-shadow: 0 0 5px rgba(239, 68, 68, 0.5); pointer-events: none; }
         
-        /* Toggle & Inputs */
         .exec-toggle { background: rgba(255,255,255,0.1); padding: 4px; border-radius: 6px; display: flex; gap: 4px; border: 1px solid rgba(255,255,255,0.2); }
         .toggle-btn { border: none; background: transparent; color: #CBD5E1; font-size: 0.8rem; font-weight: 600; padding: 6px 15px; border-radius: 4px; transition: 0.3s; }
         .toggle-btn.active { background: #38BDF8; color: #0F172A; }
@@ -69,7 +64,6 @@
         .floor-tag.active { opacity: 1; border-left-color: #38BDF8; color: #fff; }
         .floor-tag.done { border-left-color: var(--success); color: var(--success); }
 
-        /* Tabela EVM Analítica */
         .eap-table { font-size: 0.75rem; color: #334155; width: 100%; border-collapse: collapse; }
         .eap-table th { background: #F8FAFC; padding: 10px; font-weight: 700; border-bottom: 2px solid #E2E8F0; text-transform: uppercase; letter-spacing: 0.5px; }
         .eap-table td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
@@ -83,13 +77,13 @@
             <div class="logo-icon"><i class="ri-building-3-line"></i></div>
             <div>
                 <div class="fw-bold fs-5 lh-1" style="letter-spacing: 1px;">BRAVO CIVIL</div>
-                <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 600; letter-spacing: 2px;">EVM: PERFORMANCE & PROJEÇÃO</div>
+                <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 600; letter-spacing: 2px;">BIM 5D: PERFORMANCE & CURVA S</div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-4">
             <div class="exec-toggle" id="modeToggle">
                 <button class="toggle-btn active" data-mode="planned"><i class="ri-history-line me-1"></i> Simulação Fiel</button>
-                <button class="toggle-btn" data-mode="real"><i class="ri-shield-check-fill me-1"></i> Medição Real & Financeira</button>
+                <button class="toggle-btn" data-mode="real"><i class="ri-shield-check-fill me-1"></i> Medição ERP (Dia 215)</button>
             </div>
             <div class="text-end border-start border-secondary ps-4">
                 <div style="font-size: 0.65rem; color: #94A3B8; font-weight: 700; letter-spacing: 1px;">ORÇAMENTO APROVADO</div>
@@ -103,30 +97,30 @@
         <div class="row g-3 mb-3">
             <div class="col-md-3">
                 <div class="glass-card" id="card-1">
-                    <div class="kpi-label">Progresso Físico (EV)</div>
-                    <div class="kpi-value text-success" id="kpi-progresso">0.0%</div>
-                    <div class="kpi-sub mt-2"><i class="ri-check-double-line"></i> Valor Agregado: <span id="kpi-ev" class="fw-bold text-dark">R$ 0,00</span></div>
+                    <div class="kpi-label">Desembolso Realizado (AC)</div>
+                    <div class="kpi-value text-warning" id="kpi-ac">R$ 0,00</div>
+                    <div class="kpi-sub mt-2"><i class="ri-wallet-3-line"></i> Sincronizado do CSV</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="glass-card" id="card-2">
-                    <div class="kpi-label">Desembolso Realizado (AC)</div>
-                    <div class="kpi-value" id="kpi-ac" style="color: #F59E0B;">R$ 0,00</div>
-                    <div class="kpi-sub mt-2" id="kpi-cpi-text"><i class="ri-wallet-3-line"></i> Sincronizado do CSV</div>
+                    <div class="kpi-label">Variação de Custo (CV)</div>
+                    <div class="kpi-value" id="kpi-cv" style="color: #334155;">R$ 0,00</div>
+                    <div class="kpi-sub mt-2">Valores negativos indicam prejuízo</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="glass-card" id="card-3">
-                    <div class="kpi-label">Projeção Final de Custo (EAC)</div>
-                    <div class="kpi-value text-primary" id="kpi-eac">R$ 8.615.100</div>
-                    <div class="kpi-sub mt-2" id="kpi-variacao">Tendência de Término no Orçamento</div>
+                    <div class="kpi-label">Variação de Prazo (SV)</div>
+                    <div class="kpi-value" id="kpi-sv" style="color: #334155;">R$ 0,00</div>
+                    <div class="kpi-sub mt-2">Atraso convertido em Custo Financeiro</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="glass-card" style="background: #0F172A; border-color: #1E293B;">
-                    <div class="kpi-label" style="color: #94A3B8;">Falta Gastar Projetado (ETC)</div>
-                    <div class="kpi-value text-white" id="kpi-etc">R$ 8.615.100</div>
-                    <div class="kpi-sub mt-2" style="color: #64748B;">Baseado na Eficiência Atual (CPI)</div>
+                    <div class="kpi-label" style="color: #94A3B8;">Projeção Final de Custo (EAC)</div>
+                    <div class="kpi-value text-white" id="kpi-eac">R$ 8.615.100</div>
+                    <div class="kpi-sub mt-2" style="color: #64748B;" id="kpi-eac-sub">Falta gastar: R$ 8.615.100 (ETC)</div>
                 </div>
             </div>
         </div>
@@ -150,8 +144,8 @@
             <div class="col-lg-7">
                 <div class="glass-panel" style="min-height: 520px;">
                     <div class="panel-title d-flex justify-content-between">
-                        <span><i class="ri-bar-chart-horizontal-line fs-5"></i> Cronograma Global (Fiel ao MS Project)</span>
-                        <span class="badge" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;"><i class="ri-ruler-fill"></i> O 3D segue o físico, não os R$</span>
+                        <span><i class="ri-bar-chart-horizontal-line fs-5"></i> Cronograma Global Físico</span>
+                        <span class="badge" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;"><i class="ri-ruler-fill"></i> Corte exato na 5ª Laje no Modo Real</span>
                     </div>
                     <div class="gantt-wrapper">
                         <div class="gantt-header" id="gantt-months"></div>
@@ -164,25 +158,33 @@
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-lg-12">
+            <div class="col-lg-7">
                 <div class="glass-panel">
-                    <div class="panel-title"><i class="ri-file-chart-line fs-5 text-primary"></i> Análise Financeira por Pacote (EVM)</div>
+                    <div class="panel-title"><i class="ri-file-chart-line fs-5 text-primary"></i> Análise de Desempenho por Pacote (EVM)</div>
                     <div class="table-responsive">
                         <table class="eap-table">
                             <thead>
                                 <tr>
                                     <th>Pacote de Trabalho</th>
                                     <th>Orçado (BAC)</th>
-                                    <th>Agregado Físico (EV)</th>
-                                    <th style="color: #D97706;">Custo Realizado (AC)</th>
+                                    <th>Físico (EV)</th>
+                                    <th style="color: #D97706;">Realizado (AC)</th>
                                     <th>CPI</th>
-                                    <th class="text-primary">Custo Final Projetado (EAC)</th>
-                                    <th class="text-danger">Falta Gastar (ETC)</th>
+                                    <th class="text-primary">Proj. Final (EAC)</th>
                                 </tr>
                             </thead>
                             <tbody id="evmTableBody">
                                 </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-5">
+                <div class="glass-panel">
+                    <div class="panel-title"><i class="ri-line-chart-line fs-5 text-success"></i> Curva S de Valor Agregado</div>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="sCurveChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -196,24 +198,20 @@
         // 1. CONFIGURAÇÕES GERAIS
         const TOTAL_DAYS = 600; 
         const BUDGET_TOTAL = 8615100;
-        const DATA_MEDICAO_REAL = 215; // O dia que corta exatamente na 5ª Laje 100%
+        const DATA_MEDICAO_REAL = 215; // Corte na 5ª Laje 100%
         
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
-        // 2. O CRONOGRAMA EXATO (Físico Fiel - Restaurado)
+        // 2. O CRONOGRAMA EXATO (Físico Fiel)
         const cronogramaExato = [
             { name: "Subsolo -2", isSub: true, isTipo: false, isCaixa: false, est: [45, 60], alv: [280, 295], skin: null, rEst: [50, 70], rAlv: [290, 310], rSkin: null },
             { name: "Subsolo -1", isSub: true, isTipo: false, isCaixa: false, est: [60, 75], alv: [295, 310], skin: null, rEst: [70, 90], rAlv: [310, 330], rSkin: null },
             { name: "Térreo", isSub: false, isTipo: false, isCaixa: false, est: [75, 95], alv: [310, 325], skin: null, rEst: [90, 115], rAlv: [330, 350], rSkin: null },
-            
             { name: "1º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [95, 110], alv: [115, 130], skin: [145, 165], rEst: [115, 135], rAlv: [140, 160], rSkin: [175, 200] },
             { name: "2º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [110, 125], alv: [130, 145], skin: [165, 185], rEst: [135, 155], rAlv: [160, 180], rSkin: [200, 225] },
             { name: "3º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [125, 140], alv: [145, 160], skin: [185, 205], rEst: [155, 175], rAlv: [180, 200], rSkin: [225, 250] },
             { name: "4º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [140, 155], alv: [160, 175], skin: [205, 225], rEst: [175, 195], rAlv: [200, 220], rSkin: [250, 275] },
-            
-            // O 5º ANDAR CORTA NO DIA 215 A 100%
-            { name: "5º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [155, 170], alv: [175, 190], skin: [225, 245], rEst: [195, 215], rAlv: [220, 240], rSkin: [275, 300] },
-            
+            { name: "5º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [155, 170], alv: [175, 190], skin: [225, 245], rEst: [195, 215], rAlv: [220, 240], rSkin: [275, 300] }, // <-- Corte no 215
             { name: "6º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [170, 185], alv: [190, 205], skin: [245, 265], rEst: [215, 235], rAlv: [240, 260], rSkin: [300, 325] },
             { name: "7º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [185, 200], alv: [205, 220], skin: [265, 285], rEst: [235, 255], rAlv: [260, 280], rSkin: [325, 350] },
             { name: "8º Pav Tipo", isSub: false, isTipo: true, isCaixa: false, est: [200, 215], alv: [220, 235], skin: [285, 305], rEst: [255, 275], rAlv: [280, 300], rSkin: [350, 375] },
@@ -224,17 +222,16 @@
             { name: "Caixa D'Água", isSub: false, isTipo: false, isCaixa: true, est: [275, 290], alv: [295, 310], skin: null, rEst: [355, 375], rAlv: [380, 400], rSkin: null }
         ];
 
-        // 3. DICIONÁRIO EVM (Com sua coluna Realizado lida do CSV)
+        // 3. DICIONÁRIO EVM (Com Realizado)
         const dataEVM = [
-            { id: 'fundacao', name: "Terreno/Fundação", bac: 300000, ac: 220000, start: 0, end: 60, rStart: 10, rEnd: 80, color: '#8b5cf6' },
-            // Estrutura soma Pilares (490k) + Lajes (635k) = 1.125M de Realizado
-            { id: 'estrutura', name: "Estrutura (Pilar/Laje)", bac: 2150000, ac: 1125000, start: 45, end: 290, rStart: 50, rEnd: 375, color: '#3b82f6' },
+            { id: 'fundacao', name: "Fundação", bac: 300000, ac: 220000, start: 0, end: 60, rStart: 10, rEnd: 80, color: '#8b5cf6' },
+            { id: 'estrutura', name: "Estrutura", bac: 2150000, ac: 1125000, start: 45, end: 290, rStart: 50, rEnd: 375, color: '#3b82f6' },
             { id: 'alvenaria', name: "Alvenaria", bac: 890000, ac: 127000, start: 115, end: 325, rStart: 140, rEnd: 400, color: '#f59e0b' },
             { id: 'revestimento', name: "Revestimentos", bac: 2082000, ac: 0, start: 160, end: 390, rStart: 200, rEnd: 440, color: '#10b981' },
             { id: 'instalacoes', name: "Instalações", bac: 186200, ac: 0, start: 200, end: 420, rStart: 240, rEnd: 470, color: '#64748b' },
-            { id: 'esquadrias', name: "Esquadrias (Vidro)", bac: 1520000, ac: 0, start: 145, end: 385, rStart: 175, rEnd: 475, color: '#ec4899' },
+            { id: 'esquadrias', name: "Esquadrias", bac: 1520000, ac: 0, start: 145, end: 385, rStart: 175, rEnd: 475, color: '#ec4899' },
             { id: 'acabamentos', name: "Acabamentos Int.", bac: 635600, ac: 0, start: 310, end: 510, rStart: 360, rEnd: 560, color: '#06b6d4' },
-            { id: 'finalizacao', name: "Finalização Obra", bac: 851300, ac: 0, start: 480, end: 556, rStart: 530, rEnd: 600, color: '#f43f5e' }
+            { id: 'finalizacao', name: "Finalização", bac: 851300, ac: 0, start: 480, end: 556, rStart: 530, rEnd: 600, color: '#f43f5e' }
         ];
 
         // GANTT HTML
@@ -259,7 +256,23 @@
         });
         document.getElementById('gantt-container').innerHTML += ganttLines;
 
-        // 4. MOTOR 3D PREMIUM (Restaurado: Varandas, Pilares Precisos, Grua e Elevador)
+        // 4. CHART.JS: Configuração da Curva S
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        const ctxS = document.getElementById('sCurveChart').getContext('2d');
+        const sCurveData = { labels: [], datasets: [
+            { label: 'Planeado (PV)', data: [], borderColor: '#94A3B8', borderDash: [5, 5], tension: 0.4, pointRadius: 0, borderWidth: 2 },
+            { label: 'Agregado (EV)', data: [], borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3 },
+            { label: 'Realizado (AC)', data: [], borderColor: '#F59E0B', tension: 0.4, pointRadius: 0, borderWidth: 2 }
+        ]};
+        // Pré-calcular o Eixo X (Meses)
+        for(let m=1; m<=numMonths; m++) sCurveData.labels.push(`M${m}`);
+        
+        const sCurveChart = new Chart(ctxS, {
+            type: 'line', data: sCurveData,
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels:{boxWidth:12, font:{size:10}} } }, scales:{y:{display:false, beginAtZero:true}, x:{grid:{display:false}}} }
+        });
+
+        // 5. MOTOR 3D PREMIUM
         const container = document.getElementById('viewer-container');
         const scene = new THREE.Scene(); scene.background = null; 
         const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
@@ -274,7 +287,7 @@
         scene.add(new THREE.AmbientLight(0xffffff, 0.7));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.2); dirLight.position.set(40, 100, 50); dirLight.castShadow = true;
         scene.add(dirLight);
-        const grid = new THREE.GridHelper(100, 20, 0x334155, 0x1E293B); grid.position.y = -0.1; scene.add(grid);
+        scene.add(new THREE.GridHelper(100, 20, 0x334155, 0x1E293B));
 
         const matConcreto = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.7 });
         const matAlvenaria = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 1.0 }); 
@@ -330,7 +343,6 @@
             currentY += h;
         });
 
-        // Grua e Elevador (Cremalheira)
         const craneGroup = new THREE.Group(); craneGroup.position.set(-15, 0, -12);
         const matEquip = new THREE.MeshStandardMaterial({ color: 0xF59E0B, metalness: 0.5 });
         const mast = new THREE.Mesh(new THREE.BoxGeometry(1.5, 60, 1.5), matEquip); mast.position.y = 30; mast.castShadow = true; craneGroup.add(mast);
@@ -343,7 +355,7 @@
         const hoistCabin = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 2), new THREE.MeshStandardMaterial({color: 0x38BDF8}));
         hoistCabin.position.set(1.5, 1.5, 0); hoistGroup.add(hoistCabin); scene.add(hoistGroup);
 
-        // 5. MOTOR DE EXECUÇÃO: INTEGRAÇÃO FÍSICA E FINANCEIRA (EVM)
+        // 6. LÓGICA DE EVM E CURVA S
         let currentMode = 'planned'; let isPlaying = false;
         const timelineSlider = document.getElementById('timelineSlider'); const playBtn = document.getElementById('playBtn');
 
@@ -352,7 +364,7 @@
             
             // UI
             if(currentMode === 'real') {
-                document.getElementById('timeDisplay').textContent = `MÊS ATUAL (DIA ${DATA_MEDICAO_REAL})`;
+                document.getElementById('timeDisplay').textContent = `DIA ${DATA_MEDICAO_REAL} (REAL)`;
                 document.getElementById('timeDisplay').className = "bg-warning text-dark rounded px-3 py-1 fw-bold text-center";
                 document.getElementById('playIcon').className = 'ri-lock-fill fs-4 text-dark';
                 playBtn.style.background = '#FCD34D';
@@ -364,101 +376,123 @@
             }
             document.getElementById('gantt-line').style.left = `${(activeDay/TOTAL_DAYS)*100}%`;
 
-            // CÁLCULO FÍSICO (Para o 3D e para o EV)
-            let totalEV = 0; let totalAC = 0; let totalEAC = 0;
+            let totalEV = 0; let totalAC = 0; let totalPV = 0; let totalEAC = 0;
             const tableBody = document.getElementById('evmTableBody');
             tableBody.innerHTML = '';
 
             dataEVM.forEach(task => {
-                // Progresso Físico Real (da Obra) vs Planejado (Simulação Linear)
                 let pPV = Math.max(0, Math.min(1, (activeDay - task.start) / (task.end - task.start)));
                 let pReal = Math.max(0, Math.min(1, (activeDay - task.rStart) / (task.rEnd - task.rStart)));
                 
                 let physProg = currentMode === 'real' ? pReal : pPV;
-                let ev = task.bac * physProg; // Earned Value = Orçamento x % Físico
+                let ev = task.bac * physProg; 
+                let pv = task.bac * pPV;
                 totalEV += ev;
+                totalPV += pv;
 
-                // Custo Realizado (AC). No modo Real, pegamos da sua coluna do CSV. Se planejado, simulamos que gastou igual ao PV.
+                // AC (Realizado)
                 let ac = currentMode === 'real' ? task.ac : (task.bac * pPV);
                 totalAC += ac;
 
-                // CÁLCULO DE PROJEÇÃO (EAC e ETC)
-                let cpi = 1.0;
-                let eac = task.bac;
-                
+                // EAC e CPI
+                let cpi = 1.0; let eac = task.bac;
                 if (currentMode === 'real') {
                     if (ac > 0 && physProg > 0) {
                         cpi = ev / ac;
-                        // Fórmula Padrão de Engenharia de Custos: EAC = AC + ((BAC - EV) / CPI)
                         eac = ac + ((task.bac - ev) / cpi);
-                    } else if (ac > 0 && physProg === 0) {
-                        eac = task.bac + ac; // Gastou dinheiro sem andar a obra = Prejuízo direto na projeção
-                    }
-                } else {
-                    eac = task.bac; // Simulação inicial não tem desvios
+                    } else if (ac > 0 && physProg === 0) { eac = task.bac + ac; cpi = 0; }
                 }
-
-                let etc = Math.max(0, eac - ac); // Estimate to Complete (Falta Gastar)
                 totalEAC += eac;
 
-                // Tabela Analítica
-                let cpiBadgeClass = cpi >= 1 ? 'bg-success' : 'bg-danger';
-                let cpiText = cpi.toFixed(2);
-                if (physProg === 0 && ac === 0) { cpiBadgeClass = 'bg-secondary'; cpiText = '-'; }
-
+                // Atualizar Tabela
+                let cpiClass = cpi >= 1 ? 'bg-success' : 'bg-danger';
+                if(physProg===0 && ac===0) { cpiClass = 'bg-secondary'; cpi = 0; }
+                
                 tableBody.innerHTML += `
                     <tr>
                         <td class="fw-bold text-dark">${task.name}</td>
                         <td>${formatBRL(task.bac)}</td>
-                        <td>${formatBRL(ev)} <span class="text-muted small">(${(physProg*100).toFixed(1)}%)</span></td>
+                        <td>${formatBRL(ev)} <span class="text-muted small">(${(physProg*100).toFixed(0)}%)</span></td>
                         <td style="color: #D97706; font-weight: 600;">${formatBRL(ac)}</td>
-                        <td><span class="badge-cpi ${cpiBadgeClass} text-white">${cpiText}</span></td>
+                        <td><span class="badge-cpi ${cpiClass} text-white">${cpi === 0 ? '-' : cpi.toFixed(2)}</span></td>
                         <td class="text-primary fw-bold">${formatBRL(eac)}</td>
-                        <td class="text-danger fw-bold">${formatBRL(etc)}</td>
                     </tr>
                 `;
 
-                // Update Gantt Bar
                 const gline = document.getElementById(`gline-${task.id}`);
                 if(gline) { gline.style.width = `${physProg * 100}%`; gline.style.backgroundColor = currentMode === 'real' ? '#F59E0B' : task.color; }
             });
 
-            // ATUALIZAÇÃO DOS KPIS
-            let globalPhysical = (totalEV / BUDGET_TOTAL) * 100;
-            document.getElementById('kpi-progresso').textContent = globalPhysical.toFixed(1) + '%';
-            document.getElementById('kpi-ev').textContent = formatBRL(totalEV);
-            document.getElementById('kpi-ac').textContent = formatBRL(totalAC);
-            document.getElementById('kpi-ac').className = currentMode === 'real' ? "kpi-value text-warning" : "kpi-value text-dark";
+            // Atualizar Curva S (Chart.js)
+            let dataPV = []; let dataEV = []; let dataAC = [];
+            let accPV = 0; let accEV = 0; let accAC = 0;
             
-            document.getElementById('kpi-eac').textContent = formatBRL(totalEAC);
-            document.getElementById('kpi-etc').textContent = formatBRL(totalEAC - totalAC);
-            
-            let variacao = totalEAC - BUDGET_TOTAL;
-            if(currentMode === 'real') {
-                document.getElementById('kpi-variacao').innerHTML = variacao > 0 
-                    ? `<span class="text-danger"><i class="ri-arrow-up-circle-fill"></i> +${formatBRL(variacao)} vs Orçamento Original</span>` 
-                    : `<span class="text-success"><i class="ri-check-double-line"></i> Obra dentro do Orçamento</span>`;
-            } else {
-                document.getElementById('kpi-variacao').innerHTML = `Tendência de Término Perfeita na Linha Base`;
+            for(let m=1; m<=numMonths; m++) {
+                let mDayEnd = m * 30;
+                let mPV = 0; let mEV = 0; let mAC = 0;
+                
+                dataEVM.forEach(t => {
+                    // Cálculo acumulado simplificado para o gráfico
+                    let pctPV = Math.max(0, Math.min(1, (mDayEnd - t.start) / (t.end - t.start)));
+                    mPV += t.bac * pctPV;
+                    
+                    if (mDayEnd <= DATA_MEDICAO_REAL + 30) {
+                        let pctEV = Math.max(0, Math.min(1, (mDayEnd - t.rStart) / (t.rEnd - t.rStart)));
+                        mEV += t.bac * pctEV;
+                        
+                        // Distribuir o AC reportado no CSV de forma proporcional ao tempo até a data atual
+                        if(t.ac > 0) {
+                            let durReal = Math.min(mDayEnd, DATA_MEDICAO_REAL) - t.rStart;
+                            let totalDurReal = t.rEnd - t.rStart;
+                            let pctAC = Math.max(0, Math.min(1, durReal / totalDurReal));
+                            // Se a data de medição já passou, força 100% do AC reportado
+                            if (mDayEnd > DATA_MEDICAO_REAL) pctAC = 1;
+                            mAC += t.ac * pctAC;
+                        }
+                    }
+                });
+                
+                dataPV.push(mPV);
+                if (mDayEnd <= DATA_MEDICAO_REAL + 30 && currentMode === 'real') {
+                    dataEV.push(mEV); dataAC.push(mAC);
+                } else if (currentMode === 'planned') {
+                    // No modo planeado, EV e AC seguem a simulação perfeita
+                    dataEV.push(mDayEnd <= activeDay ? mPV : null);
+                    dataAC.push(mDayEnd <= activeDay ? mPV : null);
+                }
             }
+            sCurveChart.data.datasets[0].data = dataPV;
+            sCurveChart.data.datasets[1].data = dataEV;
+            sCurveChart.data.datasets[2].data = dataAC;
+            sCurveChart.update();
 
-            // ATUALIZAÇÃO 3D (FIEL AO FÍSICO)
+            // Atualizar KPIs Superiores
+            let cv = totalEV - totalAC; // Cost Variance
+            let sv = totalEV - totalPV; // Schedule Variance
+
+            document.getElementById('kpi-ac').textContent = formatBRL(totalAC);
+            document.getElementById('kpi-eac').textContent = formatBRL(totalEAC);
+            document.getElementById('kpi-eac-sub').textContent = `Falta gastar (ETC): ${formatBRL(totalEAC - totalAC)}`;
+            
+            let cvEl = document.getElementById('kpi-cv');
+            cvEl.textContent = formatBRL(cv);
+            cvEl.className = cv < 0 ? "kpi-value text-danger" : "kpi-value text-success";
+            
+            let svEl = document.getElementById('kpi-sv');
+            svEl.textContent = formatBRL(sv);
+            svEl.className = sv < 0 ? "kpi-value text-danger" : "kpi-value text-success";
+
+            // ATUALIZAÇÃO 3D (Corte Cirúrgico Físico)
             let maxHeight = 0;
             floors.forEach(f => {
                 let pEst = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rEst[0]:f.sched.est[0])) / ((currentMode==='real'?f.sched.rEst[1]:f.sched.est[1]) - (currentMode==='real'?f.sched.rEst[0]:f.sched.est[0]))));
                 let pAlv = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rAlv[0]:f.sched.alv[0])) / ((currentMode==='real'?f.sched.rAlv[1]:f.sched.alv[1]) - (currentMode==='real'?f.sched.rAlv[0]:f.sched.alv[0]))));
-                
                 let pSkin = 0;
                 if(f.sched.skin) {
                     pSkin = Math.max(0, Math.min(1, (activeDay - (currentMode==='real'?f.sched.rSkin[0]:f.sched.skin[0])) / ((currentMode==='real'?f.sched.rSkin[1]:f.sched.skin[1]) - (currentMode==='real'?f.sched.rSkin[0]:f.sched.skin[0]))));
                 }
 
-                // REGRA DO MODO REAL: Só aparece se a medição física do pav. for estritamente = 1.0 (100% Concluído)
-                if(currentMode === 'real') {
-                    pEst = pEst >= 1.0 ? 1 : 0;
-                    pAlv = pAlv >= 1.0 ? 1 : 0;
-                    pSkin = pSkin >= 1.0 ? 1 : 0;
-                }
+                if(currentMode === 'real') { pEst = pEst >= 1.0 ? 1 : 0; pAlv = pAlv >= 1.0 ? 1 : 0; pSkin = pSkin >= 1.0 ? 1 : 0; }
 
                 if (pEst > 0) { f.structGroup.visible = true; f.structGroup.scale.y = Math.max(0.001, pEst); maxHeight = Math.max(maxHeight, f.baseY + f.height); } else f.structGroup.visible = false;
                 if (pAlv > 0) { f.masonryGroup.visible = true; f.masonryGroup.scale.y = Math.max(0.001, pAlv); } else f.masonryGroup.visible = false;
@@ -471,7 +505,6 @@
             craneGroup.visible = activeDay > dataEVM[1].start && activeDay < (currentMode === 'planned' ? 530 : 580);
             craneJibGroup.position.y += (Math.max(30, maxHeight + 10) - craneJibGroup.position.y) * 0.1;
             mast.scale.y = craneJibGroup.position.y / 60; mast.position.y = craneJibGroup.position.y / 2;
-
             hoistGroup.visible = activeDay > dataEVM[2].start && activeDay < 550;
             hoistMast.scale.y = (maxHeight + 5) / 60; hoistMast.position.y = (maxHeight + 5) / 2;
             window.maxStructureHeight = maxHeight;
@@ -485,11 +518,11 @@
                 if(currentMode === 'real') {
                     e.target.classList.add('active-real'); isPlaying = false;
                     timelineSlider.disabled = true; playBtn.disabled = true; document.getElementById('viewerControls').style.opacity = '0.7';
-                    document.getElementById('card-1').classList.add('real-mode'); document.getElementById('card-2').classList.add('real-mode');
+                    document.getElementById('card-1').classList.add('real-mode'); 
                     updateAll(DATA_MEDICAO_REAL);
                 } else {
                     e.target.classList.add('active'); timelineSlider.disabled = false; playBtn.disabled = false; document.getElementById('viewerControls').style.opacity = '1';
-                    document.getElementById('card-1').classList.remove('real-mode'); document.getElementById('card-2').classList.remove('real-mode');
+                    document.getElementById('card-1').classList.remove('real-mode'); 
                     updateAll(parseFloat(timelineSlider.value));
                 }
             });
