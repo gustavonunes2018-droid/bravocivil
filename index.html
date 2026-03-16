@@ -79,14 +79,25 @@
         .sobrado-info strong { color: var(--text-muted); }
         .sobrado-cost { font-size: 22px; font-weight: bold; color: var(--primary); margin-top: 15px; text-align: center; background-color: #e2e8f0; border-radius: 4px; padding: 8px;}
         
-        /* Otimização A3 para PDF */
-        .modo-impressao { padding: 10px !important; background: white !important; width: 100% !important; }
-        .modo-impressao .table-wrapper { max-height: none !important; overflow: visible !important; width: 100% !important; }
-        .modo-impressao table { font-size: 10px !important; width: 100% !important; table-layout: auto; }
-        .modo-impressao th, .modo-impressao td { padding: 5px !important; white-space: normal !important; word-wrap: break-word; }
-        .modo-impressao td:nth-child(n+3) { white-space: nowrap !important; }
-        .modo-impressao tr { page-break-inside: avoid !important; }
-        .modo-impressao .charts-grid, .modo-impressao .sobrado-card { page-break-inside: avoid !important; }
+        /* CSS PARA IMPRESSÃO PERFEITA WYSIWYG */
+        .modo-impressao { 
+            width: 1600px !important; 
+            padding: 20px !important; 
+            background: white !important; 
+        }
+        .modo-impressao .table-wrapper { 
+            overflow: visible !important; 
+            max-height: none !important; 
+        }
+        .modo-impressao table { 
+            width: 100% !important; 
+        }
+        .modo-impressao th, .modo-impressao td { 
+            white-space: nowrap !important; 
+        }
+        .modo-impressao tr { 
+            page-break-inside: avoid !important; 
+        }
         
         /* Overlay de Loading na Nuvem */
         #cloud-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
@@ -213,21 +224,20 @@
 
     <script>
         // =========================================================
-        // CONFIGURAÇÃO DO FIREBASE (WEB SDK)
+        // CONFIGURAÇÃO DO FIREBASE ATUALIZADA
         // =========================================================
         const firebaseConfig = {
-            apiKey: "AIzaSyA8YT29Z_7ZpQo241_c1L2QoJ9l-yQ8vT0", 
-            authDomain: "piemont-cronograma.firebaseapp.com", 
-            projectId: "piemont-cronograma", 
-            storageBucket: "piemont-cronograma.appspot.com", 
-            messagingSenderId: "534123533939", 
-            appId: "1:534123533939:web:96e8574044ab0d4b9714e8" 
+            apiKey: "AIzaSyCJ_ydLwxiGsZ2Puj7GdT5QLClR7nLWlQM",
+            authDomain: "piemont-cronograma.firebaseapp.com",
+            projectId: "piemont-cronograma",
+            storageBucket: "piemont-cronograma.firebasestorage.app",
+            messagingSenderId: "316575116695",
+            appId: "1:316575116695:web:6a92c0d376b25cc345e8d2"
         };
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Variáveis Globais
         let curvaSChartObj = null;
         let roscaChartObj = null;
         let labelsMeses = []; 
@@ -236,16 +246,12 @@
         const dataAtual = new Date().toLocaleDateString('pt-BR');
         document.querySelectorAll('.data-relatorio').forEach(el => el.innerText = `Sincronizado na Nuvem em: ${dataAtual}`);
 
-        // ==========================================
-        // ARRANQUE AUTOMÁTICO NA DASHBOARD
-        // ==========================================
+        // Arranque Automático
         window.onload = async () => {
             try {
                 const docRef = await db.collection("projetos").doc("matriz").get();
-                
                 if (docRef.exists) {
                     const dadosNaNuvem = docRef.data();
-                    
                     if (dadosNaNuvem.logoBase64) {
                         document.querySelectorAll('.img-logo-dash').forEach(img => { 
                             img.src = dadosNaNuvem.logoBase64; 
@@ -253,7 +259,6 @@
                         });
                         document.getElementById('status-logo').style.display = 'block';
                     }
-
                     if (dadosNaNuvem.excelJson) {
                         processExcelData(dadosNaNuvem.excelJson);
                         document.getElementById('btnExportPDF').style.display = 'flex';
@@ -266,7 +271,7 @@
             }
         };
 
-        // Controle da Janela Modal de Configurações
+        // Modal
         function abrirConfig() { document.getElementById('configModal').style.display = 'flex'; }
         function fecharConfig() { document.getElementById('configModal').style.display = 'none'; }
 
@@ -307,9 +312,7 @@
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         }
 
-        // ==========================================
-        // UPLOAD E GRAVAÇÃO NA NUVEM
-        // ==========================================
+        // Upload
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -317,7 +320,6 @@
             reader.onload = async function(e) {
                 const base64 = e.target.result;
                 document.querySelectorAll('.img-logo-dash').forEach(img => { img.src = base64; img.style.display = 'block'; });
-                
                 try {
                     await db.collection("projetos").doc("matriz").set({ logoBase64: base64 }, { merge: true });
                     document.getElementById('status-logo').style.display = 'block';
@@ -346,7 +348,7 @@
                     await db.collection("projetos").doc("matriz").set({ excelJson: jsonData }, { merge: true });
                     document.getElementById('status-excel').style.display = 'block';
                 } catch (err) {
-                    alert("Aviso: Banco local atualizado, mas houve erro ao gravar na Nuvem. Verifique permissões.");
+                    alert("Aviso: Banco local atualizado, mas houve erro ao gravar na Nuvem.");
                     console.error(err);
                 }
 
@@ -357,6 +359,7 @@
             reader.readAsArrayBuffer(file);
         }
 
+        // Processamento
         function processExcelData(rows) {
             if (rows.length < 2) return alert("Planilha vazia.");
             const headers = rows[0];
@@ -513,11 +516,9 @@
         }
 
         // ==========================================
-        // EXPORTAÇÃO WYSIWYG (Exatamente como está na tela)
+        // EXPORTAÇÃO WYSIWYG
         // ==========================================
         function exportarPDF() {
-            // Removida a limpeza automática de filtros e a expansão forçada da tabela.
-            
             const activeTab = document.querySelector('.tab-content.active').id;
             let elementoId = activeTab === 'dashTab' ? 'impressao-dash' : 'impressao-unidades';
             const elemento = document.getElementById(elementoId);
