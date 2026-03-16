@@ -246,7 +246,7 @@
         const dataAtual = new Date().toLocaleDateString('pt-BR');
         document.querySelectorAll('.data-relatorio').forEach(el => el.innerText = `Sincronizado na Nuvem em: ${dataAtual}`);
 
-        // Arranque Automático
+        // Arranque Automático (Puxar os dados em String e Parsear)
         window.onload = async () => {
             try {
                 const docRef = await db.collection("projetos").doc("matriz").get();
@@ -259,8 +259,11 @@
                         });
                         document.getElementById('status-logo').style.display = 'block';
                     }
-                    if (dadosNaNuvem.excelJson) {
-                        processExcelData(dadosNaNuvem.excelJson);
+                    
+                    // LÊ A STRING JSON E CONVERTE DE VOLTA PARA ARRAY PARA DRIBLAR O FIREBASE
+                    if (dadosNaNuvem.excelDataString) {
+                        const jsonData = JSON.parse(dadosNaNuvem.excelDataString);
+                        processExcelData(jsonData);
                         document.getElementById('btnExportPDF').style.display = 'flex';
                     }
                 }
@@ -344,11 +347,14 @@
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
                 
+                // CONVERTE O ARRAY DE ARRAYS PARA STRING JSON (BURAL O BLOQUEIO DO FIREBASE)
+                const dataString = JSON.stringify(jsonData);
+
                 try {
-                    await db.collection("projetos").doc("matriz").set({ excelJson: jsonData }, { merge: true });
+                    await db.collection("projetos").doc("matriz").set({ excelDataString: dataString }, { merge: true });
                     document.getElementById('status-excel').style.display = 'block';
                 } catch (err) {
-                    alert("Aviso: Banco local atualizado, mas houve erro ao gravar na Nuvem.");
+                    alert("Ocorreu um erro ao gravar na nuvem.");
                     console.error(err);
                 }
 
