@@ -17,11 +17,8 @@
         :root { --primary: #1e3a8a; --primary-hover: #1e40af; --secondary: #ea580c; --bg-color: #f8fafc; --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border-color: #e2e8f0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
-        .header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .header-titles h1 { color: var(--primary); font-size: 26px; margin-bottom: 4px; }
-        .header-titles p { color: var(--text-muted); font-size: 15px; }
         
-        .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); align-items: center; justify-content: space-between; flex-wrap: wrap; padding-bottom: 15px;}
         .tabs-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .tab-btn { background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; }
         .tab-btn:hover { color: var(--primary); }
@@ -143,13 +140,6 @@
         </div>
     </div>
 
-    <div class="header">
-        <div class="header-titles">
-            <h1>Bravo Civil - Monitoramento Estrutural Cloud</h1>
-            <p>Módulo de Planejamento 5D, Análise de Unidades e Relatórios</p>
-        </div>
-    </div>
-
     <div class="tabs-container">
         <div class="tabs-group">
             <button class="tab-btn active" onclick="switchTab('dashTab')" id="btn-dashTab">📊 Dashboard Financeira</button>
@@ -260,7 +250,6 @@
                         document.getElementById('status-logo').style.display = 'block';
                     }
                     
-                    // LÊ A STRING JSON E CONVERTE DE VOLTA PARA ARRAY PARA DRIBLAR O FIREBASE
                     if (dadosNaNuvem.excelDataString) {
                         const jsonData = JSON.parse(dadosNaNuvem.excelDataString);
                         processExcelData(jsonData);
@@ -347,7 +336,6 @@
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
                 
-                // CONVERTE O ARRAY DE ARRAYS PARA STRING JSON (BURAL O BLOQUEIO DO FIREBASE)
                 const dataString = JSON.stringify(jsonData);
 
                 try {
@@ -428,11 +416,29 @@
                     if (endDate && (!sobradosData[sobradoGroup].termino || endDate > sobradosData[sobradoGroup].termino)) { sobradosData[sobradoGroup].termino = endDate; }
                 }
 
+                // Limpeza de Cabeçalhos Injetados
+                let durText = row[idxDur] ? String(row[idxDur]).replace('?','').trim() : '-';
+                if (durText.toLowerCase() === 'duração' || durText.toLowerCase() === 'duracao') {
+                    durText = '-';
+                }
+
+                let iniText = formatarDataTabela(inicioOrig);
+                let checkIni = String(inicioOrig).toLowerCase().trim();
+                if (checkIni === 'início' || checkIni === 'inicio' || checkIni === 'nd') {
+                    iniText = '-';
+                }
+
+                let fimText = formatarDataTabela(terminoOrig);
+                let checkFim = String(terminoOrig).toLowerCase().trim();
+                if (checkFim === 'término' || checkFim === 'termino' || checkFim === 'nd') {
+                    fimText = '-';
+                }
+
                 let rowHtml = `<tr class="${cssClass}" data-isrow="true" data-depth="${depth}">
                     <td>${codigo}</td><td style="padding-left: ${indent}">${nome}</td>
-                    <td style="text-align: center;">${row[idxDur] ? String(row[idxDur]).replace('?','') : '-'}</td>
-                    <td style="text-align: center;">${formatarDataTabela(inicioOrig)}</td>
-                    <td style="text-align: center;">${formatarDataTabela(terminoOrig)}</td>`;
+                    <td style="text-align: center;">${durText}</td>
+                    <td style="text-align: center;">${iniText}</td>
+                    <td style="text-align: center;">${fimText}</td>`;
 
                 monthIndices.forEach((colIdx) => {
                     let val = parseFloat(row[colIdx]) || 0;
