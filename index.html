@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Cloud - Monitoramento 5D</title>
+    <title>Bravo Civil - Monitoramento 5D</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -16,83 +16,68 @@
     <style>
         :root { --primary: #1e3a8a; --primary-hover: #1e40af; --secondary: #ea580c; --bg-color: #f8fafc; --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border-color: #e2e8f0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
         
-        .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); align-items: center; justify-content: space-between; flex-wrap: wrap; padding-bottom: 15px;}
+        .tabs-container { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); align-items: center; justify-content: space-between; flex-wrap: wrap; padding-bottom: 10px;}
         .tabs-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        .tab-btn { background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .tab-btn { background: none; border: none; padding: 8px 16px; font-size: 14px; font-weight: bold; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; }
         .tab-btn:hover { color: var(--primary); }
         .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
         .tab-content { display: none; }
         
-        .btn-upload, .btn-pdf { color: white; padding: 10px 24px; border-radius: 6px; border: none; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-upload, .btn-pdf { color: white; padding: 8px 18px; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-upload { background-color: var(--primary); margin-top: 15px; width: 100%;}
-        .btn-upload:hover { background-color: var(--primary-hover); }
         .btn-pdf { background-color: #059669; display: flex; align-items: center; gap: 8px; }
-        .btn-pdf:hover { background-color: #047857; }
-        .btn-acao { background-color: var(--secondary); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; display: flex; align-items: center; gap: 6px;}
-        .btn-acao:hover { background-color: #c2410c; }
+        .btn-acao { background-color: var(--secondary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 6px;}
         .btn-acao.primary { background-color: var(--primary); }
-        .btn-acao.primary:hover { background-color: var(--primary-hover); }
         
-        .card { background-color: var(--card-bg); padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
-        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
         
-        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .upload-area { border: 2px dashed var(--primary); border-radius: 8px; padding: 20px; text-align: center; background-color: #f1f5f9; cursor: pointer; transition: background 0.3s; }
-        .upload-area:hover { background-color: #e2e8f0; }
+        .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .upload-area { border: 2px dashed var(--primary); border-radius: 8px; padding: 15px; text-align: center; background-color: #f1f5f9; cursor: pointer; }
         .upload-area input[type="file"] { display: none; }
         
-        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border-color); }
-        .report-header img { max-height: 70px; object-fit: contain; }
-        .report-header-text h2 { color: var(--primary); font-size: 24px; margin-bottom: 4px; text-transform: uppercase; }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--border-color); }
+        .report-header img { max-height: 50px; object-fit: contain; }
+        .report-header-text h2 { color: var(--primary); font-size: 20px; margin-bottom: 2px; text-transform: uppercase; }
         
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; align-items: center; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; align-items: center; }
         @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
-        canvas { cursor: pointer; }
-        .chart-container-curva { height: 320px; width: 100%; }
-        .chart-container-rosca { height: 260px; width: 100%; display: flex; justify-content: center; }
+        .chart-container-curva { height: 280px; width: 100%; }
+        .chart-container-rosca { height: 240px; width: 100%; display: flex; justify-content: center; }
         
-        .table-wrapper { overflow-x: auto; max-height: 600px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-        th, td { border: 1px solid var(--border-color); padding: 8px 10px; text-align: right; }
-        th { background-color: var(--primary); color: white; text-align: center; position: sticky; top: 0; z-index: 10;}
-        td:nth-child(1), td:nth-child(2) { text-align: left; }
+        .table-wrapper { overflow-x: auto; max-height: 65vh; border: 1px solid var(--border-color); border-radius: 6px;}
+        table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: auto; }
+        th, td { border: 1px solid var(--border-color); padding: 4px 5px; text-align: right; white-space: nowrap; }
+        th { background-color: var(--primary); color: white; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 11px;}
+        
+        td:nth-child(1) { text-align: center; font-weight: bold; }
+        td:nth-child(2) { text-align: left; white-space: normal; min-width: 140px; max-width: 250px; line-height: 1.2; }
+        td:nth-child(3), td:nth-child(4), td:nth-child(5) { text-align: center; }
+        
+        .col-total { font-weight: bold; background-color: rgba(30, 58, 138, 0.05); color: var(--primary); }
         
         .level-0 { background-color: #cbd5e1; font-weight: bold; color: #0f172a; } 
         .level-1 { background-color: #f1f5f9; font-weight: bold; color: #1e293b; } 
         .level-2 { font-weight: 600; color: #334155; } 
-        .level-3 { font-weight: normal; color: #475569; } 
-        .level-4 { font-style: italic; color: #64748b; } 
+        .level-3 { color: #475569; }
         .table-collapsed tr[data-depth="3"], .table-collapsed tr[data-depth="4"], .table-collapsed tr[data-depth="5"] { display: none !important; }
-        .currency { color: #047857; font-weight: 500; }
-        .zero-val { color: #94a3b8; }
         
-        .sobrados-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .sobrado-card { background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; border-left: 6px solid var(--secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .sobrado-card h3 { color: var(--primary); margin-bottom: 12px; font-size: 17px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
-        .sobrado-info { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-main); margin-bottom: 8px; }
+        .sobrados-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .sobrado-card { background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; border-left: 5px solid var(--secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .sobrado-card h3 { color: var(--primary); margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+        .sobrado-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); margin-bottom: 6px; }
         .sobrado-info strong { color: var(--text-muted); }
-        .sobrado-cost { font-size: 22px; font-weight: bold; color: var(--primary); margin-top: 15px; text-align: center; background-color: #e2e8f0; border-radius: 4px; padding: 8px;}
+        .sobrado-cost { font-size: 20px; font-weight: bold; color: var(--primary); margin-top: 12px; text-align: center; background-color: #e2e8f0; border-radius: 4px; padding: 6px;}
         
-        /* CSS PARA IMPRESSÃO PERFEITA WYSIWYG */
         .modo-impressao { width: 1600px !important; padding: 20px !important; background: white !important; }
         .modo-impressao .table-wrapper { overflow: visible !important; max-height: none !important; }
-        .modo-impressao table { width: 100% !important; }
-        .modo-impressao th, .modo-impressao td { white-space: nowrap !important; }
-        .modo-impressao tr { page-break-inside: avoid !important; }
-        
-        /* Overlay de Loading na Nuvem */
         #cloud-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;}
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* MODAL DE CONFIGURAÇÃO */
         .modal-overlay { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background-color: var(--card-bg); padding: 30px; border-radius: 12px; width: 95%; max-width: 900px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideDown 0.3s ease-out; }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-muted); transition: 0.2s;}
-        .close-btn:hover { color: var(--text-main); }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content { background-color: var(--card-bg); padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; position: relative; }
     </style>
 </head>
 <body>
@@ -100,38 +85,27 @@
     <div id="cloud-loading">
         <div class="spinner"></div>
         <h2 id="cloud-loading-text" style="color: var(--primary);">Sincronizando com a Nuvem...</h2>
-        <p style="color: var(--text-muted);">Carregando a base de dados centralizada do projeto</p>
     </div>
 
     <div id="configModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-btn" onclick="fecharConfig()">&times;</span>
-            <div class="section-title" style="border:none; padding:0; margin-bottom: 10px;">Gestão de Bancos de Dados na Nuvem</div>
-            <p style="margin-bottom: 20px; color: var(--text-muted);">Ao importar as planilhas aqui, as curvas de (R$) e (%) serão geradas e distribuídas aos utilizadores automaticamente.</p>
-            
+            <span style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:24px;" onclick="fecharConfig()">&times;</span>
+            <div class="section-title">Upload de Dados (Cálculo Automático de Famílias)</div>
             <div class="upload-grid">
                 <div class="upload-area" onclick="document.getElementById('financeiroFileInput').click()">
-                    <h3 style="color: var(--primary); font-size: 16px;">📊 1. Banco Financeiro</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Matriz para Dashboard em (R$)</p>
-                    <input type="file" id="financeiroFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event, 'financeiro')">
-                    <button class="btn-upload">Upload Financeiro</button>
-                    <p id="status-financeiro" style="margin-top: 10px; color: #059669; font-weight: bold; display: none;">✅ Base Financeira Salva!</p>
+                    <h3>📊 Financeiro (R$)</h3>
+                    <input type="file" id="financeiroFileInput" accept=".xlsx" onchange="handleExcelUpload(event, 'financeiro')">
+                    <button class="btn-upload">Subir Matriz R$</button>
                 </div>
-
                 <div class="upload-area" onclick="document.getElementById('fisicoFileInput').click()">
-                    <h3 style="color: var(--primary); font-size: 16px;">📈 2. Banco Físico</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Calcula o Avanço em (%)</p>
-                    <input type="file" id="fisicoFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event, 'fisico')">
-                    <button class="btn-upload" style="background-color: var(--secondary);">Upload Físico</button>
-                    <p id="status-fisico" style="margin-top: 10px; color: #059669; font-weight: bold; display: none;">✅ Base Física Salva!</p>
+                    <h3>📈 Físico (%)</h3>
+                    <input type="file" id="fisicoFileInput" accept=".xlsx" onchange="handleExcelUpload(event, 'fisico')">
+                    <button class="btn-upload" style="background-color: var(--secondary);">Subir Matriz %</button>
                 </div>
-
                 <div class="upload-area" onclick="document.getElementById('logoFileInput').click()">
-                    <h3 style="color: var(--primary); font-size: 16px;">🏢 3. Logo da Empresa</h3>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Imagem p/ os Relatórios</p>
+                    <h3>🏢 Logo da Empresa</h3>
                     <input type="file" id="logoFileInput" accept="image/png, image/jpeg" onchange="handleLogoUpload(event)">
                     <button class="btn-upload" style="background-color: #10b981;">Procurar Imagem</button>
-                    <p id="status-logo" style="margin-top: 10px; color: #059669; font-weight: bold; display: none;">✅ Imagem Gravada!</p>
                 </div>
             </div>
         </div>
@@ -139,74 +113,54 @@
 
     <div class="tabs-container">
         <div class="tabs-group">
-            <button class="tab-btn active" id="btn-financeiro" onclick="switchTab('financeiro')">📊 Dashboard Financeiro (R$)</button>
-            <button class="tab-btn" id="btn-fisico" onclick="switchTab('fisico')">📈 Dashboard Físico (%)</button>
-            <button class="tab-btn" id="btn-unidades" onclick="switchTab('unidades')">🏠 Análise por Sobrado</button>
+            <button class="tab-btn active" id="btn-financeiro" onclick="switchTab('financeiro')">📊 Financeiro (R$)</button>
+            <button class="tab-btn" id="btn-fisico" onclick="switchTab('fisico')">📈 Físico (%)</button>
+            <button class="tab-btn" id="btn-unidades" onclick="switchTab('unidades')">🏠 Unidades</button>
         </div>
         <div style="display: flex; gap: 10px;">
             <button class="btn-acao" onclick="abrirConfig()">⚙️ Configurações</button>
-            <button class="btn-pdf" id="btnExportPDF" onclick="exportarPDF()" style="display: none;">📄 Exportar PDF (A3)</button>
+            <button class="btn-pdf" id="btnExportPDF" onclick="exportarPDF()">📄 PDF</button>
         </div>
     </div>
 
     <div id="dashTab" class="tab-content" style="display: block;">
-        <div id="impressao-dash" style="background: white; padding: 20px; border-radius: 8px;">
+        <div id="impressao-dash" style="background: white; padding: 15px; border-radius: 8px;">
             <div class="report-header">
                 <div class="report-header-text">
                     <h2>CONDOMÍNIO VILLA PIEMONTE</h2>
-                    <p id="dash-title" style="color: var(--text-muted); font-size: 15px;">Dashboard Financeiro Global (R$)</p>
-                    <p class="data-relatorio" style="color: var(--text-muted); font-size: 12px; margin-top: 4px;"></p>
+                    <p id="dash-title" style="color: var(--text-muted); font-size: 14px;">Dashboard Global</p>
                 </div>
-                <img class="img-logo-dash" src="" alt="" style="display: none;">
+                <img class="img-logo-dash" src="" style="display:none;">
             </div>
 
-            <div class="charts-grid" id="area-graficos" style="display: none;">
-                <div class="chart-container-curva">
-                    <div class="section-title" style="font-size: 15px;">Curva S (Clique numa barra para filtrar a EAP)</div>
-                    <canvas id="curvaSChart"></canvas>
-                </div>
-                <div>
-                    <div class="section-title" style="font-size: 15px; color: var(--secondary); border-bottom-color: var(--secondary); display: block; text-align: center;">Peso por Macro Etapas</div>
-                    <div class="chart-container-rosca">
-                        <canvas id="roscaChart"></canvas>
-                    </div>
-                </div>
+            <div class="charts-grid" id="area-graficos">
+                <div class="chart-container-curva"><canvas id="curvaSChart"></canvas></div>
+                <div class="chart-container-rosca"><canvas id="roscaChart"></canvas></div>
             </div>
 
-            <div class="section-title" style="border: none; margin-bottom: 10px;">
+            <div class="section-title" style="border: none; margin-bottom: 8px; font-size: 14px;">
                 Matriz Principal
                 <div style="display: flex; gap: 10px;">
-                    <button id="btn-toggle-nivel" class="btn-acao primary" onclick="toggleNiveis()" style="display: none;">➖ Recolher EAP (Nível 2)</button>
-                    <button id="btn-limpar-filtro" class="btn-acao" onclick="limparFiltro()" style="display: none;">❌ Remover Filtro do Mês</button>
+                    <button id="btn-toggle-nivel" class="btn-acao primary" onclick="toggleNiveis()">➖ Recolher EAP</button>
                 </div>
             </div>
+            
             <div class="table-wrapper">
-                <table id="eapTable">
-                    <tbody id="tbody-eap">
-                        <tr>
-                            <td colspan="15" style="text-align: center; padding: 40px; font-size: 14px; color: var(--text-muted);">
-                                Carregando Dados...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <table id="eapTable"></table>
             </div>
         </div>
     </div>
 
     <div id="unidadesTab" class="tab-content">
-        <div id="impressao-unidades" style="background: white; padding: 20px; border-radius: 8px;">
+        <div id="impressao-unidades" style="background: white; padding: 15px; border-radius: 8px;">
             <div class="report-header">
                 <div class="report-header-text">
                     <h2>CONDOMÍNIO VILLA PIEMONTE</h2>
-                    <p style="color: var(--text-muted); font-size: 15px;">Relatório Analítico de Custos (Sobrados)</p>
-                    <p class="data-relatorio" style="color: var(--text-muted); font-size: 12px; margin-top: 4px;"></p>
+                    <p style="color: var(--text-muted); font-size: 14px;">Relatório Analítico de Custos (Sobrados)</p>
                 </div>
-                <img class="img-logo-dash" src="" alt="" style="display: none;">
+                <img class="img-logo-dash" src="" style="display:none;">
             </div>
-            <div id="sobrados-container" class="sobrados-grid" style="margin-top: 20px;">
-                <p style="text-align: center; width: 100%; color: var(--text-muted); padding: 40px;">Nenhum dado de sobrados carregado.</p>
-            </div>
+            <div id="sobrados-container" class="sobrados-grid"></div>
         </div>
     </div>
 
@@ -219,77 +173,38 @@
             messagingSenderId: "316575116695",
             appId: "1:316575116695:web:6a92c0d376b25cc345e8d2"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let globalFinanceiroData = null;
-        let globalFisicoData = null;
-        let curvaSChartObj = null;
-        let roscaChartObj = null;
-        let labelsMeses = []; 
-
-        const dataAtual = new Date().toLocaleDateString('pt-BR');
-        document.querySelectorAll('.data-relatorio').forEach(el => el.innerText = `Sincronizado na Nuvem em: ${dataAtual}`);
+        let globalFinanceiroData = null, globalFisicoData = null;
+        let curvaSChartObj = null, roscaChartObj = null;
 
         window.onload = async () => {
             try {
-                const docRef = await db.collection("projetos").doc("matriz").get();
-                if (docRef.exists) {
-                    const dados = docRef.data();
-                    if (dados.logoBase64) {
-                        document.querySelectorAll('.img-logo-dash').forEach(img => { img.src = dados.logoBase64; img.style.display = 'block'; });
-                        document.getElementById('status-logo').style.display = 'block';
-                    }
-                    if (dados.financeiroDataString) globalFinanceiroData = JSON.parse(dados.financeiroDataString);
-                    else if (dados.excelDataString) globalFinanceiroData = JSON.parse(dados.excelDataString);
-                    
-                    if (dados.fisicoDataString) globalFisicoData = JSON.parse(dados.fisicoDataString);
+                const doc = await db.collection("projetos").doc("matriz").get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    if (d.logoBase64) document.querySelectorAll('.img-logo-dash').forEach(img => { img.src = d.logoBase64; img.style.display = 'block'; });
+                    if (d.financeiroDataString) globalFinanceiroData = JSON.parse(d.financeiroDataString);
+                    if (d.fisicoDataString) globalFisicoData = JSON.parse(d.fisicoDataString);
                 }
-            } catch (error) {
-                console.warn("Aviso: Configurações do Firebase pendentes.");
-            } finally {
-                document.getElementById('cloud-loading').style.display = 'none';
-                if (globalFinanceiroData) switchTab('financeiro');
-                else if (globalFisicoData) switchTab('fisico');
-                else switchTab('financeiro'); 
-            }
+            } catch (e) { console.warn(e); }
+            
+            document.getElementById('cloud-loading').style.display = 'none';
+            if (globalFinanceiroData) switchTab('financeiro');
+            else if (globalFisicoData) switchTab('fisico');
+            else switchTab('financeiro');
         };
 
-        function abrirConfig() { document.getElementById('configModal').style.display = 'flex'; }
-        function fecharConfig() { document.getElementById('configModal').style.display = 'none'; }
-
-        function switchTab(tab) {
-            limparFiltro();
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + tab).classList.add('active');
-
-            document.getElementById('dashTab').style.display = 'none';
-            document.getElementById('unidadesTab').style.display = 'none';
-            document.getElementById('btnExportPDF').style.display = 'none';
-
-            if (tab === 'financeiro' || tab === 'fisico') {
-                document.getElementById('dashTab').style.display = 'block';
-                if (tab === 'financeiro') {
-                    if (globalFinanceiroData) { processExcelData(globalFinanceiroData, 'financeiro'); document.getElementById('btnExportPDF').style.display = 'flex'; }
-                    else showEmptyDash('financeiro');
-                } else {
-                    if (globalFisicoData) { processExcelData(globalFisicoData, 'fisico'); document.getElementById('btnExportPDF').style.display = 'flex'; }
-                    else showEmptyDash('fisico');
-                }
-            } else if (tab === 'unidades') {
-                document.getElementById('unidadesTab').style.display = 'block';
-                processSobradosData();
-                if (globalFinanceiroData) document.getElementById('btnExportPDF').style.display = 'flex';
-            }
-        }
-
-        function showEmptyDash(tipo) {
-            let texto = tipo === 'fisico' ? 'Nenhum Banco de Dados Físico Carregado.' : 'Nenhum Banco de Dados Financeiro Carregado.';
-            document.getElementById('eapTable').innerHTML = `<tbody><tr><td style="text-align: center; padding: 40px; color: var(--text-muted);">${texto}<br>Clique em <b>⚙️ Configurações</b> para importar sua matriz.</td></tr></tbody>`;
-            document.getElementById('area-graficos').style.display = 'none';
-            document.getElementById('btn-toggle-nivel').style.display = 'none';
-            document.getElementById('dash-title').innerText = tipo === 'fisico' ? 'Dashboard de Avanço Físico Global (%)' : 'Dashboard Financeiro Global (R$)';
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + t).classList.add('active');
+            document.getElementById('dashTab').style.display = t === 'unidades' ? 'none' : 'block';
+            document.getElementById('unidadesTab').style.display = t === 'unidades' ? 'block' : 'none';
+            
+            if(t === 'financeiro') processData(globalFinanceiroData, 'financeiro');
+            else if(t === 'fisico') processData(globalFisicoData, 'fisico');
+            else processUnidades();
         }
 
         function handleLogoUpload(event) {
@@ -299,339 +214,274 @@
             reader.onload = async function(e) {
                 const base64 = e.target.result;
                 document.querySelectorAll('.img-logo-dash').forEach(img => { img.src = base64; img.style.display = 'block'; });
-                try {
-                    await db.collection("projetos").doc("matriz").set({ logoBase64: base64 }, { merge: true });
-                    document.getElementById('status-logo').style.display = 'block';
-                    setTimeout(fecharConfig, 1500); 
-                } catch(err) {}
+                await db.collection("projetos").doc("matriz").set({ logoBase64: base64 }, { merge: true });
+                fecharConfig();
             };
             reader.readAsDataURL(file); 
         }
 
-        function handleExcelUpload(event, tipo) {
-            const file = event.target.files[0];
-            if (!file) return;
+        function handleExcelUpload(ev, tipo) {
+            const file = ev.target.files[0];
+            if(!file) return;
             
-            fecharConfig(); 
+            fecharConfig();
             document.getElementById('cloud-loading').style.display = 'flex';
-            document.getElementById('cloud-loading-text').innerText = `Gravando Banco ${tipo === 'fisico' ? 'Físico' : 'Financeiro'} na Nuvem...`;
             
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
                 
-                const dataString = JSON.stringify(jsonData);
-                const fieldName = tipo === 'fisico' ? 'fisicoDataString' : 'financeiroDataString';
-
-                try {
-                    await db.collection("projetos").doc("matriz").set({ [fieldName]: dataString }, { merge: true });
-                    document.getElementById('status-' + tipo).style.display = 'block';
-                } catch (err) { alert("Erro ao gravar na nuvem."); }
-
-                if (tipo === 'fisico') globalFisicoData = jsonData;
-                if (tipo === 'financeiro') globalFinanceiroData = jsonData;
-
-                switchTab(tipo);
-                document.getElementById('cloud-loading').style.display = 'none';
+                const processed = somarFamilias(jsonData);
+                const dataStr = JSON.stringify(processed);
+                
+                await db.collection("projetos").doc("matriz").set({ [tipo + 'DataString']: dataStr }, { merge: true });
+                location.reload();
             };
             reader.readAsArrayBuffer(file);
         }
 
-        const formatCell = (val, tipo, somaProj) => {
-            if (!val || isNaN(val) || val === 0) return '<span class="zero-val">-</span>';
-            if (tipo === 'fisico') {
-                if (somaProj === 0) return '-';
-                let perc = (val / somaProj) * 100;
-                return `<span class="currency" style="color:#0f766e; font-weight:600;">${perc.toFixed(2)}%</span>`;
-            } else {
-                return '<span class="currency">' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) + '</span>';
-            }
-        };
+        function somarFamilias(rows) {
+            const headers = rows[0];
+            const colInicioMeses = 5;
+            
+            let eap = rows.slice(1).map(r => ({ cod: String(r[0]), dados: r }));
 
-        function parseDataUniversal(dateVal) {
+            for (let depth = 6; depth >= 0; depth--) {
+                eap.forEach(item => {
+                    let parts = item.cod.split('.');
+                    if (parts.length === depth + 1) {
+                        let temFilhos = eap.some(f => f.cod.startsWith(item.cod + '.') && f.cod.split('.').length === parts.length + 1);
+                        
+                        if (temFilhos) {
+                            for (let c = colInicioMeses; c < headers.length; c++) item.dados[c] = 0;
+                            
+                            eap.filter(f => f.cod.startsWith(item.cod + '.') && f.cod.split('.').length === parts.length + 1)
+                               .forEach(filho => {
+                                   for (let c = colInicioMeses; c < headers.length; c++) {
+                                       item.dados[c] += parseFloat(filho.dados[c]) || 0;
+                                   }
+                               });
+                        }
+                    }
+                });
+            }
+            return [headers, ...eap.map(e => e.dados)];
+        }
+
+        function formatarDataUniversal(dateVal) {
+            if (!dateVal) return '-';
+            if (typeof dateVal === 'number') { let d = new Date((dateVal - 25569) * 86400 * 1000); return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`; }
+            let s = String(dateVal).trim().toLowerCase();
+            if (s === 'início' || s === 'inicio' || s === 'término' || s === 'termino') return '-';
+            if (s.includes('-')) { let p = s.split('-'); return `${p[2].substring(0,2)}/${p[1]}/${p[0]}`; }
+            if (s.includes('/')) return s;
+            return '-';
+        }
+
+        // NOVO: Função para transformar valores de data em Objeto Date (para cálculo da Unidade)
+        function parseDateObj(dateVal) {
             if (!dateVal) return null;
-            if (typeof dateVal === 'number') { let d = new Date((dateVal - 25569) * 86400 * 1000); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
-            let s = String(dateVal).trim();
-            if (s.includes('-')) { let p = s.split('-'); if (p[0].length === 4) return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2].substring(0,2))); }
-            if (s.includes('/')) { let p = s.split('/'); if (p.length === 3) return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0])); }
+            if (typeof dateVal === 'number') {
+                let d = new Date((dateVal - 25569) * 86400 * 1000);
+                return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+            }
+            let s = String(dateVal).trim().toLowerCase();
+            if (s === 'início' || s === 'inicio' || s === 'término' || s === 'termino') return null;
+            if (s.includes('-')) { let p = s.split('-'); return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2].substring(0,2))); }
+            if (s.includes('/')) { let p = s.split('/'); return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0])); }
             return null;
         }
 
-        function formatarDataTabela(dateVal) {
-            let d = parseDataUniversal(dateVal);
-            return d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` : '-';
-        }
-
-        function processExcelData(rows, tipo) {
-            if (rows.length < 2) return showEmptyDash(tipo);
-            const headers = rows[0];
-            let idxCod = 0, idxNome = 1, idxDur = 2, idxIni = 3, idxFim = 4;
-            let monthIndices = []; labelsMeses = [];
-            
-            for (let i = 0; i < headers.length; i++) {
-                let h = String(headers[i]).toLowerCase();
-                if (h.includes('tópicos') || h.includes('código') || h === 'codigo') idxCod = i;
-                else if (h.includes('nome') || h.includes('tarefa')) idxNome = i;
-                else if (h.includes('duração') || h.includes('duracao')) idxDur = i;
-                else if (h.includes('início') || h.includes('inicio')) idxIni = i;
-                else if (h.includes('término') || h.includes('termino')) idxFim = i;
-                else if((h.includes('mes') || h.includes('mês')) && !h.includes('trimestre')) { monthIndices.push(i); labelsMeses.push(headers[i]); }
-            }
-
-            // ==========================================
-            // LÓGICA CORRIGIDA: SOMA ESTRUTURAL
-            // ==========================================
-            let somaProjeto = 0;
-            let mesAMesTotal = new Array(monthIndices.length).fill(0);
-            let hasZero = false;
-
-            // 1. Verifica se existe a linha "0"
-            for (let i = 1; i < rows.length; i++) {
-                if (!rows[i] || rows[i].length < 2 || rows[i][idxCod] === undefined || rows[i][idxCod] === "") continue;
-                if (String(rows[i][idxCod]).trim() === '0') hasZero = true;
-            }
-
-            // 2. Calcula os totais (Dinamicamente)
-            for (let i = 1; i < rows.length; i++) {
-                if (!rows[i] || rows[i].length < 2 || rows[i][idxCod] === undefined || rows[i][idxCod] === "") continue;
-                let c = String(rows[i][idxCod]).trim();
-                let depth = c.split('.').length;
-                
-                if ((hasZero && c === '0') || (!hasZero && depth === 1)) {
-                    monthIndices.forEach((col, index) => { 
-                        let v = parseFloat(rows[i][col]) || 0;
-                        somaProjeto += v; 
-                        mesAMesTotal[index] += v;
-                    });
-                }
-            }
-            if (somaProjeto === 0) somaProjeto = 1;
-
-            // 3. Monta a Curva do Gráfico
-            let projetoDesembolso = []; 
-            let projetoAcumulado = []; 
-            let somaProjetoAcumulada = 0;
-            
-            mesAMesTotal.forEach(val => {
-                let chartVal = tipo === 'fisico' ? (val / somaProjeto) * 100 : val;
-                projetoDesembolso.push(chartVal);
-                somaProjetoAcumulada += chartVal;
-                projetoAcumulado.push(somaProjetoAcumulada);
-            });
-
-            // 4. Monta a Tabela EAP
-            let nomesEtapas = []; let custosEtapas = []; 
-            let thead = `<thead><tr><th>Código</th><th>Tarefa</th><th>Duração</th><th>Início</th><th>Término</th>`;
-            labelsMeses.forEach(m => thead += `<th>${m}</th>`);
-            thead += `<th>${tipo==='fisico' ? 'Avanço EAP' : 'Total Etapa'}</th></tr></thead><tbody id="tbody-eap">`;
-            let tbody = ''; 
-
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row || row.length < 2 || row[idxCod] === undefined || row[idxCod] === "") continue;
-
-                let codigo = String(row[idxCod]).trim();
-                let nome = String(row[idxNome]).trim();
-                let depth = codigo.split('.').length;
-                let cssClass = 'level-4'; let indent = '40px'; 
-                
-                if (codigo === '0') { cssClass = 'level-0'; indent = '0px'; depth = 0;} 
-                else if (depth === 1) { cssClass = 'level-1'; indent = '10px'; }
-                else if (depth === 2) { cssClass = 'level-2'; indent = '20px'; }
-                else if (depth === 3) { cssClass = 'level-3'; indent = '30px'; }
-
-                let durText = row[idxDur] ? String(row[idxDur]).replace('?','').trim() : '-';
-                if (durText.toLowerCase() === 'duração' || durText.toLowerCase() === 'duracao') durText = '-';
-                let iniText = formatarDataTabela(row[idxIni]);
-                let checkIni = String(row[idxIni]).toLowerCase().trim();
-                if (checkIni === 'início' || checkIni === 'inicio' || checkIni === 'nd') iniText = '-';
-                let fimText = formatarDataTabela(row[idxFim]);
-                let checkFim = String(row[idxFim]).toLowerCase().trim();
-                if (checkFim === 'término' || checkFim === 'termino' || checkFim === 'nd') fimText = '-';
-
-                let rowHtml = `<tr class="${cssClass}" data-isrow="true" data-depth="${depth}">
-                    <td>${codigo}</td><td style="padding-left: ${indent}">${nome}</td>
-                    <td style="text-align: center;">${durText}</td>
-                    <td style="text-align: center;">${iniText}</td>
-                    <td style="text-align: center;">${fimText}</td>`;
-
-                let rowTotal = 0;
-                monthIndices.forEach((colIdx) => {
-                    let val = parseFloat(row[colIdx]) || 0;
-                    rowTotal += val;
-                    rowHtml += `<td data-val="${val}">${formatCell(val, tipo, somaProjeto)}</td>`;
-                });
-
-                if (depth === 1 && codigo !== '0' && rowTotal > 0) { 
-                    nomesEtapas.push(codigo + ' ' + nome); 
-                    custosEtapas.push(tipo === 'fisico' ? (rowTotal / somaProjeto) * 100 : rowTotal); 
-                }
-                
-                rowHtml += `<td style="font-weight: bold; background-color: rgba(0,0,0,0.02);">${formatCell(rowTotal, tipo, somaProjeto)}</td></tr>`;
-                tbody += rowHtml;
-            }
-
-            document.getElementById('eapTable').innerHTML = thead + tbody + '</tbody>';
-            document.getElementById('area-graficos').style.display = 'grid'; 
-            document.getElementById('btn-toggle-nivel').style.display = 'flex'; 
-            document.getElementById('dash-title').innerText = tipo === 'fisico' ? 'Dashboard de Avanço Físico Ponderado (%)' : 'Dashboard Financeiro Global (R$)';
-            
-            renderCurvaS(labelsMeses, projetoDesembolso, projetoAcumulado, tipo);
-            renderRoscaChart(nomesEtapas, custosEtapas, tipo);
-        }
-
-        function processSobradosData() {
-            if (!globalFinanceiroData) {
-                document.getElementById('sobrados-container').innerHTML = '<p style="text-align: center; width: 100%; color: var(--text-muted); padding: 40px;">É necessário subir o Banco Financeiro primeiro para analisar as unidades.</p>';
+        function processData(rows, tipo) {
+            if(!rows || rows.length < 2) {
+                document.getElementById('eapTable').innerHTML = `<tr><td style="padding: 30px; text-align:center;">Nenhum dado importado.</td></tr>`;
+                document.getElementById('area-graficos').style.display = 'none';
                 return;
             }
             
-            let rows = globalFinanceiroData;
+            document.getElementById('area-graficos').style.display = 'grid';
+            document.getElementById('dash-title').innerText = tipo === 'fisico' ? 'Dashboard de Avanço Físico Ponderado (%)' : 'Dashboard Financeiro Global (R$)';
+
             const headers = rows[0];
-            let idxCod = 0, idxNome = 1, idxIni = 3, idxFim = 4;
-            let monthIndices = [];
-            for (let i = 0; i < headers.length; i++) {
-                let h = String(headers[i]).toLowerCase();
-                if (h.includes('tópicos') || h.includes('código') || h === 'codigo') idxCod = i;
-                else if (h.includes('nome') || h.includes('tarefa')) idxNome = i;
-                else if (h.includes('início') || h.includes('inicio')) idxIni = i;
-                else if (h.includes('término') || h.includes('termino')) idxFim = i;
-                else if((h.includes('mes') || h.includes('mês')) && !h.includes('trimestre')) monthIndices.push(i);
-            }
-
-            let sobradosDict = {};
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row || row.length < 2 || row[idxCod] === undefined || row[idxCod] === "") continue;
-                let nome = String(row[idxNome]).trim();
-                if (nome.toLowerCase().includes('sobrado')) {
-                    let rowTotal = 0;
-                    monthIndices.forEach(col => rowTotal += parseFloat(row[col]) || 0);
-
-                    let parts = nome.split("-");
-                    let sobradoGroup = parts[0].trim(); 
-                    let startDate = parseDataUniversal(row[idxIni]);
-                    let endDate = parseDataUniversal(row[idxFim]);
-                    
-                    if (!sobradosDict[sobradoGroup]) sobradosDict[sobradoGroup] = { custo: 0, inicio: startDate, termino: endDate };
-                    sobradosDict[sobradoGroup].custo += rowTotal;
-                    
-                    if (startDate && (!sobradosDict[sobradoGroup].inicio || startDate < sobradosDict[sobradoGroup].inicio)) sobradosDict[sobradoGroup].inicio = startDate;
-                    if (endDate && (!sobradosDict[sobradoGroup].termino || endDate > sobradosDict[sobradoGroup].termino)) sobradosDict[sobradoGroup].termino = endDate;
+            let somaTotalObra = 0;
+            let mesesLabels = [];
+            
+            for(let c=5; c<headers.length; c++) mesesLabels.push(headers[c]);
+            
+            let hasZero = rows.slice(1).some(r => String(r[0]).trim() === '0');
+            rows.slice(1).forEach(r => {
+                let cod = String(r[0]).trim();
+                let depth = cod.split('.').length;
+                if((hasZero && cod === '0') || (!hasZero && depth === 1)) {
+                    for(let c=5; c<headers.length; c++) somaTotalObra += parseFloat(r[c]) || 0;
                 }
-            }
-
-            const container = document.getElementById('sobrados-container');
-            container.innerHTML = '';
-            const chaves = Object.keys(sobradosDict).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-            if (chaves.length === 0) {
-                 container.innerHTML = '<p style="text-align: center; width: 100%; color: var(--text-muted); padding: 40px;">Nenhuma tarefa com a palavra "Sobrado" encontrada na EAP.</p>';
-                 return;
-            }
-
-            chaves.forEach(nomeSobrado => {
-                const dados = sobradosDict[nomeSobrado];
-                let strInicio = dados.inicio ? `${String(dados.inicio.getDate()).padStart(2, '0')}/${String(dados.inicio.getMonth() + 1).padStart(2, '0')}/${dados.inicio.getFullYear()}` : '-';
-                let strFim = dados.termino ? `${String(dados.termino.getDate()).padStart(2, '0')}/${String(dados.termino.getMonth() + 1).padStart(2, '0')}/${dados.termino.getFullYear()}` : '-';
-                let dias = '-';
-                if(dados.inicio && dados.termino) { let diffTempo = Math.abs(dados.termino - dados.inicio); dias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + " dias"; }
-
-                const cardHtml = `<div class="sobrado-card"><h3>🏠 ${nomeSobrado}</h3><div class="sobrado-info"><strong>Início:</strong> <span>${strInicio}</span></div><div class="sobrado-info"><strong>Término:</strong> <span>${strFim}</span></div><div class="sobrado-info"><strong>Duração Total:</strong> <span>${dias}</span></div><div class="sobrado-cost">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dados.custo)}</div></div>`;
-                container.innerHTML += cardHtml;
             });
+            if(somaTotalObra === 0) somaTotalObra = 1;
+
+            let thead = `<thead><tr><th>Cód</th><th>Tarefa</th><th>Dur.</th><th>Início</th><th>Fim</th>`;
+            mesesLabels.forEach(m => thead += `<th>${m}</th>`);
+            thead += `<th class="col-total">TOTAL ${tipo === 'fisico' ? '(%)' : '(R$)'}</th></tr></thead><tbody>`;
+
+            let desembolsoProjeto = new Array(mesesLabels.length).fill(0);
+            let roscaNomes = [], roscaValores = [];
+
+            let tbody = '';
+            rows.slice(1).forEach(r => {
+                let cod = String(r[0]).trim();
+                if(!cod) return;
+                let depth = cod.split('.').length;
+                let nome = r[1] || '';
+                
+                let durText = r[2] ? String(r[2]).replace('?','') : '-';
+                if(durText.toLowerCase().includes('dura')) durText = '-';
+
+                let rowTotal = 0;
+                let colunasMesesHtml = '';
+                
+                for(let c=5; c<headers.length; c++) {
+                    let v = parseFloat(r[c]) || 0;
+                    rowTotal += v;
+                    colunasMesesHtml += `<td>${formatVal(v, tipo, somaTotalObra)}</td>`;
+                    
+                    if((hasZero && cod === '0') || (!hasZero && depth === 1)) {
+                        desembolsoProjeto[c-5] += (tipo === 'fisico' ? (v/somaTotalObra)*100 : v);
+                    }
+                }
+
+                if (depth === 1 && cod !== '0' && rowTotal > 0) {
+                    roscaNomes.push(cod + ' ' + nome);
+                    roscaValores.push(tipo === 'fisico' ? (rowTotal/somaTotalObra)*100 : rowTotal);
+                }
+
+                let indent = cod === '0' ? 0 : (depth - 1) * 12;
+
+                tbody += `<tr class="level-${cod === '0' ? '0' : depth}" data-depth="${depth}">
+                    <td>${cod}</td>
+                    <td style="padding-left: ${indent}px">${nome}</td>
+                    <td>${durText}</td>
+                    <td>${formatarDataUniversal(r[3])}</td>
+                    <td>${formatarDataUniversal(r[4])}</td>
+                    ${colunasMesesHtml}
+                    <td class="col-total">${formatVal(rowTotal, tipo, somaTotalObra)}</td>
+                </tr>`;
+            });
+
+            document.getElementById('eapTable').innerHTML = thead + tbody + `</tbody>`;
+
+            let acumulado = 0;
+            let projetoAcumulado = desembolsoProjeto.map(v => { acumulado += v; return acumulado; });
+
+            renderCurvaS(mesesLabels, desembolsoProjeto, projetoAcumulado, tipo);
+            renderRoscaChart(roscaNomes, roscaValores, tipo);
         }
 
-        function toggleNiveis() {
-            const table = document.getElementById('eapTable');
-            const btn = document.getElementById('btn-toggle-nivel');
-            table.classList.toggle('table-collapsed');
-            if (table.classList.contains('table-collapsed')) { btn.innerText = "➕ Expandir EAP Completa"; btn.classList.remove('primary'); } 
-            else { btn.innerText = "➖ Recolher EAP (Nível 2)"; btn.classList.add('primary'); }
+        function formatVal(v, tipo, total) {
+            if(v === 0) return "-";
+            if(tipo === 'fisico') return ((v/total)*100).toFixed(2) + "%";
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+
+        // NOVO: LÓGICA DE DATAS DAS UNIDADES
+        function processUnidades() {
+            if (!globalFinanceiroData) return;
+            let rows = globalFinanceiroData;
+            let sobradosDict = {};
+            
+            rows.slice(1).forEach(r => {
+                let cod = String(r[0]);
+                let nome = String(r[1]);
+                if (nome.toLowerCase().includes('sobrado')) {
+                    let rowTotal = 0;
+                    for(let c=5; c<rows[0].length; c++) rowTotal += parseFloat(r[c]) || 0;
+                    
+                    let sobradoGroup = nome.split("-")[0].trim(); 
+                    
+                    // Capturando datas
+                    let dataIni = parseDateObj(r[3]);
+                    let dataFim = parseDateObj(r[4]);
+
+                    if (!sobradosDict[sobradoGroup]) {
+                        sobradosDict[sobradoGroup] = { custo: 0, inicio: dataIni, termino: dataFim };
+                    }
+                    
+                    sobradosDict[sobradoGroup].custo += rowTotal;
+
+                    // Ajustando Menor Data e Maior Data
+                    if (dataIni && (!sobradosDict[sobradoGroup].inicio || dataIni < sobradosDict[sobradoGroup].inicio)) {
+                        sobradosDict[sobradoGroup].inicio = dataIni;
+                    }
+                    if (dataFim && (!sobradosDict[sobradoGroup].termino || dataFim > sobradosDict[sobradoGroup].termino)) {
+                        sobradosDict[sobradoGroup].termino = dataFim;
+                    }
+                }
+            });
+
+            let html = '';
+            Object.keys(sobradosDict).sort().forEach(k => {
+                let s = sobradosDict[k];
+                
+                // Formatando para string
+                let strInicio = s.inicio ? `${String(s.inicio.getDate()).padStart(2, '0')}/${String(s.inicio.getMonth() + 1).padStart(2, '0')}/${s.inicio.getFullYear()}` : '-';
+                let strFim = s.termino ? `${String(s.termino.getDate()).padStart(2, '0')}/${String(s.termino.getMonth() + 1).padStart(2, '0')}/${s.termino.getFullYear()}` : '-';
+                
+                // Calculando dias corridos
+                let dias = '-';
+                if(s.inicio && s.termino) { 
+                    let diffTempo = Math.abs(s.termino - s.inicio); 
+                    dias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24)) + " dias"; 
+                }
+
+                html += `<div class="sobrado-card">
+                    <h3>🏠 ${k}</h3>
+                    <div class="sobrado-info"><strong>Início da Obra:</strong> <span>${strInicio}</span></div>
+                    <div class="sobrado-info"><strong>Término Previsto:</strong> <span>${strFim}</span></div>
+                    <div class="sobrado-info"><strong>Duração Total:</strong> <span>${dias}</span></div>
+                    <div class="sobrado-cost">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(s.custo)}</div>
+                </div>`;
+            });
+            document.getElementById('sobrados-container').innerHTML = html;
         }
 
         function renderCurvaS(labels, desembolso, acumulado, tipo) {
             const ctx = document.getElementById('curvaSChart').getContext('2d');
-            if (curvaSChartObj) curvaSChartObj.destroy();
+            if(curvaSChartObj) curvaSChartObj.destroy();
             let isFisico = tipo === 'fisico';
 
             curvaSChartObj = new Chart(ctx, {
                 type: 'line',
-                data: { labels: labels, datasets: [ { type: 'line', label: isFisico ? 'Avanço Acumulado (%)' : 'Acumulado (R$)', data: acumulado, borderColor: '#1e3a8a', backgroundColor: 'rgba(30, 58, 138, 0.1)', borderWidth: 3, tension: 0.4, fill: true }, { type: 'bar', label: isFisico ? 'Avanço Mensal (%)' : 'Mensal (R$)', data: desembolso, backgroundColor: '#94a3b8', borderRadius: 4, hoverBackgroundColor: '#ea580c' } ] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, animation: false, 
-                    onClick: (event, elements) => { if (elements.length > 0) filtrarTabelaPorMes(elements[0].index); },
-                    plugins: { tooltip: { callbacks: { label: function(context) { return isFisico ? context.raw.toFixed(2) + '%' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw); } } } },
-                    scales: { y: { ticks: { callback: function(val) { return isFisico ? val + '%' : 'R$ ' + val.toLocaleString('pt-BR'); } } } }
-                } 
+                data: { labels: labels, datasets: [ { type: 'line', label: isFisico ? 'Avanço Acumulado (%)' : 'Acumulado (R$)', data: acumulado, borderColor: '#1e3a8a', backgroundColor: 'rgba(30, 58, 138, 0.1)', borderWidth: 3, tension: 0.4, fill: true }, { type: 'bar', label: isFisico ? 'Avanço Mensal (%)' : 'Mensal (R$)', data: desembolso, backgroundColor: '#94a3b8', borderRadius: 4 } ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return isFisico ? context.raw.toFixed(2) + '%' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw); } } } } } 
             });
         }
 
         function renderRoscaChart(nomes, custos, tipo) {
             const ctx = document.getElementById('roscaChart').getContext('2d');
-            if (roscaChartObj) roscaChartObj.destroy();
+            if(roscaChartObj) roscaChartObj.destroy();
             let isFisico = tipo === 'fisico';
 
             roscaChartObj = new Chart(ctx, { 
                 type: 'doughnut', 
                 data: { labels: nomes, datasets: [{ data: custos, backgroundColor: ['#1e3a8a', '#ea580c', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b', '#06b6d4'], borderWidth: 2 }] }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, animation: false, cutout: '65%', 
-                    plugins: { 
-                        legend: { position: 'right', labels: { boxWidth: 12, font: {size: 11} } },
-                        tooltip: { callbacks: { label: function(context) { return isFisico ? context.raw.toFixed(2) + '% de Peso' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw); } } }
-                    } 
-                } 
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: {size: 10} } } } } 
             });
         }
 
-        function filtrarTabelaPorMes(mesIndex) {
-            const tbody = document.getElementById('tbody-eap');
-            const rows = tbody.querySelectorAll('tr[data-isrow="true"]');
-            const colunaAlvo = 5 + mesIndex; 
-            rows.forEach(row => {
-                const celulaMes = row.cells[colunaAlvo];
-                if(!celulaMes) return;
-                const valor = parseFloat(celulaMes.getAttribute('data-val'));
-                const depth = parseInt(row.getAttribute('data-depth'));
-                if (valor > 0 || depth === 0 || depth === 1) { row.style.display = ''; } else { row.style.display = 'none'; }
-            });
-            const btnLimpar = document.getElementById('btn-limpar-filtro');
-            btnLimpar.style.display = 'flex';
-            btnLimpar.innerText = `❌ Remover Filtro (${labelsMeses[mesIndex]})`;
-        }
-
-        function limparFiltro() {
-            document.querySelectorAll('#tbody-eap tr[data-isrow="true"]').forEach(row => row.style.display = '');
-            document.getElementById('btn-limpar-filtro').style.display = 'none';
+        function toggleNiveis() {
+            const table = document.getElementById('eapTable');
+            table.classList.toggle('table-collapsed');
+            document.getElementById('btn-toggle-nivel').innerText = table.classList.contains('table-collapsed') ? "➕ Expandir EAP" : "➖ Recolher EAP";
         }
 
         function exportarPDF() {
-            const btnFinanceiro = document.getElementById('btn-financeiro').classList.contains('active');
-            const btnFisico = document.getElementById('btn-fisico').classList.contains('active');
-            
-            let elementoId = (btnFinanceiro || btnFisico) ? 'impressao-dash' : 'impressao-unidades';
-            const elemento = document.getElementById(elementoId);
-            
-            elemento.classList.add('modo-impressao');
-            const botaoPDF = document.getElementById('btnExportPDF');
-            botaoPDF.innerText = "⏳ A Gerar PDF...";
-            botaoPDF.style.opacity = "0.7";
-
-            let fileName = 'Relatorio_Piemonte.pdf';
-            if (btnFinanceiro) fileName = 'Dashboard_Financeiro_Piemonte.pdf';
-            if (btnFisico) fileName = 'Dashboard_Fisico_Piemonte.pdf';
-
-            const opt = { margin: [10, 10, 10, 10], filename: fileName, image: { type: 'jpeg', quality: 0.98 }, html2canvas:  { scale: 2, useCORS: true, windowWidth: 1600 }, pagebreak: { mode: ['css', 'legacy'] }, jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' } };
-            
-            html2pdf().set(opt).from(elemento).save().then(() => {
-                elemento.classList.remove('modo-impressao');
-                botaoPDF.innerText = "📄 Exportar PDF (A3)";
-                botaoPDF.style.opacity = "1";
-            });
+            const el = document.querySelector('.tab-content[style*="block"] > div');
+            el.classList.add('modo-impressao');
+            html2pdf().set({ margin: 10, filename: 'Relatorio.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, windowWidth: 1600 }, jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' } }).from(el).save().then(() => el.classList.remove('modo-impressao'));
         }
+
+        function abrirConfig() { document.getElementById('configModal').style.display = 'flex'; }
+        function fecharConfig() { document.getElementById('configModal').style.display = 'none'; }
     </script>
 </body>
 </html>
