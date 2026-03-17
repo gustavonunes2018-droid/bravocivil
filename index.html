@@ -28,6 +28,7 @@
         .btn-upload, .btn-pdf { color: white; padding: 8px 18px; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-upload { background-color: var(--primary); margin-top: 15px; width: 100%;}
         .btn-pdf { background-color: #059669; display: flex; align-items: center; gap: 8px; }
+        .btn-pdf:disabled { background-color: #94a3b8; cursor: not-allowed; }
         .btn-acao { background-color: var(--secondary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 6px;}
         .btn-acao.primary { background-color: var(--primary); }
         
@@ -70,8 +71,14 @@
         .sobrado-info strong { color: var(--text-muted); }
         .sobrado-cost { font-size: 20px; font-weight: bold; color: var(--primary); margin-top: 12px; text-align: center; background-color: #e2e8f0; border-radius: 4px; padding: 6px;}
         
-        .modo-impressao { width: 1600px !important; padding: 20px !important; background: white !important; }
-        .modo-impressao .table-wrapper { overflow: visible !important; max-height: none !important; }
+        /* ==========================================================
+           NOVO CSS DE IMPRESSÃO - MAIS LIMPO E A PROVA DE FALHAS
+           ========================================================== */
+        .modo-impressao { padding: 20px !important; background: white !important; }
+        .modo-impressao .table-wrapper { overflow: visible !important; max-height: none !important; border: none !important; }
+        .modo-impressao table { width: 100% !important; }
+        .modo-impressao th { position: static !important; } /* Desliga o cabeçalho fixo */
+
         #cloud-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -280,7 +287,6 @@
             return '-';
         }
 
-        // NOVO: Função para transformar valores de data em Objeto Date (para cálculo da Unidade)
         function parseDateObj(dateVal) {
             if (!dateVal) return null;
             if (typeof dateVal === 'number') {
@@ -383,7 +389,6 @@
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         }
 
-        // NOVO: LÓGICA DE DATAS DAS UNIDADES
         function processUnidades() {
             if (!globalFinanceiroData) return;
             let rows = globalFinanceiroData;
@@ -398,7 +403,6 @@
                     
                     let sobradoGroup = nome.split("-")[0].trim(); 
                     
-                    // Capturando datas
                     let dataIni = parseDateObj(r[3]);
                     let dataFim = parseDateObj(r[4]);
 
@@ -408,7 +412,6 @@
                     
                     sobradosDict[sobradoGroup].custo += rowTotal;
 
-                    // Ajustando Menor Data e Maior Data
                     if (dataIni && (!sobradosDict[sobradoGroup].inicio || dataIni < sobradosDict[sobradoGroup].inicio)) {
                         sobradosDict[sobradoGroup].inicio = dataIni;
                     }
@@ -422,11 +425,9 @@
             Object.keys(sobradosDict).sort().forEach(k => {
                 let s = sobradosDict[k];
                 
-                // Formatando para string
                 let strInicio = s.inicio ? `${String(s.inicio.getDate()).padStart(2, '0')}/${String(s.inicio.getMonth() + 1).padStart(2, '0')}/${s.inicio.getFullYear()}` : '-';
                 let strFim = s.termino ? `${String(s.termino.getDate()).padStart(2, '0')}/${String(s.termino.getMonth() + 1).padStart(2, '0')}/${s.termino.getFullYear()}` : '-';
                 
-                // Calculando dias corridos
                 let dias = '-';
                 if(s.inicio && s.termino) { 
                     let diffTempo = Math.abs(s.termino - s.inicio); 
@@ -474,10 +475,44 @@
             document.getElementById('btn-toggle-nivel').innerText = table.classList.contains('table-collapsed') ? "➕ Expandir EAP" : "➖ Recolher EAP";
         }
 
+        // ==========================================
+        // EXPORTAÇÃO DE PDF CORRIGIDA E ROBUSTA
+        // ==========================================
         function exportarPDF() {
             const el = document.querySelector('.tab-content[style*="block"] > div');
+            const botaoPDF = document.getElementById('btnExportPDF');
+            
+            botaoPDF.innerText = "⏳ Gerando...";
+            botaoPDF.disabled = true;
+
+            // Aplica a classe que desativa a rolagem e o cabeçalho fixo
             el.classList.add('modo-impressao');
-            html2pdf().set({ margin: 10, filename: 'Relatorio.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, windowWidth: 1600 }, jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' } }).from(el).save().then(() => el.classList.remove('modo-impressao'));
+            
+            // Aumentei o tempo para o navegador redesenhar a tabela livre do overflow
+            setTimeout(() => {
+                const opt = { 
+                    margin: 10, 
+                    filename: 'Relatorio_Piemonte.pdf', 
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { 
+                        scale: 2, 
+                        windowWidth: el.scrollWidth + 50, // Permite que a foto não corte a margem direita
+                        useCORS: true 
+                    }, 
+                    jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' } 
+                };
+                
+                html2pdf().set(opt).from(el).save().then(() => {
+                    el.classList.remove('modo-impressao');
+                    botaoPDF.innerText = "📄 PDF";
+                    botaoPDF.disabled = false;
+                }).catch(err => {
+                    console.error("Erro na exportação:", err);
+                    el.classList.remove('modo-impressao');
+                    botaoPDF.innerText = "📄 PDF";
+                    botaoPDF.disabled = false;
+                });
+            }, 600);
         }
 
         function abrirConfig() { document.getElementById('configModal').style.display = 'flex'; }
