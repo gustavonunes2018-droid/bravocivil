@@ -44,6 +44,7 @@
         
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px; align-items: center; }
         @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
+        canvas { cursor: pointer; }
         .chart-container-curva { height: 280px; width: 100%; }
         .chart-container-rosca { height: 240px; width: 100%; display: flex; justify-content: center; }
         
@@ -71,13 +72,10 @@
         .sobrado-info strong { color: var(--text-muted); }
         .sobrado-cost { font-size: 20px; font-weight: bold; color: var(--primary); margin-top: 12px; text-align: center; background-color: #e2e8f0; border-radius: 4px; padding: 6px;}
         
-        /* ==========================================================
-           NOVO CSS DE IMPRESSÃO - MAIS LIMPO E A PROVA DE FALHAS
-           ========================================================== */
         .modo-impressao { padding: 20px !important; background: white !important; }
         .modo-impressao .table-wrapper { overflow: visible !important; max-height: none !important; border: none !important; }
         .modo-impressao table { width: 100% !important; }
-        .modo-impressao th { position: static !important; } /* Desliga o cabeçalho fixo */
+        .modo-impressao th { position: static !important; } 
 
         #cloud-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;}
@@ -148,12 +146,13 @@
             <div class="section-title" style="border: none; margin-bottom: 8px; font-size: 14px;">
                 Matriz Principal
                 <div style="display: flex; gap: 10px;">
-                    <button id="btn-toggle-nivel" class="btn-acao primary" onclick="toggleNiveis()">➖ Recolher EAP</button>
+                    <button id="btn-toggle-nivel" class="btn-acao primary" onclick="toggleNiveis()">➕ Expandir EAP</button>
+                    <button id="btn-limpar-filtro" class="btn-acao" onclick="limparFiltro()" style="display: none; background-color: #ef4444;">❌ Remover Filtro</button>
                 </div>
             </div>
             
             <div class="table-wrapper">
-                <table id="eapTable"></table>
+                <table id="eapTable" class="table-collapsed"></table>
             </div>
         </div>
     </div>
@@ -185,6 +184,9 @@
 
         let globalFinanceiroData = null, globalFisicoData = null;
         let curvaSChartObj = null, roscaChartObj = null;
+        
+        // Variável para guardar os nomes dos meses e usar no botão de filtro
+        window.mesesLabelsGlobal = [];
 
         window.onload = async () => {
             try {
@@ -204,6 +206,8 @@
         };
 
         function switchTab(t) {
+            limparFiltro(); // Limpa o filtro sempre que trocar de aba
+            
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + t).classList.add('active');
             document.getElementById('dashTab').style.display = t === 'unidades' ? 'none' : 'block';
@@ -315,6 +319,7 @@
             let mesesLabels = [];
             
             for(let c=5; c<headers.length; c++) mesesLabels.push(headers[c]);
+            window.mesesLabelsGlobal = mesesLabels; // Salva para o botão do filtro
             
             let hasZero = rows.slice(1).some(r => String(r[0]).trim() === '0');
             rows.slice(1).forEach(r => {
@@ -349,7 +354,8 @@
                 for(let c=5; c<headers.length; c++) {
                     let v = parseFloat(r[c]) || 0;
                     rowTotal += v;
-                    colunasMesesHtml += `<td>${formatVal(v, tipo, somaTotalObra)}</td>`;
+                    // Adicionado atributo data-val para o filtro conseguir ler o valor real
+                    colunasMesesHtml += `<td data-val="${v}">${formatVal(v, tipo, somaTotalObra)}</td>`;
                     
                     if((hasZero && cod === '0') || (!hasZero && depth === 1)) {
                         desembolsoProjeto[c-5] += (tipo === 'fisico' ? (v/somaTotalObra)*100 : v);
@@ -374,7 +380,10 @@
                 </tr>`;
             });
 
-            document.getElementById('eapTable').innerHTML = thead + tbody + `</tbody>`;
+            const tableElement = document.getElementById('eapTable');
+            tableElement.innerHTML = thead + tbody + `</tbody>`;
+            tableElement.classList.add('table-collapsed'); 
+            document.getElementById('btn-toggle-nivel').innerText = "➕ Expandir EAP"; 
 
             let acumulado = 0;
             let projetoAcumulado = desembolsoProjeto.map(v => { acumulado += v; return acumulado; });
@@ -387,6 +396,46 @@
             if(v === 0) return "-";
             if(tipo === 'fisico') return ((v/total)*100).toFixed(2) + "%";
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+
+        // ==========================================
+        // LÓGICA DE FILTRAGEM RESTAURADA
+        // ==========================================
+        function filtrarTabelaPorMes(mesIndex) {
+            const tbody = document.querySelector('#eapTable tbody');
+            if(!tbody) return;
+            const rows = tbody.querySelectorAll('tr');
+            
+            // As primeiras 5 colunas são info (Cód, Tarefa, Dur, Ini, Fim)
+            const colunaAlvo = 5 + mesIndex; 
+            
+            rows.forEach(row => {
+                const celulaMes = row.cells[colunaAlvo];
+                if(!celulaMes) return;
+                
+                const valor = parseFloat(celulaMes.getAttribute('data-val')) || 0;
+                const depth = parseInt(row.getAttribute('data-depth')) || 0;
+                
+                // Mantém visível se tiver gasto no mês OU se for um título de macroetapa
+                if (valor > 0 || depth === 0 || depth === 1) { 
+                    row.style.display = ''; 
+                } else { 
+                    row.style.display = 'none'; 
+                }
+            });
+            
+            const btnLimpar = document.getElementById('btn-limpar-filtro');
+            btnLimpar.style.display = 'flex';
+            btnLimpar.innerText = `❌ Remover Filtro (${window.mesesLabelsGlobal[mesIndex]})`;
+        }
+
+        function limparFiltro() {
+            const tbody = document.querySelector('#eapTable tbody');
+            if(tbody) {
+                tbody.querySelectorAll('tr').forEach(row => row.style.display = '');
+            }
+            const btn = document.getElementById('btn-limpar-filtro');
+            if(btn) btn.style.display = 'none';
         }
 
         function processUnidades() {
@@ -453,7 +502,15 @@
             curvaSChartObj = new Chart(ctx, {
                 type: 'line',
                 data: { labels: labels, datasets: [ { type: 'line', label: isFisico ? 'Avanço Acumulado (%)' : 'Acumulado (R$)', data: acumulado, borderColor: '#1e3a8a', backgroundColor: 'rgba(30, 58, 138, 0.1)', borderWidth: 3, tension: 0.4, fill: true }, { type: 'bar', label: isFisico ? 'Avanço Mensal (%)' : 'Mensal (R$)', data: desembolso, backgroundColor: '#94a3b8', borderRadius: 4 } ] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { return isFisico ? context.raw.toFixed(2) + '%' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw); } } } } } 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    // EVENTO ONCLICK RESTAURADO AQUI
+                    onClick: (event, elements) => { 
+                        if (elements.length > 0) filtrarTabelaPorMes(elements[0].index); 
+                    },
+                    plugins: { tooltip: { callbacks: { label: function(context) { return isFisico ? context.raw.toFixed(2) + '%' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw); } } } } 
+                } 
             });
         }
 
@@ -475,9 +532,6 @@
             document.getElementById('btn-toggle-nivel').innerText = table.classList.contains('table-collapsed') ? "➕ Expandir EAP" : "➖ Recolher EAP";
         }
 
-        // ==========================================
-        // EXPORTAÇÃO DE PDF CORRIGIDA E ROBUSTA
-        // ==========================================
         function exportarPDF() {
             const el = document.querySelector('.tab-content[style*="block"] > div');
             const botaoPDF = document.getElementById('btnExportPDF');
@@ -485,10 +539,8 @@
             botaoPDF.innerText = "⏳ Gerando...";
             botaoPDF.disabled = true;
 
-            // Aplica a classe que desativa a rolagem e o cabeçalho fixo
             el.classList.add('modo-impressao');
             
-            // Aumentei o tempo para o navegador redesenhar a tabela livre do overflow
             setTimeout(() => {
                 const opt = { 
                     margin: 10, 
@@ -496,7 +548,7 @@
                     image: { type: 'jpeg', quality: 0.98 }, 
                     html2canvas: { 
                         scale: 2, 
-                        windowWidth: el.scrollWidth + 50, // Permite que a foto não corte a margem direita
+                        windowWidth: el.scrollWidth + 50,
                         useCORS: true 
                     }, 
                     jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' } 
