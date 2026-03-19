@@ -16,7 +16,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: var(--bg-main); color: var(--text-dark); padding: 30px; }
         
-        /* --- CABEÇALHO --- */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
         .brand-area { display: flex; align-items: center; gap: 15px; }
         .company-logo { max-height: 50px; width: auto; object-fit: contain; display: none; } 
@@ -28,19 +27,16 @@
         .btn-secondary { background-color: var(--secondary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .btn-secondary:hover { background-color: #334155; }
         
-        /* --- DASHBOARD NUMÉRICO --- */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: flex-start;}
         .card-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .card-value { font-size: 2rem; font-weight: 800; margin-top: 8px; color: var(--primary); }
         
-        /* --- PAINEL CENTRAL DE FILTROS --- */
         .master-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 20px; }
         .filter-input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; font-size: 0.85rem; font-weight: 600; color: var(--primary); outline: none; transition: border-color 0.2s; background: #fff;}
         .filter-input:focus { border-color: var(--accent); }
         .filter-label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         
-        /* --- TABELA E CONTEÚDO --- */
         .main-content { margin-bottom: 30px; }
         .table-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; box-shadow: var(--shadow); padding-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; min-width: 1200px; }
@@ -56,7 +52,6 @@
         .tag-hoje { color: var(--warning); font-size: 0.7rem; font-weight: 800; animation: piscar 1.5s infinite; }
         @keyframes piscar { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Selects Inline */
         .inline-select { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; border: 1px solid transparent; cursor: pointer; outline: none; font-family: inherit; transition: all 0.2s; width: 100%; max-width: 120px; }
         .inline-select:hover { filter: brightness(0.95); border-color: var(--border); }
         
@@ -69,7 +64,6 @@
         .prio-media { background-color: #fef3c7; color: #d97706; }
         .prio-alta { background-color: #fee2e2; color: var(--danger); border: 1px solid #f87171; }
         
-        /* Timeline */
         .timeline-cell { width: 200px; min-width: 150px; }
         .timeline-wrapper { position: relative; width: 100%; height: 22px; background-color: #e2e8f0; border-radius: 6px; overflow: hidden; }
         .timeline-bar { position: absolute; height: 100%; border-radius: 6px; top: 0; transition: width 0.3s, left 0.3s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -77,6 +71,10 @@
         .bar-andamento { background-color: #3b82f6; }
         .bar-concluido { background-color: #10b981; }
         .bar-atrasado { background-color: #ef4444; }
+
+        /* Oculta textos e blocos mobile no Desktop */
+        .mobile-context { display: none; }
+        .mobile-label { display: none; }
 
         /* Modais */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;}
@@ -114,59 +112,110 @@
         .discreet-upload:hover { color: var(--accent); }
 
         /* =========================================================
-           ENGENHARIA RESPONSIVA AVANçada (MOBILE ACTION CARDS)
+           ENGENHARIA RESPONSIVA TÁTICA (MOBILE CARD VIEW DO USUÁRIO)
            ========================================================= */
         @media (max-width: 850px) {
-            body { padding: 15px; }
-            
-            /* Cabeçalho empilhado */
-            .header { flex-direction: column; align-items: flex-start; gap: 20px; border-bottom: none; }
+            body { padding: 10px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 15px; border-bottom: none; }
             .header-actions { flex-direction: column; width: 100%; align-items: stretch; gap: 10px; }
             .header-actions > select, .header-actions > button { width: 100%; text-align: center; }
-            
-            /* Dashboard 2 colunas */
-            .dashboard { grid-template-columns: 1fr 1fr; }
-            
-            /* Painel de Filtros 2 colunas */
-            .master-filters { grid-template-columns: 1fr 1fr; }
-            .master-filters > div:first-child { grid-column: 1 / -1; } /* Busca pega a tela toda */
+            .dashboard { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .master-filters { grid-template-columns: 1fr 1fr; padding: 10px; gap: 8px; }
+            .master-filters > div:first-child { grid-column: 1 / -1; } 
 
-            /* TRANSMUTAÇÃO: Tabela para Cards */
+            /* TRANSMUTAÇÃO: Tabela para o "Croqui do Usuário" */
             .table-container { border: none; background: transparent; box-shadow: none; padding: 0; overflow: visible; }
-            table, thead, tbody, th, td, tr { display: block; }
+            table, thead, tbody { display: block; width: 100%; }
+            thead { display: none; } /* Oculta totalmente o cabeçalho original */
             
-            /* Oculta o cabeçalho clássico (agora inútil no mobile) */
-            thead tr { display: none; }
-            
-            /* Cada linha vira um Cartão de Atividade */
+            /* Estrutura Exata do Cartão Desenhado (Bordas Grossas Pretas) */
             tr { 
-                background: white; border: 1px solid var(--border); border-radius: 12px; 
-                margin-bottom: 15px; padding: 15px; box-shadow: var(--shadow); position: relative;
+                background: white; 
+                border: 3px solid var(--primary); /* Borda grossa externa */
+                border-radius: 16px; /* Cantos bem arredondados */
+                margin-bottom: 15px; 
+                box-shadow: 0 4px 6px rgba(0,0,0,0.15); 
+                position: relative;
+                display: flex;
+                flex-wrap: wrap; /* Permite a quebra das zonas do cartão */
+                overflow: hidden;
             }
             
-            /* Formatação interna dos itens do cartão */
-            td { 
-                padding: 10px 0; border-bottom: 1px dashed var(--border); 
-                display: flex; justify-content: space-between; align-items: center; text-align: right; white-space: normal;
-            }
-            td:last-child { border-bottom: none; padding-bottom: 0; }
-            
-            /* Injeta os rótulos dinamicamente (Ex: "Status:", "Prioridade:") */
-            td::before { 
-                content: attr(data-label); font-weight: 800; color: var(--text-muted); 
-                font-size: 0.75rem; text-transform: uppercase; margin-right: 15px; text-align: left;
+            /* Oculta colunas desnecessárias para o modo de campo */
+            td:nth-child(2), /* Obra */
+            td:nth-child(3), /* Setor */
+            td:nth-child(4), /* Início */
+            td:nth-child(5), /* Término */
+            td:nth-child(8)  /* Cronograma */ {
+                display: none !important;
             }
 
-            /* Destaca o Nome da Tarefa e a Obra */
-            td:nth-child(1) { font-size: 1.1rem; color: var(--primary); font-weight: 800; border-bottom: 2px solid var(--border); padding-bottom: 15px; flex-direction: column; align-items: flex-start;}
-            td:nth-child(1)::before { display: none; } /* Remove rótulo do título */
+            /* --- ZONA 1: DESCRIÇÃO DA TAREFA (Ocupa a linha de cima) --- */
+            td:nth-child(1) { 
+                width: 100%; 
+                font-size: 1.2rem; 
+                color: var(--primary); 
+                font-weight: 800; 
+                text-align: center;
+                border-bottom: 3px solid var(--primary); /* Linha divisória central grossa */
+                padding: 15px 10px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
             
-            /* Ajustes finos nos botões e selects dentro do card */
-            .inline-select { width: 60%; max-width: none; text-align: center; }
-            td.timeline-cell { flex-direction: column; align-items: stretch; }
-            td.timeline-cell::before { margin-bottom: 8px; }
+            /* Ativa o contexto protetor que adicionei */
+            .mobile-context { 
+                display: block; 
+                font-size: 0.65rem; 
+                color: #64748b; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                margin-bottom: 6px; 
+                letter-spacing: 0.5px; 
+            }
 
-            /* Modais */
+            /* --- ZONA 2: PRIORIDADE (Metade Esquerda) --- */
+            td:nth-child(6) { 
+                width: 50%;
+                border-right: 3px solid var(--primary); /* Linha divisória vertical grossa */
+                border-bottom: none;
+                padding: 15px 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* --- ZONA 3: STATUS (Metade Direita) --- */
+            td:nth-child(7) { 
+                width: 50%;
+                border-bottom: none;
+                padding: 15px 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Rótulos inseridos acima dos botões de Status/Prioridade */
+            .mobile-label {
+                display: block;
+                font-size: 0.7rem;
+                font-weight: 800;
+                color: var(--primary);
+                margin-bottom: 8px;
+                text-transform: uppercase;
+            }
+
+            /* --- ZONA AÇÕES (Botão Lixeira Oculto no topo) --- */
+            td:nth-child(9) { 
+                position: absolute; top: 8px; right: 8px; border: none; padding: 0; width: auto;
+            }
+            .delete-btn-sm { padding: 6px 10px; font-size: 0.7rem; border-radius: 8px; background-color: #fee2e2; }
+
+            /* Ajustes Finos */
+            .inline-select { width: 100%; max-width: 100%; text-align: center; font-size: 0.9rem; padding: 10px 5px; }
             .modal-content { padding: 20px; width: 100%; margin: 0; max-height: 95vh;}
             .form-grid { grid-template-columns: 1fr; gap: 15px;}
             .form-group.full { grid-column: auto; }
@@ -393,7 +442,6 @@
                     await setDoc(configDocRef, { logoBase64: e.target.result }, { merge: true });
                     alert('Identidade visual atualizada com sucesso!');
                 } catch (error) {
-                    console.error("Erro ao salvar logo:", error);
                     alert('Erro ao salvar. Tente uma imagem mais leve.');
                 }
             };
@@ -548,7 +596,7 @@
             const classes = { 'Pendente': 'bg-pendente', 'Em Andamento': 'bg-andamento', 'Concluído': 'bg-concluido', 'Atrasado': 'bg-atrasado' };
             const classeAtual = classes[statusAtual] || 'bg-pendente';
             return `
-                <select class="inline-select ${classeAtual}" onchange="window.atualizarStatusRapido('${id}', this.value)">
+                <select class="inline-select ${classeAtual}" onchange="window.atualizarStatusRapido('${id}', this.value)" onclick="event.stopPropagation()">
                     <option value="Pendente" ${statusAtual === 'Pendente' ? 'selected' : ''}>Pendente</option>
                     <option value="Em Andamento" ${statusAtual === 'Em Andamento' ? 'selected' : ''}>Em Andamento</option>
                     <option value="Concluído" ${statusAtual === 'Concluído' ? 'selected' : ''}>Concluído</option>
@@ -560,7 +608,7 @@
             const classes = { 'Baixa': 'prio-baixa', 'Média': 'prio-media', 'Alta': 'prio-alta' };
             const classeAtual = classes[prioridadeAtual] || 'prio-media';
             return `
-                <select class="inline-select ${classeAtual}" onchange="window.atualizarPrioridadeRapido('${id}', this.value)">
+                <select class="inline-select ${classeAtual}" onchange="window.atualizarPrioridadeRapido('${id}', this.value)" onclick="event.stopPropagation()">
                     <option value="Baixa" ${prioridadeAtual === 'Baixa' ? 'selected' : ''}>Baixa</option>
                     <option value="Média" ${prioridadeAtual === 'Média' ? 'selected' : ''}>Média</option>
                     <option value="Alta" ${prioridadeAtual === 'Alta' ? 'selected' : ''}>Alta</option>
@@ -619,17 +667,25 @@
                     barHtml = `<div class="timeline-wrapper"><div class="timeline-bar ${corBarra}" style="left: ${leftPct}%; width: ${widthPct}%;"></div></div>`;
                 }
                 
-                // INJEÇÃO DOS DATA-LABELS (Crucial para o modo Mobile Card View)
                 tr.innerHTML = `
-                    <td data-label="Tarefa">${tarefa.nome || 'Sem nome'}</td>
-                    <td data-label="Obra" style="font-weight: 600; color: var(--secondary);">${tarefa.obra || '-'}</td>
-                    <td data-label="Setor">${tarefa.setor || '-'}</td>
-                    <td data-label="Início">${formatarData(tarefa.inicio)}</td>
-                    <td data-label="Término">${formatarData(tarefa.termino)}${isVenceHoje ? '<br><span class="tag-hoje">VENCE HOJE</span>' : ''}</td>
-                    <td data-label="Prioridade">${getPrioridadeSelect(tarefa.id, tarefa.prioridade)}</td>
-                    <td data-label="Status">${getStatusSelect(tarefa.id, tarefa.status)}</td>
-                    <td data-label="Cronograma" class="timeline-cell">${barHtml}</td>
-                    <td data-label="Ações"><button class="delete-btn-sm" onclick="window.excluirTarefa('${tarefa.id}')">Excluir</button></td>
+                    <td>
+                        <div class="mobile-context">${tarefa.obra} - ${tarefa.setor} | Vence: ${formatarData(tarefa.termino)}</div>
+                        ${tarefa.nome || 'Sem nome'}
+                    </td>
+                    <td style="font-weight: 600; color: var(--secondary);">${tarefa.obra || '-'}</td>
+                    <td>${tarefa.setor || '-'}</td>
+                    <td>${formatarData(tarefa.inicio)}</td>
+                    <td>${formatarData(tarefa.termino)}${isVenceHoje ? '<br><span class="tag-hoje">VENCE HOJE</span>' : ''}</td>
+                    <td>
+                        <span class="mobile-label">Prioridade</span>
+                        ${getPrioridadeSelect(tarefa.id, tarefa.prioridade)}
+                    </td>
+                    <td>
+                        <span class="mobile-label">Status</span>
+                        ${getStatusSelect(tarefa.id, tarefa.status)}
+                    </td>
+                    <td class="timeline-cell">${barHtml}</td>
+                    <td><button class="delete-btn-sm" onclick="event.stopPropagation(); window.excluirTarefa('${tarefa.id}')">Excluir</button></td>
                 `;
                 tbody.appendChild(tr);
             });
