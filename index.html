@@ -138,7 +138,6 @@
             .card { padding: 15px; border-radius: 12px; }
             .card-value { font-size: 1.8rem; }
             
-            /* Ajuste dos novos filtros no grid mobile */
             .master-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 12px; margin-bottom: 25px; align-items: start;}
             .filter-group { min-width: 0; }
             .filter-group.large { grid-column: 1 / -1; } 
@@ -160,12 +159,11 @@
             }
             
             td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(6), td:nth-child(9) {
-                display: none !important; /* Oculta Obra, Setor, Início, Término, Responsável(Texto) e Cronograma */
+                display: none !important; 
             }
 
             td { display: flex; flex-direction: column; box-sizing: border-box; border: none; background: transparent !important;}
 
-            /* ZONA 1: TITULO E CONTEXTO (100% largura) */
             td:nth-child(1) { 
                 width: 100%; 
                 padding: 18px 15px 15px 15px;
@@ -188,7 +186,6 @@
                 letter-spacing: 0.5px; 
             }
 
-            /* ZONA 2: PRIORIDADE (50% Esquerda) */
             td:nth-child(7) { 
                 width: 50%; padding: 15px; 
                 border-right: 1px solid #f1f5f9; 
@@ -196,7 +193,6 @@
                 align-items: flex-start;
             }
             
-            /* ZONA 3: STATUS (50% Direita) */
             td:nth-child(8) { 
                 width: 50%; padding: 15px; 
                 border-bottom: 1px solid #f1f5f9;
@@ -210,7 +206,6 @@
 
             .inline-select { width: 100%; max-width: 100%; padding: 10px; font-size: 0.85rem;}
 
-            /* ZONA 4: AÇÕES (Botão de excluir no rodapé) */
             td:nth-child(10) { 
                 width: 100%; padding: 12px 15px; 
                 background: #f8fafc !important; 
@@ -267,7 +262,7 @@
             <span class="filter-label">Responsável</span>
             <select id="filtroResponsavel" class="filter-input" onchange="window.aplicarFiltro()">
                 <option value="">Todos</option>
-                </select>
+            </select>
         </div>
         <div class="filter-group">
             <span class="filter-label">Andamento</span>
@@ -466,7 +461,7 @@
                     await setDoc(configDocRef, { logoBase64: e.target.result }, { merge: true });
                     alert('Identidade visual atualizada com sucesso!');
                 } catch (error) {
-                    alert('Erro ao salvar. A imagem pode ser muito pesada.');
+                    alert('Erro ao salvar. A imagem pode ser demasiado pesada.');
                 }
             };
             reader.readAsDataURL(file);
@@ -509,6 +504,88 @@
             window.aplicarFiltro();
         }
 
+        window.adicionarObra = async () => {
+            const input = document.getElementById('novaObraInput');
+            const nomeObra = input.value.trim();
+            const btn = input.nextElementSibling; 
+            
+            if(nomeObra !== '') {
+                btn.innerText = '⏳...'; 
+                btn.style.backgroundColor = 'var(--warning)';
+                
+                try {
+                    await addDoc(obrasCol, { nome: nomeObra });
+                    input.value = '';
+                    btn.innerText = '✔️ Salvo';
+                    btn.style.backgroundColor = 'var(--success)';
+                    
+                    setTimeout(() => {
+                        const lista = document.getElementById('listaObrasConfig');
+                        lista.scrollTop = lista.scrollHeight;
+                        btn.innerText = 'Adicionar'; 
+                        btn.style.backgroundColor = 'var(--accent)';
+                    }, 1500);
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Falha ao gravar a Obra. Verifique a sua ligação à internet.");
+                    btn.innerText = 'Adicionar';
+                    btn.style.backgroundColor = 'var(--accent)';
+                }
+            }
+        };
+
+        window.excluirObra = async (id) => { 
+            if(confirm('Atenção: Eliminar esta Obra?')) {
+                try {
+                    await deleteDoc(doc(db, 'obras', id)); 
+                } catch (error) {
+                    alert("Erro ao eliminar. O banco de dados pode estar bloqueado.");
+                }
+            }
+        };
+
+        window.adicionarSetor = async () => {
+            const input = document.getElementById('novoSetorInput');
+            const nomeSetor = input.value.trim();
+            const btn = input.nextElementSibling;
+            
+            if(nomeSetor !== '') {
+                btn.innerText = '⏳...';
+                btn.style.backgroundColor = 'var(--warning)';
+                
+                try {
+                    await addDoc(setoresCol, { nome: nomeSetor });
+                    input.value = '';
+                    btn.innerText = '✔️ Salvo';
+                    btn.style.backgroundColor = 'var(--success)';
+                    
+                    setTimeout(() => {
+                        const lista = document.getElementById('listaSetoresConfig');
+                        lista.scrollTop = lista.scrollHeight;
+                        btn.innerText = 'Adicionar';
+                        btn.style.backgroundColor = 'var(--accent)';
+                    }, 1500);
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Falha ao gravar o Setor. Verifique a sua ligação à internet.");
+                    btn.innerText = 'Adicionar';
+                    btn.style.backgroundColor = 'var(--accent)';
+                }
+            }
+        };
+
+        window.excluirSetor = async (id) => { 
+            if(confirm('Atenção: Eliminar este Setor?')) {
+                try {
+                    await deleteDoc(doc(db, 'setores', id)); 
+                } catch (error) {
+                    alert("Erro ao eliminar. O banco de dados pode estar bloqueado.");
+                }
+            }
+        };
+
         const getHojeStr = () => {
             const d = new Date();
             const ano = d.getFullYear();
@@ -539,12 +616,10 @@
             window.aplicarFiltro(); 
         });
         
-        // NOVA FUNÇÃO: Varredura Dinâmica de Responsáveis
         function atualizarDropdownResponsavel() {
             const select = document.getElementById('filtroResponsavel');
-            const valorAtual = select.value; // Salva o que estava selecionado
+            const valorAtual = select.value;
             
-            // Extrai nomes únicos ignorando nulos e vazios
             const responsaveisUnicos = [...new Set(tarefasLocal.map(t => t.responsavel).filter(r => r && r !== '-'))].sort();
             
             select.innerHTML = '<option value="">Todos</option>' + 
@@ -595,7 +670,6 @@
             
             const dataHoje = new Date(getHojeStr() + 'T00:00:00');
 
-            // 1. Aplica todos os filtros
             let filtradas = tarefasLocal.filter(t => {
                 if (filtroNome && !(t.nome || '').toLowerCase().includes(filtroNome)) return false;
                 if (filtroObra && t.obra !== filtroObra) return false;
@@ -614,12 +688,10 @@
                 return true;
             });
             
-            // 2. Aplica o Motor de Ordenação de Datas
             filtradas.sort((a, b) => {
                 let dataA, dataB;
                 
                 if (ordenacao.startsWith('termino')) {
-                    // Trata datas vazias jogando para o final da lista (2099)
                     dataA = a.termino ? new Date(a.termino + 'T00:00:00').getTime() : new Date('2099-01-01').getTime();
                     dataB = b.termino ? new Date(b.termino + 'T00:00:00').getTime() : new Date('2099-01-01').getTime();
                 } else {
@@ -628,9 +700,9 @@
                 }
 
                 if (ordenacao.endsWith('asc')) {
-                    return dataA - dataB; // Menor para o maior (Mais antigo/próximo primeiro)
+                    return dataA - dataB;
                 } else {
-                    return dataB - dataA; // Maior para o menor (Mais recente/distante primeiro)
+                    return dataB - dataA;
                 }
             });
             
@@ -687,7 +759,7 @@
             const tbody = document.getElementById('tabelaCorpo');
             tbody.innerHTML = '';
             
-            const tarefasParaExibir = obterTarefasFiltradasEOrdenadas(); // Chama a nova função com Ordenação
+            const tarefasParaExibir = obterTarefasFiltradasEOrdenadas();
             const hojeStr = getHojeStr();
             const limites = getLimitesCronograma(tarefasParaExibir);
 
@@ -749,7 +821,7 @@
         document.getElementById('formTarefa').addEventListener('submit', async function(e) {
             e.preventDefault();
             if(obrasLocal.length === 0 || setoresLocal.length === 0) {
-                alert("Por favor, acesse as 'Configurações' e cadastre pelo menos uma Obra e um Setor antes de criar tarefas.");
+                alert("Por favor, aceda às 'Configurações' e cadastre pelo menos uma Obra e um Setor antes de criar tarefas.");
                 return;
             }
             const novaTarefa = {
@@ -784,7 +856,7 @@
                         <div class="historico-data">${new Date(item.data).toLocaleDateString('pt-BR')} às ${new Date(item.data).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
                         <div class="historico-texto">${item.texto}</div>
                     </div>`).join('')
-                : '<div class="empty-history" style="padding: 10px 0;">Nenhuma anotação registrada ainda.</div>';
+                : '<div class="empty-history" style="padding: 10px 0;">Nenhum registo efetuado ainda.</div>';
             window.abrirModal('modalDetalhes');
         };
 
@@ -799,7 +871,7 @@
             window.fecharModal('modalDetalhes');
         };
 
-        window.excluirTarefa = async (id) => { if(confirm('Excluir permanentemente esta atividade?')) await deleteDoc(doc(db, 'tarefas', id)); };
+        window.excluirTarefa = async (id) => { if(confirm('Eliminar permanentemente esta atividade?')) await deleteDoc(doc(db, 'tarefas', id)); };
     </script>
 </body>
 </html>
