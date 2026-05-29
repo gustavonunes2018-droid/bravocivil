@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bravo Civil — Suprimentos</title>
+    <!-- Firebase SDK (compat — funciona sem bundler) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════
@@ -259,9 +263,52 @@
         .lp-item .lp-qtd   { width:70px; font-size:12px; }
         .upload-area { border:2px dashed #bfdbfe; border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:#f8fafc; transition:.2s; }
         .upload-area:hover { background:#eff6ff; border-color:#93c5fd; }
+
+        /* ══════════════════════════════════════════════════════
+           ALMOXARIFADO
+        ══════════════════════════════════════════════════════ */
+        .alm-section { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:20px; overflow:hidden; }
+        .alm-section-hdr { padding:14px 18px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .alm-section-hdr h4 { margin:0; font-size:15px; font-weight:700; color:#0f172a; }
+        .alm-kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+        .alm-kpi { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px 18px; }
+        .alm-kpi .kpi-label { font-size:11px; text-transform:uppercase; font-weight:700; color:var(--muted); margin-bottom:4px; letter-spacing:.4px; }
+        .alm-kpi .kpi-val   { font-size:26px; font-weight:800; }
+        .alm-table { width:100%; border-collapse:collapse; }
+        .alm-table th { background:#f8fafc; padding:9px 12px; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--border); white-space:nowrap; letter-spacing:.4px; }
+        .alm-table td { padding:8px 12px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+        .alm-table tr:last-child td { border-bottom:none; }
+        .alm-table tr:hover td { background:#f8fafc; }
+        .alm-empty { text-align:center; color:#94a3b8; padding:28px; font-size:13px; }
+        .ordem-chip { display:inline-flex; gap:4px; align-items:center; background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; padding:2px 7px; font-size:11px; font-weight:700; color:#1e3a8a; cursor:pointer; }
+        .ordem-chip:hover { background:#dbeafe; }
+        .cot-footer-row td { background:#f8fafc; }
+        .cot-footer-lbl { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
+        .cot-metpag select { font-size:12px; }
     </style>
 </head>
 <body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     LOADING OVERLAY (Firebase init)
+════════════════════════════════════════════════════════════════ -->
+<div id="loading-overlay" style="
+    position:fixed;inset:0;z-index:9999;background:#0f172a;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;">
+    <div style="font-size:56px;margin-bottom:20px;">🏗️</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:10px;">Bravo Civil</div>
+    <div id="loading-msg" style="font-size:14px;color:#94a3b8;text-align:center;max-width:300px;">Conectando ao Firebase...</div>
+    <div style="margin-top:24px;width:180px;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+        <div id="loading-bar" style="height:100%;background:#2563eb;border-radius:2px;width:0%;transition:width .4s ease;"></div>
+    </div>
+</div>
+
+<!-- Error toast -->
+<div id="error-toast" style="
+    display:none;position:fixed;bottom:20px;right:20px;z-index:9998;
+    background:#ef4444;color:#fff;padding:12px 18px;border-radius:8px;
+    font-size:13px;font-weight:700;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,.3);">
+</div>
 
 <!-- ════════════════════════════════════════════════════════════════
      LOGIN
@@ -297,6 +344,7 @@
         <nav class="nav-menu">
             <a class="nav-item active" onclick="alternarTela('view-dashboard')">📊 Painel de Controle</a>
             <a class="nav-item" id="nav-solicitar"        onclick="alternarTela('view-pedido')"          style="display:none;">📋 Nova Solicitação RM</a>
+            <a class="nav-item" id="nav-almoxarifado"    onclick="alternarTela('view-almoxarifado')"    style="display:none;">🏪 Almoxarifado</a>
             <a class="nav-item" id="nav-empreendimentos" onclick="alternarTela('view-empreendimentos')" style="display:none;">🏗️ Empreendimentos</a>
             <a class="nav-item" id="nav-usuarios"        onclick="alternarTela('view-usuarios')"        style="display:none;">👥 Gestão de Usuários</a>
         </nav>
@@ -364,6 +412,78 @@
                     </table>
                 </div>
             </div><!-- /view-dashboard -->
+
+            <!-- ─── Almoxarifado ─── -->
+            <div id="view-almoxarifado" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h2>🏪 Almoxarifado</h2>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <label style="font-size:13px;font-weight:600;margin:0;">Filtrar Obra:</label>
+                        <select id="alm-filtro-obra" onchange="renderAlmoxarifado()" style="width:220px;">
+                            <option value="TODOS">Todos os Empreendimentos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- KPIs -->
+                <div class="alm-kpi-grid">
+                    <div class="alm-kpi">
+                        <div class="kpi-label">Entregas Pendentes</div>
+                        <div class="kpi-val" id="alm-kpi-pendentes" style="color:#f59e0b;">0</div>
+                    </div>
+                    <div class="alm-kpi">
+                        <div class="kpi-label">OCs em Trânsito</div>
+                        <div class="kpi-val" id="alm-kpi-ocs" style="color:#2563eb;">0</div>
+                    </div>
+                    <div class="alm-kpi">
+                        <div class="kpi-label">Itens Recebidos (total)</div>
+                        <div class="kpi-val" id="alm-kpi-recebidos" style="color:#10b981;">0</div>
+                    </div>
+                </div>
+
+                <!-- Entregas Pendentes -->
+                <div class="alm-section">
+                    <div class="alm-section-hdr">
+                        <h4>📦 Entregas Pendentes</h4>
+                    </div>
+                    <table class="alm-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;min-width:180px;">Material</th>
+                                <th>OC</th>
+                                <th>Fornecedor</th>
+                                <th>Obra / CC</th>
+                                <th>Prev. Entrega</th>
+                                <th>Qtd Pedida</th>
+                                <th>Qtd Recebida</th>
+                                <th>Saldo</th>
+                                <th>Gravar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alm-tbody-pendentes"></tbody>
+                    </table>
+                </div>
+
+                <!-- Posição de Estoque -->
+                <div class="alm-section">
+                    <div class="alm-section-hdr">
+                        <h4>📊 Posição de Estoque (acumulado recebido)</h4>
+                    </div>
+                    <table class="alm-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;min-width:220px;">Material</th>
+                                <th>Und</th>
+                                <th>Total Pedido</th>
+                                <th>Total Recebido</th>
+                                <th>Saldo Pendente</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alm-tbody-estoque"></tbody>
+                    </table>
+                </div>
+            </div><!-- /view-almoxarifado -->
 
             <!-- ─── Nova RM / Solicitação ─── -->
             <div id="view-pedido" style="display:none;">
@@ -735,6 +855,19 @@
 'use strict';
 
 /* ══════════════════════════════════════════════════════════════════
+   §0 — FIREBASE INIT
+══════════════════════════════════════════════════════════════════ */
+firebase.initializeApp({
+    apiKey           : "AIzaSyA9Sbic-gUvLvC2LHKw3oyfUAC2OvD_cgU",
+    authDomain       : "compras-882f4.firebaseapp.com",
+    projectId        : "compras-882f4",
+    storageBucket    : "compras-882f4.firebasestorage.app",
+    messagingSenderId: "882821382153",
+    appId            : "1:882821382153:web:507c10ef6fbd427786f8d8",
+});
+const _fs = firebase.firestore();
+
+/* ══════════════════════════════════════════════════════════════════
    §1 — EMAILJS
 ══════════════════════════════════════════════════════════════════ */
 const EMAILJS_KEY = "srF3sicIP-gQDPHZe";
@@ -743,70 +876,115 @@ const EMAILJS_TPL = "template_ftce7gt";
 emailjs.init(EMAILJS_KEY);
 
 /* ══════════════════════════════════════════════════════════════════
-   §2 — DATA SERVICE (Pedidos — Firebase-ready)
+   §1b — HELPERS DE FIREBASE / FEEDBACK
+══════════════════════════════════════════════════════════════════ */
+function logErr(err) {
+    console.error('[Firebase]', err);
+    const t = document.getElementById('error-toast');
+    if (!t) return;
+    t.innerText = '⚠ Firebase: ' + (err?.message || String(err));
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
+
+function setLoadingMsg(msg, pct) {
+    const el  = document.getElementById('loading-msg');
+    const bar = document.getElementById('loading-bar');
+    if (el)  el.innerText = msg;
+    if (bar && pct !== undefined) bar.style.width = pct + '%';
+}
+
+function hideOverlay() {
+    const ov = document.getElementById('loading-overlay');
+    if (ov) ov.style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   §2 — CONFIG SERVICE (coleção _config do Firestore)
+   Armazena arrays JSON como documentos únicos:
+     _config/usuarios, _config/empreendimentos, _config/tarefas
+══════════════════════════════════════════════════════════════════ */
+const ConfigService = {
+    col: () => _fs.collection('_config'),
+
+    async ler(nome) {
+        const snap = await this.col().doc(nome).get();
+        return snap.exists ? (snap.data().lista || []) : [];
+    },
+
+    salvar(nome, lista) {
+        return this.col().doc(nome).set({ lista: JSON.parse(JSON.stringify(lista)) });
+    },
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   §2b — DATA SERVICE (coleção pedidos — 1 doc por pedido)
 ══════════════════════════════════════════════════════════════════ */
 const DataService = {
-    KEY: 'bravo_erp_v3',
-    ler()       { try { return JSON.parse(localStorage.getItem(this.KEY)) || []; } catch(_){ return []; } },
-    salvar(d)   { localStorage.setItem(this.KEY, JSON.stringify(d)); },
+    col: () => _fs.collection('pedidos'),
+
+    /** Salva/atualiza um pedido específico */
+    salvarPedido(p) {
+        return this.col().doc(String(p.id)).set(JSON.parse(JSON.stringify(p)));
+    },
+
+    /** Remove um pedido */
+    deletarPedido(id) {
+        return this.col().doc(String(id)).delete();
+    },
+
+    /** Listener em tempo real — chama cb(array) sempre que houver mudança */
+    escutar(cb) {
+        return this.col().onSnapshot(
+            snap  => cb(snap.docs.map(d => d.data())),
+            err   => logErr(err)
+        );
+    },
 };
 
 /* ══════════════════════════════════════════════════════════════════
-   §2b — USER SERVICE (Usuários e Perfis)
+   §2c–2e — CACHES EM MEMÓRIA (carregados no init, sync depois)
+   Os services lêem/escrevem no cache local + salvam no Firestore.
 ══════════════════════════════════════════════════════════════════ */
+let _usuarios       = [];
+let _empreendimentos= [];
+let _tarefas        = [];
+
 const UserService = {
-    KEY: 'bravo_users_v1',
-    ler()     { try { return JSON.parse(localStorage.getItem(this.KEY)) || []; } catch(_){ return []; } },
-    salvar(u) { localStorage.setItem(this.KEY, JSON.stringify(u)); },
-
-    /** Usuários padrão criados no primeiro acesso */
     DEFAULTS: [
-        { id:'u_master',    login:'master',    senha:'master123', nome:'Administrador Master',      perfil:'master',    obra:null,                                   ativo:true },
-        { id:'u_comprador', login:'comprador', senha:'123',       nome:'Suprimentos / Compras',     perfil:'comprador', obra:null,                                   ativo:true },
-        { id:'u_gestor',    login:'gestor',    senha:'123',       nome:'Diretoria / Gestor',        perfil:'gestor',    obra:null,                                   ativo:true },
-        { id:'u_obra1',     login:'obra',      senha:'123',       nome:'Encarregado de Obra',       perfil:'obra',      obra:'Condomínio Villa Piemonte',             ativo:true },
+        { id:'u_master',    login:'master',    senha:'master123', nome:'Administrador Master',  perfil:'master',    obra:null,                         ativo:true },
+        { id:'u_comprador', login:'comprador', senha:'123',       nome:'Suprimentos / Compras', perfil:'comprador', obra:null,                         ativo:true },
+        { id:'u_gestor',    login:'gestor',    senha:'123',       nome:'Diretoria / Gestor',    perfil:'gestor',    obra:null,                         ativo:true },
+        { id:'u_obra1',     login:'obra',      senha:'123',       nome:'Encarregado de Obra',   perfil:'obra',      obra:'Condomínio Villa Piemonte',  ativo:true },
     ],
-
-    /** Semeadura: cria defaults se o storage estiver vazio */
+    ler()      { return _usuarios; },
+    salvar(u)  { _usuarios = u; ConfigService.salvar('usuarios', u).catch(logErr); },
     seedDefaults() {
-        const existentes = this.ler();
-        if (!existentes.length) this.salvar(this.DEFAULTS);
+        if (!_usuarios.length) { _usuarios = this.DEFAULTS; ConfigService.salvar('usuarios', _usuarios).catch(logErr); }
     },
-
     autenticar(login, senha) {
-        return this.ler().find(u => u.login === login && u.senha === senha && u.ativo);
+        return _usuarios.find(u => u.login === login && u.senha === senha && u.ativo) || null;
     },
 };
 
-/* ══════════════════════════════════════════════════════════════════
-   §2c — EMPREENDIMENTO SERVICE
-══════════════════════════════════════════════════════════════════ */
 const EmpService = {
-    KEY: 'bravo_emp_v1',
-    ler()     { try { return JSON.parse(localStorage.getItem(this.KEY)) || []; } catch(_){ return []; } },
-    salvar(d) { localStorage.setItem(this.KEY, JSON.stringify(d)); },
-
     DEFAULTS: [
-        { id:'emp1', codigo:'CVP',  nome:'Condomínio Villa Piemonte',            centrosCusto:['Estrutura','Alvenaria','Instalações Elétricas','Acabamento'],     ativo:true },
-        { id:'emp2', codigo:'CTA',  nome:'Canteiro Central - Torre Alvorada',    centrosCusto:['Fundação','Estrutura','Vedação','Cobertura'],                     ativo:true },
-        { id:'emp3', codigo:'IPS',  nome:'Infraestrutura - Ponte do Setor Sul',  centrosCusto:['Terraplenagem','Concreto','Pavimentação','Drenagem'],             ativo:true },
+        { id:'emp1', codigo:'CVP', nome:'Condomínio Villa Piemonte',           centrosCusto:['Estrutura','Alvenaria','Instalações Elétricas','Acabamento'],  ativo:true },
+        { id:'emp2', codigo:'CTA', nome:'Canteiro Central - Torre Alvorada',   centrosCusto:['Fundação','Estrutura','Vedação','Cobertura'],                  ativo:true },
+        { id:'emp3', codigo:'IPS', nome:'Infraestrutura - Ponte do Setor Sul', centrosCusto:['Terraplenagem','Concreto','Pavimentação','Drenagem'],          ativo:true },
     ],
-
+    ler()      { return _empreendimentos; },
+    salvar(e)  { _empreendimentos = e; ConfigService.salvar('empreendimentos', e).catch(logErr); },
     seedDefaults() {
-        if (!this.ler().length) this.salvar(this.DEFAULTS);
+        if (!_empreendimentos.length) { _empreendimentos = this.DEFAULTS; ConfigService.salvar('empreendimentos', _empreendimentos).catch(logErr); }
     },
-
-    nomes() { return this.ler().filter(e => e.ativo).map(e => e.nome); },
+    nomes()    { return _empreendimentos.filter(e => e.ativo).map(e => e.nome); },
 };
 
-/* ══════════════════════════════════════════════════════════════════
-   §2d — TAREFAS PADRÃO SERVICE
-══════════════════════════════════════════════════════════════════ */
 const TarefasService = {
-    KEY: 'bravo_tarefas_v1',
-    ler()      { try { return JSON.parse(localStorage.getItem(this.KEY)) || []; } catch(_){ return []; } },
-    salvar(d)  { localStorage.setItem(this.KEY, JSON.stringify(d)); },
-    porEmp(empId) { return this.ler().filter(t => t.empId === empId); },
+    ler()        { return _tarefas; },
+    salvar(t)    { _tarefas = t; ConfigService.salvar('tarefas', t).catch(logErr); },
+    porEmp(eId)  { return _tarefas.filter(t => t.empId === eId); },
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -848,29 +1026,53 @@ let expandidos      = new Set();
 ══════════════════════════════════════════════════════════════════ */
 function migrarDados(arr) {
     return arr.map(p => {
-        if (Array.isArray(p.fornecedores)) return p;
-        const nomes = p.nomesEmpresas || {};
-        const fornecedores = ['A','B','C'].reduce((acc, k) => {
-            const temNome  = nomes[k] && nomes[k].trim();
-            const temPreco = (p.itens || []).some(it => toNum(it[`forn${k}`]) > 0);
-            if (temNome || temPreco) acc.push({ id: k, nome: nomes[k] || `Empresa ${k}` });
-            return acc;
-        }, []);
-        const itens = (p.itens || []).map(it => ({
-            natureza      : it.natureza   || '',
-            tarefa        : it.tarefa     || '',
-            descricao     : it.descricao  || '',
-            und           : it.und        || '',
-            qtdOriginal   : toNum(it.qtdOriginal),
-            qtdRecebida   : toNum(it.qtdRecebida),
-            cotacoes      : fornecedores
-                .map(f => ({ fornId: f.id, precoUnit: toNum(it[`forn${f.id}`]), frete: 0, impostos: 0 }))
-                .filter(c => c.precoUnit > 0),
-            vencedorFornId: it.vencedor || null,
-            dataEntrega   : it.dataEntrega || '',
-        }));
-        const { nomesEmpresas, ...restoPedido } = p;
-        return { ...restoPedido, fornecedores, itens };
+        // ── v1/v2 → v3: sem fornecedores em array ─────────────────────────────
+        if (!Array.isArray(p.fornecedores)) {
+            const nomes = p.nomesEmpresas || {};
+            const fornecedores = ['A','B','C'].reduce((acc, k) => {
+                const temNome  = nomes[k] && nomes[k].trim();
+                const temPreco = (p.itens || []).some(it => toNum(it[`forn${k}`]) > 0);
+                if (temNome || temPreco) acc.push({ id: k, nome: nomes[k] || `Empresa ${k}` });
+                return acc;
+            }, []);
+            const itens = (p.itens || []).map(it => ({
+                natureza      : it.natureza   || '',
+                tarefa        : it.tarefa     || '',
+                descricao     : it.descricao  || '',
+                und           : it.und        || '',
+                qtdOriginal   : toNum(it.qtdOriginal),
+                qtdRecebida   : toNum(it.qtdRecebida),
+                cotacoes      : fornecedores
+                    .map(f => ({ fornId: f.id, precoUnit: toNum(it[`forn${f.id}`]) }))
+                    .filter(c => c.precoUnit > 0),
+                vencedorFornId: it.vencedor || null,
+                dataEntrega   : it.dataEntrega || '',
+            }));
+            const { nomesEmpresas, ...restoPedido } = p;
+            return { ...restoPedido, fornecedores, itens, cotacoesOrdem: {} };
+        }
+
+        // ── v3 → v4: frete/impostos eram por item → mover para cotacoesOrdem ──
+        if (!p.cotacoesOrdem) {
+            const cotacoesOrdem = {};
+            (p.fornecedores || []).forEach(f => {
+                // Agrega frete e impostos de todos os itens desse fornecedor (soma)
+                let frete = 0, impostos = 0;
+                (p.itens || []).forEach(it => {
+                    const c = (it.cotacoes || []).find(c => c.fornId === f.id);
+                    if (c) { frete += toNum(c.frete); impostos += toNum(c.impostos); }
+                });
+                cotacoesOrdem[f.id] = { metodoPagamento: '', frete, impostos };
+            });
+            // Remove frete/impostos dos itens (simplifica para só precoUnit)
+            const itens = (p.itens || []).map(it => ({
+                ...it,
+                cotacoes: (it.cotacoes || []).map(c => ({ fornId: c.fornId, precoUnit: toNum(c.precoUnit) })),
+            }));
+            return { ...p, itens, cotacoesOrdem };
+        }
+
+        return p;
     });
 }
 
@@ -901,14 +1103,28 @@ function fmtData(iso) {
     return new Date(+y, +m - 1, +d).toLocaleDateString('pt-BR');
 }
 
-function custoUnit(cot) {
-    return toNum(cot.precoUnit) + toNum(cot.frete) + toNum(cot.impostos);
+/** Preço unitário de um item para um fornecedor específico */
+function precoItemForn(item, fornId) {
+    const cot = (item.cotacoes || []).find(c => c.fornId === fornId);
+    return cot ? toNum(cot.precoUnit) : 0;
 }
 
+/** Subtotal de todos os itens de um fornecedor (precoUnit × qty) */
+function subtotalForn(pedido, fornId) {
+    return (pedido.itens || []).reduce((s, it) => s + precoItemForn(it, fornId) * it.qtdOriginal, 0);
+}
+
+/** Total geral de um fornecedor = subtotal + frete + impostos (por pedido) */
+function totalForn(pedido, fornId) {
+    const ord = (pedido.cotacoesOrdem || {})[fornId] || {};
+    return subtotalForn(pedido, fornId) + toNum(ord.frete) + toNum(ord.impostos);
+}
+
+/** Fornecedor com menor preço unitário para um item específico */
 function menorCot(item) {
-    const valid = (item.cotacoes || []).filter(c => custoUnit(c) > 0);
+    const valid = (item.cotacoes || []).filter(c => toNum(c.precoUnit) > 0);
     if (!valid.length) return null;
-    return valid.reduce((m, c) => custoUnit(c) < custoUnit(m) ? c : m);
+    return valid.reduce((m, c) => toNum(c.precoUnit) < toNum(m.precoUnit) ? c : m);
 }
 
 function proximoRM() {
@@ -936,11 +1152,12 @@ function gerarOCs(pedido) {
     });
 }
 
-function valorOC(oc) {
-    return oc.itens.reduce((s, it) => {
-        const cot = (it.cotacoes || []).find(c => c.fornId === oc.fornId);
-        return s + (cot ? custoUnit(cot) * it.qtdOriginal : 0);
-    }, 0);
+function valorOC(oc, pedido) {
+    // Subtotal dos itens desta OC
+    const sub = oc.itens.reduce((s, it) => s + precoItemForn(it, oc.fornId) * it.qtdOriginal, 0);
+    // Frete + impostos por pedido deste fornecedor
+    const ord = pedido ? ((pedido.cotacoesOrdem || {})[oc.fornId] || {}) : {};
+    return sub + toNum(ord.frete) + toNum(ord.impostos);
 }
 
 function temAtraso(pedido) {
@@ -989,10 +1206,15 @@ function logHistorico(pedido, acao) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   §6 — PERSISTÊNCIA CENTRALIZADA
+   §6 — PERSISTÊNCIA CENTRALIZADA (Firestore)
+   Salva o pedido ativo (ou lista passada) no Firestore.
+   Optimistic update: UI já reflete o estado local imediatamente.
 ══════════════════════════════════════════════════════════════════ */
 function salvar(renderizar = true) {
-    DataService.salvar(db);
+    // Identifica o pedido que acabou de ser modificado
+    const p = db.find(x => x.id === ativoPedidoId);
+    if (p) DataService.salvarPedido(p).catch(logErr);
+
     if (renderizar && document.getElementById('view-dashboard').style.display !== 'none') {
         renderDash();
     }
@@ -1022,9 +1244,11 @@ function autenticar(e) {
     // Navegar: quem pode criar RM?
     const podeRm    = ['obra','comprador','master'].includes(user.perfil);
     const isMaster  = user.perfil === 'master';
-    document.getElementById('nav-solicitar').style.display        = podeRm   ? 'block' : 'none';
-    document.getElementById('nav-empreendimentos').style.display  = isMaster ? 'block' : 'none';
-    document.getElementById('nav-usuarios').style.display         = isMaster ? 'block' : 'none';
+    const podeAlmox = ['obra','comprador','master'].includes(user.perfil);
+    document.getElementById('nav-solicitar').style.display        = podeRm    ? 'block' : 'none';
+    document.getElementById('nav-almoxarifado').style.display     = podeAlmox ? 'block' : 'none';
+    document.getElementById('nav-empreendimentos').style.display  = isMaster  ? 'block' : 'none';
+    document.getElementById('nav-usuarios').style.display         = isMaster  ? 'block' : 'none';
 
     // Popular os selects de obra com empreendimentos dinâmicos
     populateObraSelects();
@@ -1120,7 +1344,7 @@ function enviarPedido(e) {
 
     logHistorico(pedido, 'Pedido criado');
     db.push(pedido);
-    salvar(false);
+    DataService.salvarPedido(pedido).catch(logErr); // salva diretamente (sem ativoPedidoId)
 
     emailjs.send(EMAILJS_SVC, EMAILJS_TPL, {
         'NUMERO DO PEDIDO': labelRM(pedido),
@@ -1222,7 +1446,7 @@ function renderDash() {
                 });
                 const datas = oc.itens.filter(it => it.dataEntrega).map(it => it.dataEntrega).sort();
                 const dtMax = datas.length ? fmtData(datas[datas.length-1]) : '—';
-                const valor = valorOC(oc);
+                const valor = valorOC(oc, pedido);
 
                 let ocStatus, ocCls;
                 if (pedido.fase === 'Aprovado (Aguard. Compra)') { ocStatus = 'Aguard. Emissão'; ocCls = 'b-compra';    }
@@ -1293,7 +1517,7 @@ function abrirModal(id) {
         chipsBloco.style.display = 'block';
         document.getElementById('oc-chips-lista').innerHTML = ocs.map((oc, i) => {
             const entregue = oc.itens.every(it => it.qtdRecebida >= it.qtdOriginal);
-            const valor    = valorOC(oc);
+            const valor    = valorOC(oc, p);
             const datas    = oc.itens.filter(it => it.dataEntrega).map(it => it.dataEntrega).sort();
             const dtMax    = datas.length ? fmtData(datas[datas.length-1]) : '—';
             return `<div class="oc-chip">
@@ -1420,33 +1644,23 @@ function montarTabelaCotacao(p, bloqueado) {
     const thead = document.getElementById('thead-cotacao');
     const tbody = document.getElementById('tbody-cotacao');
     const tfoot = document.getElementById('tfoot-cotacao');
+    const attrs = `type="number" min="0" step="0.01" placeholder="0,00" ${bloqueado ? 'disabled' : ''}`;
 
-    const linha1Forns = forns.map(f =>
-        `<th colspan="4" class="th-forn-main">${escHtml(f.nome)}</th>`
-    ).join('');
-    const linha2Forns = forns.map(() => `
-        <th class="th-sub-preco">Preço</th>
-        <th class="th-sub-frete">Frete</th>
-        <th class="th-sub-imp">Imp.</th>
-        <th class="th-sub-total">Total/un</th>`
-    ).join('');
-
-    thead.innerHTML = `
-        <tr>
-            <th rowspan="2" style="text-align:left;min-width:160px;">Insumo</th>
-            <th rowspan="2" style="min-width:70px;">Qtd</th>
-            ${linha1Forns}
-            <th rowspan="2" style="min-width:80px;background:#ecfdf5;color:#166534;">★ Menor</th>
-        </tr>
-        <tr>${linha2Forns}</tr>`;
+    // Cabeçalho: 1 coluna por fornecedor (preço/un) + coluna "★ Menor preço"
+    thead.innerHTML = `<tr>
+        <th style="text-align:left;min-width:160px;">Insumo</th>
+        <th style="min-width:70px;">Qtd</th>
+        ${forns.map(f => `<th class="th-forn-main" style="min-width:130px;">${escHtml(f.nome)}<br>
+            <small style="font-weight:400;font-size:10px;">Preço Unit. (R$)</small></th>`).join('')}
+        <th style="min-width:80px;background:#ecfdf5;color:#166534;">★ Menor/un</th>
+    </tr>`;
 
     tbody.innerHTML = '';
-    const totaisForn = Object.fromEntries(forns.map(f => [f.id, 0]));
+    const subsForn = Object.fromEntries(forns.map(f => [f.id, 0]));
 
     p.itens.forEach((item, iIdx) => {
-        const mc      = menorCot(item);
-        const mcTotal = mc ? custoUnit(mc) : null;
-        const tr      = document.createElement('tr');
+        const mc  = menorCot(item);
+        const tr  = document.createElement('tr');
         let cells = `
             <td class="tl" style="font-size:13px;">
                 <strong>${escHtml(item.descricao)}</strong>
@@ -1455,56 +1669,89 @@ function montarTabelaCotacao(p, bloqueado) {
             <td style="font-size:12px;text-align:center;">${item.qtdOriginal} ${escHtml(item.und)}</td>`;
 
         forns.forEach(forn => {
-            const cot    = (item.cotacoes || []).find(c => c.fornId === forn.id)
-                        || { fornId: forn.id, precoUnit:0, frete:0, impostos:0 };
-            const total  = custoUnit(cot);
-            const isBest = mc && mc.fornId === forn.id && total > 0;
-            const bCls   = isBest ? 'cell-best' : '';
-            const tCls   = isBest ? 'cell-total-best' : '';
-
-            totaisForn[forn.id] += total * item.qtdOriginal;
-            const attrs = `type="number" min="0" step="0.01" placeholder="0,00" ${bloqueado ? 'disabled' : ''}`;
-            cells += `
-                <td class="${bCls}">
-                    <input ${attrs} value="${cot.precoUnit||''}"
-                           onchange="salvarCotacao(${iIdx},'${forn.id}','precoUnit',this.value)">
-                </td>
-                <td class="${bCls}">
-                    <input ${attrs} value="${cot.frete||''}"
-                           onchange="salvarCotacao(${iIdx},'${forn.id}','frete',this.value)">
-                </td>
-                <td class="${bCls}">
-                    <input ${attrs} value="${cot.impostos||''}"
-                           onchange="salvarCotacao(${iIdx},'${forn.id}','impostos',this.value)">
-                </td>
-                <td class="${tCls}" style="text-align:center;font-size:12px;font-weight:700;">
-                    ${total > 0 ? `R$ ${fmt(total)}` : '—'}
-                    ${isBest ? '<br><span class="badge b-menor">★</span>' : ''}
-                </td>`;
+            const preco  = precoItemForn(item, forn.id);
+            const isBest = mc && mc.fornId === forn.id && preco > 0;
+            subsForn[forn.id] += preco * item.qtdOriginal;
+            cells += `<td class="${isBest ? 'cell-best' : ''}" style="text-align:center;">
+                <input ${attrs} value="${preco || ''}"
+                       onchange="salvarCotacao(${iIdx},'${forn.id}','precoUnit',this.value)">
+                ${isBest ? '<br><span class="badge b-menor" style="margin-top:2px;">★ menor</span>' : ''}
+            </td>`;
         });
 
+        const mcPreco = mc ? toNum(mc.precoUnit) : null;
         cells += `<td style="text-align:center;font-size:12px;font-weight:700;color:#16a34a;">
-            ${mcTotal ? `R$ ${fmt(mcTotal)}` : '—'}
+            ${mcPreco ? `R$ ${fmt(mcPreco)}` : '—'}
         </td>`;
         tr.innerHTML = cells;
         tbody.appendChild(tr);
     });
 
-    if (forns.length) {
-        const tfCells = forns.map(f =>
-            `<td colspan="3" style="border:none;"></td>
-             <td style="text-align:center;font-weight:800;color:#1e3a8a;font-size:12px;">
-                 ${totaisForn[f.id] > 0 ? `R$ ${fmt(totaisForn[f.id])}` : '—'}
-             </td>`
-        ).join('');
-        tfoot.innerHTML = `<tr>
-            <td colspan="2" style="text-align:right;font-size:12px;font-weight:700;padding:8px;color:var(--muted);">
-                Total por Fornecedor:
-            </td>
-            ${tfCells}
-            <td style="border:none;"></td>
-        </tr>`;
-    } else { tfoot.innerHTML = ''; }
+    if (!forns.length) { tfoot.innerHTML = ''; return; }
+
+    // Rodapé: subtotal de itens, frete, impostos, método de pagamento, total geral
+    const metPagOpts = ['À Vista','Boleto 30 d','Boleto 28/56 d','Boleto 30/60/90 d','Cartão','Outro'].map(o =>
+        `<option value="${o}">${o}</option>`).join('');
+
+    const buildFooterCols = () => forns.map(f => {
+        const ord  = (p.cotacoesOrdem || {})[f.id] || {};
+        const sub  = subsForn[f.id];
+        const tot  = totalForn(p, f.id);
+        return `<td style="padding:6px 8px;border:1px solid var(--border);">
+            ${sub > 0 ? `<strong style="font-size:12px;color:#1e3a8a;">R$ ${fmt(sub)}</strong>` : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}
+        </td>`;
+    }).join('');
+
+    const rows = [
+        { lbl: 'Subtotal Itens', key: null, tipo: 'display' },
+        { lbl: 'Frete (R$)',     key: 'frete',    tipo: 'input' },
+        { lbl: 'Impostos (R$)',  key: 'impostos', tipo: 'input' },
+        { lbl: 'Método Pgto.',   key: 'metodoPagamento', tipo: 'select' },
+        { lbl: 'Total Geral',    key: null, tipo: 'total' },
+    ];
+
+    let tfHtml = '';
+    rows.forEach(row => {
+        tfHtml += `<tr class="cot-footer-row">
+            <td colspan="2" style="text-align:right;padding:7px 10px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;">${row.lbl}</td>`;
+        forns.forEach(f => {
+            const ord = (p.cotacoesOrdem || {})[f.id] || {};
+            const sub = subsForn[f.id];
+            const tot = totalForn(p, f.id);
+            if (row.tipo === 'display') {
+                tfHtml += `<td style="text-align:center;font-size:12px;font-weight:700;color:#1e3a8a;border:1px solid var(--border);">
+                    ${sub > 0 ? `R$ ${fmt(sub)}` : '<span style="color:#cbd5e1;">—</span>'}
+                </td>`;
+            } else if (row.tipo === 'input') {
+                tfHtml += `<td style="border:1px solid var(--border);padding:4px;">
+                    <input ${attrs} value="${ord[row.key] || ''}"
+                           onchange="salvarCotacaoOrdem('${f.id}','${row.key}',this.value)"
+                           style="text-align:center;font-size:12px;">
+                </td>`;
+            } else if (row.tipo === 'select') {
+                const cur = ord.metodoPagamento || '';
+                tfHtml += `<td style="border:1px solid var(--border);padding:4px;" class="cot-metpag">
+                    ${bloqueado
+                        ? `<span style="font-size:12px;">${cur || '—'}</span>`
+                        : `<select style="font-size:12px;padding:4px;" onchange="salvarCotacaoOrdem('${f.id}','metodoPagamento',this.value)">
+                            <option value="">Selecionar…</option>
+                            ${['À Vista','Boleto 30 d','Boleto 28/56 d','Boleto 30/60/90 d','Cartão','Outro'].map(o =>
+                                `<option value="${o}" ${cur===o?'selected':''}>${o}</option>`).join('')}
+                           </select>`
+                    }
+                </td>`;
+            } else if (row.tipo === 'total') {
+                const isWin = tot > 0 && tot === Math.min(...forns.map(ff => totalForn(p, ff.id)).filter(v => v > 0));
+                tfHtml += `<td style="text-align:center;font-weight:900;font-size:13px;border:1px solid var(--border);
+                    ${isWin ? 'background:#bbf7d0;color:#065f46;' : 'color:#1e3a8a;'}">
+                    ${tot > 0 ? `R$ ${fmt(tot)}` : '—'}
+                    ${isWin ? '<br><span style="font-size:9px;font-weight:700;">👑 MENOR TOTAL</span>' : ''}
+                </td>`;
+            }
+        });
+        tfHtml += `<td style="border:none;"></td></tr>`;
+    });
+    tfoot.innerHTML = tfHtml;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1513,14 +1760,8 @@ function montarTabelaCotacao(p, bloqueado) {
 function montarAprovacaoView(p) {
     const forns = p.fornecedores || [];
 
-    const totaisGerais = {};
-    forns.forEach(f => {
-        totaisGerais[f.id] = p.itens.reduce((s, it) => {
-            const cot = (it.cotacoes || []).find(c => c.fornId === f.id);
-            return s + (cot ? custoUnit(cot) * it.qtdOriginal : 0);
-        }, 0);
-    });
-
+    // Total geral por fornecedor (subtotal itens + frete + impostos)
+    const totaisGerais = Object.fromEntries(forns.map(f => [f.id, totalForn(p, f.id)]));
     const totaisValidos = forns.filter(f => totaisGerais[f.id] > 0);
     const menorTotal    = totaisValidos.length ? Math.min(...totaisValidos.map(f => totaisGerais[f.id])) : Infinity;
 
@@ -1530,8 +1771,10 @@ function montarAprovacaoView(p) {
         <th style="min-width:70px;">Qtd</th>
         ${forns.map(f => {
             const isGlobal = totaisGerais[f.id] === menorTotal && totaisGerais[f.id] > 0;
+            const ord = (p.cotacoesOrdem || {})[f.id] || {};
+            const metPag = ord.metodoPagamento ? `<br><small style="font-weight:400;font-size:10px;color:#64748b;">${ord.metodoPagamento}</small>` : '';
             return `<th style="min-width:130px;" class="${isGlobal ? 'th-winner' : 'th-loser'}">
-                ${isGlobal ? '👑 ' : ''}${escHtml(f.nome)}
+                ${isGlobal ? '👑 ' : ''}${escHtml(f.nome)}${metPag}
                 ${isGlobal ? '<br><small style="font-weight:400;font-size:10px;">Menor custo total</small>' : ''}
             </th>`;
         }).join('')}
@@ -1542,9 +1785,10 @@ function montarAprovacaoView(p) {
     tbody.innerHTML = '';
 
     p.itens.forEach(item => {
-        const mc       = menorCot(item);
-        const mcTotal  = mc ? custoUnit(mc) : null;
-        const maiorPreco = Math.max(...(item.cotacoes || []).filter(c => custoUnit(c) > 0).map(c => custoUnit(c)), 0);
+        const mc         = menorCot(item);
+        const mcPreco    = mc ? toNum(mc.precoUnit) : null;
+        const precos     = (item.cotacoes || []).map(c => toNum(c.precoUnit)).filter(v => v > 0);
+        const maiorPreco = precos.length ? Math.max(...precos) : 0;
 
         const tr = document.createElement('tr');
         let cells = `
@@ -1552,54 +1796,55 @@ function montarAprovacaoView(p) {
             <td style="font-size:12px;text-align:center;">${item.qtdOriginal} ${escHtml(item.und)}</td>`;
 
         forns.forEach(forn => {
-            const cot    = (item.cotacoes || []).find(c => c.fornId === forn.id);
-            const total  = cot ? custoUnit(cot) : 0;
-            const isBest = mc && mc.fornId === forn.id && total > 0;
-
+            const preco  = precoItemForn(item, forn.id);
+            const isBest = mc && mc.fornId === forn.id && preco > 0;
             let content;
-            if (!total) {
+            if (!preco) {
                 content = '<span style="color:#cbd5e1;">—</span>';
             } else {
-                const detalhe = [];
-                if (toNum(cot.frete))    detalhe.push(`Frete R$ ${fmt(cot.frete)}`);
-                if (toNum(cot.impostos)) detalhe.push(`Imp. R$ ${fmt(cot.impostos)}`);
-                const detalheHtml = detalhe.length
-                    ? `<br><small style="font-size:10px;color:var(--muted);">${detalhe.join(' · ')}</small>`
-                    : '';
-                const pct = maiorPreco > 0 && total < maiorPreco
-                    ? Math.round((1 - total / maiorPreco) * 100) : 0;
+                const pct = maiorPreco > 0 && preco < maiorPreco
+                    ? Math.round((1 - preco / maiorPreco) * 100) : 0;
                 const econHtml = pct > 0
-                    ? `<br><small style="font-size:10px;color:#16a34a;font-weight:700;">−${pct}% vs mais caro</small>`
-                    : '';
-                content = `<strong>R$ ${fmt(total)}/un</strong>${detalheHtml}${econHtml}
-                           ${isBest ? '<br><span class="badge b-menor" style="margin-top:2px;">★ melhor</span>' : ''}`;
+                    ? `<br><small style="font-size:10px;color:#16a34a;font-weight:700;">−${pct}% vs mais caro</small>` : '';
+                content = `<strong>R$ ${fmt(preco)}/un</strong>${econHtml}
+                    ${isBest ? '<br><span class="badge b-menor" style="margin-top:2px;">★ melhor</span>' : ''}`;
             }
             cells += `<td class="${isBest ? 'cell-total-best' : ''}" style="text-align:center;font-size:12px;">${content}</td>`;
         });
 
         cells += `<td style="text-align:center;font-size:12px;font-weight:700;color:#16a34a;">
-            ${mcTotal ? `R$ ${fmt(mcTotal)}` : '—'}
+            ${mcPreco ? `R$ ${fmt(mcPreco)}` : '—'}
         </td>`;
         tr.innerHTML = cells;
         tbody.appendChild(tr);
     });
 
+    // Rodapé com subtotal, frete, impostos, total
     const tfoot = document.getElementById('tfoot-aprovacao');
-    tfoot.innerHTML = `<tr>
-        <td colspan="2" style="text-align:right;font-size:12px;font-weight:700;padding:8px;color:var(--muted);">
-            Total Geral:
-        </td>
+    const footerRows = [
+        { lbl: 'Subtotal Itens', fn: f => subtotalForn(p, f.id) },
+        { lbl: 'Frete',          fn: f => toNum(((p.cotacoesOrdem||{})[f.id]||{}).frete) },
+        { lbl: 'Impostos',       fn: f => toNum(((p.cotacoesOrdem||{})[f.id]||{}).impostos) },
+        { lbl: 'Método Pgto.',   fn: f => null, tipo: 'metpag' },
+        { lbl: 'TOTAL GERAL',    fn: f => totaisGerais[f.id], tipo: 'total' },
+    ];
+    tfoot.innerHTML = footerRows.map(row => `<tr>
+        <td colspan="2" style="text-align:right;font-size:11px;font-weight:700;padding:7px 10px;color:var(--muted);text-transform:uppercase;">${row.lbl}</td>
         ${forns.map(f => {
-            const total = totaisGerais[f.id];
-            const isWin = total === menorTotal && total > 0;
-            return `<td style="text-align:center;font-weight:800;font-size:13px;
-                               ${isWin ? 'background:#bbf7d0;color:#065f46;' : 'color:#1e3a8a;'}">
-                ${total > 0 ? `R$ ${fmt(total)}` : '—'}
+            const ord = (p.cotacoesOrdem || {})[f.id] || {};
+            if (row.tipo === 'metpag') {
+                return `<td style="text-align:center;font-size:12px;color:#475569;">${ord.metodoPagamento || '—'}</td>`;
+            }
+            const val = row.fn(f);
+            const isWin = row.tipo === 'total' && val === menorTotal && val > 0;
+            return `<td style="text-align:center;font-weight:${row.tipo==='total'?'900':'700'};font-size:${row.tipo==='total'?'13':'12'}px;
+                ${isWin ? 'background:#bbf7d0;color:#065f46;' : 'color:#1e3a8a;'}">
+                ${val > 0 ? `R$ ${fmt(val)}` : '<span style="color:#cbd5e1;">—</span>'}
                 ${isWin ? '<br><small style="font-size:10px;">👑 MELHOR PROPOSTA</small>' : ''}
             </td>`;
         }).join('')}
         <td style="border:none;"></td>
-    </tr>`;
+    </tr>`).join('');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1627,23 +1872,21 @@ function montarEmissaoOC(p, bloqueado) {
         const tr = document.createElement('tr');
 
         const fornCells = forns.map(forn => {
-            const cot    = (item.cotacoes || []).find(c => c.fornId === forn.id);
-            const total  = cot ? custoUnit(cot) : 0;
-            const isBest = mc && cot && mc.fornId === forn.id && total > 0;
+            const preco  = precoItemForn(item, forn.id);
+            const isBest = mc && mc.fornId === forn.id && preco > 0;
             return `<td class="${isBest ? 'cell-total-best' : ''}" style="text-align:center;font-size:13px;">
-                ${total > 0
-                    ? `<strong>R$ ${fmt(total)}</strong>${isBest ? '<br><span class="badge b-menor">★ menor</span>' : ''}`
+                ${preco > 0
+                    ? `<strong>R$ ${fmt(preco)}/un</strong>${isBest ? '<br><span class="badge b-menor">★ menor</span>' : ''}`
                     : '<span style="color:#cbd5e1;">—</span>'}
             </td>`;
         }).join('');
 
         const opts = forns
-            .filter(f => { const cot = (item.cotacoes||[]).find(c=>c.fornId===f.id); return cot && custoUnit(cot)>0; })
+            .filter(f => precoItemForn(item, f.id) > 0)
             .map(f => {
-                const cot   = (item.cotacoes||[]).find(c=>c.fornId===f.id);
-                const total = custoUnit(cot);
+                const preco = precoItemForn(item, f.id);
                 return `<option value="${f.id}" ${item.vencedorFornId===f.id ? 'selected' : ''}>
-                    ${escHtml(f.nome)} — R$ ${fmt(total)}/un</option>`;
+                    ${escHtml(f.nome)} — R$ ${fmt(preco)}/un</option>`;
             }).join('');
 
         tr.innerHTML = `
@@ -1746,8 +1989,11 @@ function iniciarCotacao() {
 function adicionarFornecedor() {
     const p = db.find(x => x.id === ativoPedidoId);
     if (!p.fornecedores) p.fornecedores = [];
+    if (!p.cotacoesOrdem) p.cotacoesOrdem = {};
     const letra = String.fromCharCode(65 + p.fornecedores.length);
-    p.fornecedores.push({ id: uid(), nome: `Empresa ${letra}` });
+    const novoId = uid();
+    p.fornecedores.push({ id: novoId, nome: `Empresa ${letra}` });
+    p.cotacoesOrdem[novoId] = { metodoPagamento: '', frete: 0, impostos: 0 };
     salvar(false);
     montarCotacao(p, false);
 }
@@ -1759,6 +2005,7 @@ function removerFornecedor(fornId) {
         it.cotacoes = (it.cotacoes || []).filter(c => c.fornId !== fornId);
         if (it.vencedorFornId === fornId) it.vencedorFornId = null;
     });
+    if (p.cotacoesOrdem) delete p.cotacoesOrdem[fornId];
     salvar(false);
     montarCotacao(p, false);
 }
@@ -1775,8 +2022,18 @@ function salvarCotacao(iIdx, fornId, campo, rawVal) {
     const item = p.itens[iIdx];
     if (!item.cotacoes) item.cotacoes = [];
     let cot = item.cotacoes.find(c => c.fornId === fornId);
-    if (!cot) { cot = { fornId, precoUnit:0, frete:0, impostos:0 }; item.cotacoes.push(cot); }
+    if (!cot) { cot = { fornId, precoUnit: 0 }; item.cotacoes.push(cot); }
     cot[campo] = val;
+    salvar(false);
+    montarTabelaCotacao(p, false);
+}
+
+function salvarCotacaoOrdem(fornId, campo, rawVal) {
+    const p = db.find(x => x.id === ativoPedidoId);
+    if (!p.cotacoesOrdem) p.cotacoesOrdem = {};
+    if (!p.cotacoesOrdem[fornId]) p.cotacoesOrdem[fornId] = { metodoPagamento: '', frete: 0, impostos: 0 };
+    const val = campo === 'metodoPagamento' ? rawVal : Math.max(0, toNum(rawVal));
+    p.cotacoesOrdem[fornId][campo] = val;
     salvar(false);
     montarTabelaCotacao(p, false);
 }
@@ -1796,7 +2053,7 @@ function salvarData(iIdx, val) {
 function enviarParaAprovacao() {
     const p = db.find(x => x.id === ativoPedidoId);
     if (!(p.fornecedores || []).length) { alert('Adicione ao menos um fornecedor antes de encaminhar.'); return; }
-    const temPreco = p.itens.some(it => (it.cotacoes||[]).some(c => custoUnit(c) > 0));
+    const temPreco = p.itens.some(it => (it.cotacoes||[]).some(c => toNum(c.precoUnit) > 0));
     if (!temPreco) { alert('Preencha ao menos um preço antes de encaminhar.'); return; }
 
     p.fase = 'Aguardando Aprovação';
@@ -1907,7 +2164,9 @@ function exportarCSV_TOTVS(pedidoId) {
         'Cód. Fornecedor (TOTVS)','Nome Fornecedor',
         'Cód. Item (TOTVS)','Descrição do Material','Grupo / Natureza','Aplicação / Tarefa',
         'Unidade','Quantidade',
-        'Preço Unitário','Frete','Impostos','Custo Total Unitário','Custo Total Item',
+        'Preço Unitário','Preço Total Item',
+        'Frete OC','Impostos OC','Método Pagamento',
+        'Total OC (c/ frete e imp.)',
         'Data Prevista Entrega','Centro de Custo','Cód. Obra (TOTVS)','N° RM Origem','Justificativa',
         'Solicitante','Perfil Solicitante',
     ];
@@ -1915,23 +2174,26 @@ function exportarCSV_TOTVS(pedidoId) {
     const linhas = [cabecalho];
     ocs.forEach((oc, ocIdx) => {
         const ocLbl = labelOC(p, ocIdx);
+        const ord   = (p.cotacoesOrdem || {})[oc.fornId] || {};
+        const freteOC    = toNum(ord.frete);
+        const impostosOC = toNum(ord.impostos);
+        const metPag     = ord.metodoPagamento || '';
+        const totalOC    = valorOC(oc, p);
+
         oc.itens.forEach(it => {
-            const cot      = (it.cotacoes||[]).find(c => c.fornId === oc.fornId);
-            const preco    = cot ? toNum(cot.precoUnit) : 0;
-            const frete    = cot ? toNum(cot.frete)     : 0;
-            const impostos = cot ? toNum(cot.impostos)  : 0;
-            const custoUn  = preco + frete + impostos;
-            const custoTot = custoUn * it.qtdOriginal;
+            const preco    = precoItemForn(it, oc.fornId);
+            const subtotIt = preco * it.qtdOriginal;
             linhas.push([
                 ocLbl,'001',p.data,
                 '',oc.nome,
                 '',it.descricao,it.natureza,it.tarefa,
                 it.und,it.qtdOriginal,
                 preco.toFixed(2).replace('.',','),
-                frete.toFixed(2).replace('.',','),
-                impostos.toFixed(2).replace('.',','),
-                custoUn.toFixed(2).replace('.',','),
-                custoTot.toFixed(2).replace('.',','),
+                subtotIt.toFixed(2).replace('.',','),
+                freteOC.toFixed(2).replace('.',','),
+                impostosOC.toFixed(2).replace('.',','),
+                metPag,
+                totalOC.toFixed(2).replace('.',','),
                 it.dataEntrega ? fmtData(it.dataEntrega) : '',
                 p.obra,'',
                 labelRM(p),p.just,
@@ -2039,10 +2301,170 @@ function excluirUsuario(id) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   §17b — ALMOXARIFADO
+══════════════════════════════════════════════════════════════════ */
+function populateAlmFiltro() {
+    const sel  = document.getElementById('alm-filtro-obra');
+    const cur  = sel.value;
+    const nomes = EmpService.nomes();
+    sel.innerHTML = `<option value="TODOS">Todos os Empreendimentos</option>` +
+        nomes.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+    // Restaura filtro de obra para perfil obra
+    if (usuarioAtivo?.perfil === 'obra' && usuarioAtivo?.obra) {
+        sel.value    = usuarioAtivo.obra;
+        sel.disabled = true;
+    } else {
+        if (cur && sel.querySelector(`option[value="${cur}"]`)) sel.value = cur;
+        sel.disabled = false;
+    }
+}
+
+function renderAlmoxarifado() {
+    const filtroObra = document.getElementById('alm-filtro-obra')?.value || 'TODOS';
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+    // Coleta todos os pedidos em fase de entrega / processada
+    const pedidosEntrega = db.filter(p => FASES_OC.includes(p.fase));
+    const pedidosFiltrados = filtroObra === 'TODOS'
+        ? pedidosEntrega
+        : pedidosEntrega.filter(p => p.obra === filtroObra);
+
+    // ── KPIs ──────────────────────────────────────────────────────────
+    let totalPendentes = 0, totalOCs = 0, totalRecebidos = 0;
+
+    pedidosFiltrados.forEach(p => {
+        const ocs = gerarOCs(p);
+        ocs.forEach(oc => {
+            const temPendente = oc.itens.some(it => it.qtdRecebida < it.qtdOriginal);
+            if (temPendente) totalOCs++;
+            oc.itens.forEach(it => {
+                if (it.qtdRecebida < it.qtdOriginal) totalPendentes++;
+                if (it.qtdRecebida > 0) totalRecebidos += it.qtdRecebida;
+            });
+        });
+    });
+
+    document.getElementById('alm-kpi-pendentes').textContent = totalPendentes;
+    document.getElementById('alm-kpi-ocs').textContent       = totalOCs;
+    document.getElementById('alm-kpi-recebidos').textContent = totalRecebidos;
+
+    // ── Tabela Entregas Pendentes ─────────────────────────────────────
+    const tbodyPend = document.getElementById('alm-tbody-pendentes');
+    const pf = perfil();
+    const podeReceber = ['obra','master'].includes(pf);
+    const rowsPend = [];
+
+    pedidosFiltrados.forEach(p => {
+        if (p.fase === 'Nota Processada') return;
+        const ocs = gerarOCs(p);
+        ocs.forEach((oc, ocIdx) => {
+            oc.itens.forEach(it => {
+                if (it.qtdRecebida >= it.qtdOriginal) return;
+                const saldo = it.qtdOriginal - it.qtdRecebida;
+                let atrasHTML = '';
+                if (it.dataEntrega) {
+                    const [y,m,d] = it.dataEntrega.split('-');
+                    if (new Date(+y,+m-1,+d) < hoje)
+                        atrasHTML = `<span style="color:#ef4444;font-weight:700;font-size:10px;"> ⚠ Vencido</span>`;
+                }
+                const realIdx = p.itens.indexOf(it);
+                const inputId = `alm-rq-${p.id}-${realIdx}`;
+                rowsPend.push(`<tr>
+                    <td class="tl">
+                        <strong style="font-size:13px;">${escHtml(it.descricao)}</strong>
+                        <br><span style="font-size:11px;color:var(--muted);">${escHtml(p.obra)}${p.centroCusto ? ' › ' + escHtml(p.centroCusto) : ''}</span>
+                    </td>
+                    <td>
+                        <span class="ordem-chip" onclick="abrirModal(${p.id})">${labelOC(p, ocIdx)}</span>
+                        <span style="font-size:11px;color:var(--muted);display:block;margin-top:2px;">${escHtml(labelRM(p))}</span>
+                    </td>
+                    <td style="font-size:12px;">${escHtml(oc.nome)}</td>
+                    <td style="font-size:12px;color:var(--muted);">${escHtml(p.obra)}${p.centroCusto ? '<br><small>' + escHtml(p.centroCusto) + '</small>' : ''}</td>
+                    <td style="font-size:12px;">${fmtData(it.dataEntrega)}${atrasHTML}</td>
+                    <td style="text-align:center;font-size:13px;font-weight:700;">${it.qtdOriginal} ${escHtml(it.und)}</td>
+                    <td style="text-align:center;font-size:13px;font-weight:700;color:#f59e0b;">${it.qtdRecebida}</td>
+                    <td style="text-align:center;font-size:13px;font-weight:700;color:#ef4444;">${saldo}</td>
+                    <td>
+                        ${podeReceber
+                            ? `<div style="display:flex;gap:5px;justify-content:center;">
+                                <input type="number" id="${inputId}" min="1" max="${saldo}"
+                                       style="width:56px;font-size:12px;padding:4px;" placeholder="Qtd">
+                                <button class="btn-success btn-sm"
+                                        onclick="gravarRecebimentoAlmox(${p.id},${realIdx},'${inputId}')">✓</button>
+                               </div>`
+                            : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}
+                    </td>
+                </tr>`);
+            });
+        });
+    });
+
+    tbodyPend.innerHTML = rowsPend.length
+        ? rowsPend.join('')
+        : `<tr><td colspan="9" class="alm-empty">Nenhuma entrega pendente. 🎉</td></tr>`;
+
+    // ── Tabela Posição de Estoque ─────────────────────────────────────
+    const tbodyEst = document.getElementById('alm-tbody-estoque');
+    const mapa = {}; // { chave: { descricao, und, pedido, recebido } }
+
+    db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
+        if (!FASES_OC.includes(p.fase) && p.fase !== 'Nota Processada') return;
+        (p.itens || []).forEach(it => {
+            if (!it.vencedorFornId) return; // só itens com fornecedor escolhido
+            const chave = it.descricao.trim().toLowerCase();
+            if (!mapa[chave]) mapa[chave] = { descricao: it.descricao, und: it.und, pedido: 0, recebido: 0 };
+            mapa[chave].pedido   += it.qtdOriginal;
+            mapa[chave].recebido += it.qtdRecebida || 0;
+        });
+    });
+
+    const rowsEst = Object.values(mapa).sort((a,b) => a.descricao.localeCompare(b.descricao)).map(r => {
+        const saldo = r.pedido - r.recebido;
+        const pct   = r.pedido > 0 ? Math.round((r.recebido / r.pedido) * 100) : 0;
+        const cls   = r.recebido >= r.pedido ? 'b-recebido' : saldo > 0 ? 'b-parcial' : 'b-gerado';
+        const lbl   = r.recebido >= r.pedido ? '✓ Completo' : `${pct}% recebido`;
+        return `<tr>
+            <td class="tl" style="font-size:13px;font-weight:600;">${escHtml(r.descricao)}</td>
+            <td style="text-align:center;font-size:12px;">${escHtml(r.und)}</td>
+            <td style="text-align:center;font-size:13px;font-weight:700;color:#1e3a8a;">${r.pedido}</td>
+            <td style="text-align:center;font-size:13px;font-weight:700;color:#10b981;">${r.recebido}</td>
+            <td style="text-align:center;font-size:13px;font-weight:700;color:${saldo>0?'#f59e0b':'#10b981'};">${saldo}</td>
+            <td style="text-align:center;"><span class="badge ${cls}">${lbl}</span></td>
+        </tr>`;
+    });
+
+    tbodyEst.innerHTML = rowsEst.length
+        ? rowsEst.join('')
+        : `<tr><td colspan="6" class="alm-empty">Nenhum material em trânsito ou recebido.</td></tr>`;
+}
+
+function gravarRecebimentoAlmox(pedidoId, idx, inputId) {
+    const qtd = parseInt(document.getElementById(inputId)?.value || '0');
+    if (!qtd || qtd <= 0) { alert('Informe uma quantidade válida.'); return; }
+
+    const p  = db.find(x => x.id === pedidoId);
+    const it = p.itens[idx];
+    if (!it) return;
+    if (it.qtdRecebida + qtd > it.qtdOriginal) { alert('Quantidade excede o saldo pendente.'); return; }
+
+    ativoPedidoId = pedidoId; // para o salvar() saber qual pedido
+    it.qtdRecebida += qtd;
+    logHistorico(p, `[Almoxarifado] Recebimento: ${qtd} ${it.und} de "${it.descricao}" — Acum.: ${it.qtdRecebida}/${it.qtdOriginal}`);
+
+    if (p.itens.every(it => it.qtdRecebida >= it.qtdOriginal)) {
+        p.fase = 'Nota Processada';
+        logHistorico(p, 'Todas as entregas concluídas — Nota Processada');
+    }
+    salvar(false);
+    renderAlmoxarifado();
+    alert(`✓ Recebimento gravado: ${qtd} ${it.und} de "${it.descricao}"`);
+}
+
+/* ══════════════════════════════════════════════════════════════════
    §18 — NAVEGAÇÃO
 ══════════════════════════════════════════════════════════════════ */
 function alternarTela(id) {
-    ['view-dashboard','view-pedido','view-empreendimentos','view-usuarios'].forEach(v =>
+    ['view-dashboard','view-pedido','view-almoxarifado','view-empreendimentos','view-usuarios'].forEach(v =>
         document.getElementById(v).style.display = 'none');
     document.getElementById(id).style.display = 'block';
 
@@ -2051,6 +2473,10 @@ function alternarTela(id) {
     if (id === 'view-dashboard') {
         document.querySelector('.nav-item').classList.add('active');
         renderDash();
+    } else if (id === 'view-almoxarifado') {
+        document.getElementById('nav-almoxarifado').classList.add('active');
+        populateAlmFiltro();
+        renderAlmoxarifado();
     } else if (id === 'view-pedido') {
         document.getElementById('nav-solicitar').classList.add('active');
         document.getElementById('lp-panel').style.display = 'none';
@@ -2102,15 +2528,11 @@ function montarDesvioView(p) {
 
     p.itens.forEach(item => {
         const mc         = menorCot(item);
-        const vencedor   = (item.fornecedores || forns).find
-            ? (p.fornecedores||[]).find(f => f.id === item.vencedorFornId)
-            : null;
-        const cotVenc    = (item.cotacoes||[]).find(c => c.fornId === item.vencedorFornId);
-        const totalVenc  = cotVenc ? custoUnit(cotVenc) : 0;
-        const totalMenor = mc ? custoUnit(mc) : 0;
-        const temDesvio  = mc && mc.fornId !== item.vencedorFornId && totalVenc > 0;
-        const diff       = totalVenc - totalMenor;
-        const diffPct    = totalMenor > 0 ? Math.round((diff / totalMenor) * 100) : 0;
+        const precoVenc  = precoItemForn(item, item.vencedorFornId);
+        const precoMenor = mc ? toNum(mc.precoUnit) : 0;
+        const temDesvio  = mc && mc.fornId !== item.vencedorFornId && precoVenc > 0;
+        const diff       = precoVenc - precoMenor;
+        const diffPct    = precoMenor > 0 ? Math.round((diff / precoMenor) * 100) : 0;
 
         const tr = document.createElement('tr');
         tr.style.background = temDesvio ? '#fef9c3' : '';
@@ -2122,11 +2544,10 @@ function montarDesvioView(p) {
             <td style="text-align:center;font-size:12px;">${item.qtdOriginal} ${escHtml(item.und)}</td>`;
 
         forns.forEach(forn => {
-            const cot   = (item.cotacoes||[]).find(c => c.fornId === forn.id);
-            const total = cot ? custoUnit(cot) : 0;
+            const preco  = precoItemForn(item, forn.id);
             const isVenc = forn.id === item.vencedorFornId;
             cells += `<td style="text-align:center;font-size:12px;${isVenc?'font-weight:800;color:#1e3a8a;':''}">
-                ${total > 0 ? `R$ ${fmt(total)}` : '—'}
+                ${preco > 0 ? `R$ ${fmt(preco)}/un` : '—'}
                 ${isVenc ? '<br><span style="font-size:10px;color:#2563eb;">✓ escolhido</span>' : ''}
             </td>`;
         });
@@ -2134,7 +2555,7 @@ function montarDesvioView(p) {
         const vencNome = (p.fornecedores||[]).find(f => f.id === item.vencedorFornId)?.nome || '—';
         cells += `
             <td style="text-align:center;font-size:12px;color:#16a34a;font-weight:700;">
-                ${totalMenor > 0 ? `R$ ${fmt(totalMenor)}` : '—'}
+                ${precoMenor > 0 ? `R$ ${fmt(precoMenor)}/un` : '—'}
             </td>
             <td style="text-align:center;font-size:12px;font-weight:700;">
                 ${escHtml(vencNome)}
@@ -2500,21 +2921,82 @@ function excluirPedido(id) {
     if (!p) return;
     if (!confirm(`Excluir permanentemente o pedido ${labelRM(p)}?\nEsta ação não pode ser desfeita.`)) return;
     db = db.filter(x => x.id !== id);
-    salvar();
+    DataService.deletarPedido(id).catch(logErr);
     fecharModal();
+    renderDash();
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   §22 — INICIALIZAÇÃO
+   §22 — INICIALIZAÇÃO ASSÍNCRONA (Firebase)
 ══════════════════════════════════════════════════════════════════ */
-(function init() {
-    UserService.seedDefaults();
-    EmpService.seedDefaults();
 
-    const raw = DataService.ler();
-    db = migrarDados(raw);
-    if (raw.some(p => !Array.isArray(p.fornecedores))) {
-        DataService.salvar(db);
+/** Migra dados antigos do localStorage para o Firestore (uma única vez) */
+async function migrarLocalStorage() {
+    const LS_KEY = 'bravo_erp_v3';
+    try {
+        const raw = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        if (!raw.length) return; // nada a migrar
+
+        const migrados = migrarDados(raw);
+        console.log(`[Migração] Encontrado(s) ${migrados.length} pedido(s) no localStorage.`);
+
+        // Só migra se o Firestore ainda não tiver esses documentos
+        const salvando = migrados.map(p => DataService.salvarPedido(p));
+        await Promise.all(salvando);
+
+        localStorage.removeItem(LS_KEY);
+        console.log(`[Migração] ${migrados.length} pedido(s) migrado(s) para o Firestore!`);
+    } catch (e) {
+        console.warn('[Migração localStorage]', e);
+    }
+}
+
+(async function init() {
+    try {
+        // 1. Carrega configs (usuários, empreendimentos, tarefas) em paralelo
+        setLoadingMsg('Carregando configurações...', 20);
+        [_usuarios, _empreendimentos, _tarefas] = await Promise.all([
+            ConfigService.ler('usuarios'),
+            ConfigService.ler('empreendimentos'),
+            ConfigService.ler('tarefas'),
+        ]);
+
+        // 2. Popula defaults se vazio
+        UserService.seedDefaults();
+        EmpService.seedDefaults();
+
+        setLoadingMsg('Sincronizando pedidos em tempo real...', 60);
+
+        // 3. Listener em tempo real para pedidos
+        //    Dispara imediatamente com os dados atuais e a cada mudança futura.
+        let primeiraVez = true;
+        DataService.escutar(dados => {
+            db = migrarDados(dados);
+
+            if (primeiraVez) {
+                primeiraVez = false;
+                setLoadingMsg('Pronto!', 100);
+
+                // 4. Migra localStorage (silencioso, apenas se Firestore vazio)
+                if (db.length === 0) migrarLocalStorage();
+
+                setTimeout(hideOverlay, 400); // pequeno delay para a barra completar
+            } else {
+                // Atualização em tempo real para usuários já logados
+                if (usuarioAtivo) {
+                    renderDash();
+                    // Se almoxarifado estiver visível, atualiza também
+                    if (document.getElementById('view-almoxarifado')?.style.display !== 'none') {
+                        renderAlmoxarifado();
+                    }
+                }
+            }
+        });
+
+    } catch (e) {
+        logErr(e);
+        setLoadingMsg('❌ Falha ao conectar ao Firebase.\n' + (e.message || e), 0);
+        console.error('[init]', e);
     }
 })();
 </script>
