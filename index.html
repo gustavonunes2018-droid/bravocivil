@@ -285,6 +285,26 @@
         .cot-footer-row td { background:#f8fafc; }
         .cot-footer-lbl { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
         .cot-metpag select { font-size:12px; }
+
+        /* ── Abas do Almoxarifado ── */
+        .alm-tabs { display:flex; gap:4px; border-bottom:2px solid var(--border); margin-bottom:20px; }
+        .alm-tab  { padding:10px 18px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer;
+                    border-bottom:3px solid transparent; margin-bottom:-2px; transition:.15s; user-select:none; }
+        .alm-tab:hover  { color:var(--text); }
+        .alm-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+        /* ── Estoque: saldo chip ── */
+        .saldo-ok  { color:#065f46; font-weight:800; }
+        .saldo-zer { color:#94a3b8; font-weight:600; }
+        .saldo-neg { color:#b91c1c; font-weight:800; }
+
+        /* ── Modal de Baixa ── */
+        #baixa-modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55);
+                       justify-content:center; align-items:center; z-index:1100; }
+        .baixa-box { background:#fff; border-radius:10px; padding:28px; width:100%; max-width:520px;
+                     box-shadow:0 20px 40px rgba(0,0,0,.2); }
+        .baixa-box h3 { margin:0 0 18px; font-size:17px; color:#0f172a; }
+        .baixa-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     </style>
 </head>
 <body>
@@ -415,18 +435,18 @@
 
             <!-- ─── Almoxarifado ─── -->
             <div id="view-almoxarifado" style="display:none;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <h2>🏪 Almoxarifado</h2>
                     <div style="display:flex;gap:10px;align-items:center;">
-                        <label style="font-size:13px;font-weight:600;margin:0;">Filtrar Obra:</label>
-                        <select id="alm-filtro-obra" onchange="renderAlmoxarifado()" style="width:220px;">
+                        <label style="font-size:13px;font-weight:600;margin:0;">Empreendimento:</label>
+                        <select id="alm-filtro-obra" onchange="renderAlmoxarifado()" style="width:240px;">
                             <option value="TODOS">Todos os Empreendimentos</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- KPIs -->
-                <div class="alm-kpi-grid">
+                <div class="alm-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
                     <div class="alm-kpi">
                         <div class="kpi-label">Entregas Pendentes</div>
                         <div class="kpi-val" id="alm-kpi-pendentes" style="color:#f59e0b;">0</div>
@@ -436,54 +456,121 @@
                         <div class="kpi-val" id="alm-kpi-ocs" style="color:#2563eb;">0</div>
                     </div>
                     <div class="alm-kpi">
-                        <div class="kpi-label">Itens Recebidos (total)</div>
-                        <div class="kpi-val" id="alm-kpi-recebidos" style="color:#10b981;">0</div>
+                        <div class="kpi-label">Itens em Estoque</div>
+                        <div class="kpi-val" id="alm-kpi-estoque" style="color:#10b981;">0</div>
+                    </div>
+                    <div class="alm-kpi">
+                        <div class="kpi-label">Baixas Realizadas</div>
+                        <div class="kpi-val" id="alm-kpi-baixas" style="color:#7c3aed;">0</div>
                     </div>
                 </div>
 
-                <!-- Entregas Pendentes -->
-                <div class="alm-section">
-                    <div class="alm-section-hdr">
-                        <h4>📦 Entregas Pendentes</h4>
-                    </div>
-                    <table class="alm-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align:left;min-width:180px;">Material</th>
-                                <th>OC</th>
-                                <th>Fornecedor</th>
-                                <th>Obra / CC</th>
-                                <th>Prev. Entrega</th>
-                                <th>Qtd Pedida</th>
-                                <th>Qtd Recebida</th>
-                                <th>Saldo</th>
-                                <th>Gravar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="alm-tbody-pendentes"></tbody>
-                    </table>
+                <!-- Abas -->
+                <div class="alm-tabs">
+                    <div class="alm-tab active" id="alm-tab-receb"  onclick="ativarAbaAlm('receb')">📦 Recebimentos</div>
+                    <div class="alm-tab"         id="alm-tab-estoque" onclick="ativarAbaAlm('estoque')">📊 Estoque por Obra</div>
+                    <div class="alm-tab"         id="alm-tab-baixas" onclick="ativarAbaAlm('baixas')">📋 Histórico de Baixas</div>
                 </div>
 
-                <!-- Posição de Estoque -->
-                <div class="alm-section">
-                    <div class="alm-section-hdr">
-                        <h4>📊 Posição de Estoque (acumulado recebido)</h4>
+                <!-- Aba: Recebimentos -->
+                <div id="alm-pane-receb">
+                    <div class="alm-section">
+                        <div class="alm-section-hdr"><h4>📦 Entregas Pendentes</h4></div>
+                        <table class="alm-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;min-width:180px;">Material</th>
+                                    <th>OC / RM</th>
+                                    <th>Fornecedor</th>
+                                    <th>Prev. Entrega</th>
+                                    <th>Qtd Pedida</th>
+                                    <th>Qtd Recebida</th>
+                                    <th>Saldo</th>
+                                    <th>Gravar Recebimento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alm-tbody-pendentes"></tbody>
+                        </table>
                     </div>
-                    <table class="alm-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align:left;min-width:220px;">Material</th>
-                                <th>Und</th>
-                                <th>Total Pedido</th>
-                                <th>Total Recebido</th>
-                                <th>Saldo Pendente</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="alm-tbody-estoque"></tbody>
-                    </table>
                 </div>
+
+                <!-- Aba: Estoque por Obra -->
+                <div id="alm-pane-estoque" style="display:none;">
+                    <div class="alm-section">
+                        <div class="alm-section-hdr">
+                            <h4>📊 Posição de Estoque</h4>
+                            <span style="font-size:12px;color:var(--muted);">Saldo = Total Recebido − Total Baixado</span>
+                        </div>
+                        <table class="alm-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;min-width:200px;">Material</th>
+                                    <th>Und</th>
+                                    <th>Total Recebido</th>
+                                    <th>Total Baixado</th>
+                                    <th>Saldo Disponível</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alm-tbody-estoque"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Aba: Histórico de Baixas -->
+                <div id="alm-pane-baixas" style="display:none;">
+                    <div class="alm-section">
+                        <div class="alm-section-hdr"><h4>📋 Histórico de Baixas de Material</h4></div>
+                        <table class="alm-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width:110px;">Data</th>
+                                    <th style="text-align:left;min-width:180px;">Material</th>
+                                    <th>Und</th>
+                                    <th>Qtd Baixada</th>
+                                    <th style="text-align:left;">Motivo</th>
+                                    <th>Centro de Custo</th>
+                                    <th>Empreendimento</th>
+                                    <th>Operador</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alm-tbody-baixas"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div><!-- /view-almoxarifado -->
+
+            <!-- ════ Modal de Baixa de Material ════ -->
+            <div id="baixa-modal" onclick="if(event.target===this)fecharBaixaModal()">
+                <div class="baixa-box">
+                    <h3>📤 Dar Baixa de Material</h3>
+                    <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;">
+                        <strong id="baixa-material-nome">—</strong>
+                        <span id="baixa-material-saldo" style="float:right;color:#166534;font-weight:700;"></span>
+                    </div>
+                    <div class="baixa-grid">
+                        <div class="form-group">
+                            <label>Quantidade <span id="baixa-und-lbl" style="color:var(--muted);font-weight:400;"></span></label>
+                            <input type="number" id="baixa-qtd" min="0.01" step="0.01" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Centro de Custo</label>
+                            <select id="baixa-cc">
+                                <option value="">— selecione —</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column:1/-1;">
+                            <label>Motivo / Aplicação</label>
+                            <input type="text" id="baixa-motivo" placeholder="Ex: Aplicação na estrutura Bloco A">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+                        <button class="btn-outline" onclick="fecharBaixaModal()">Cancelar</button>
+                        <button class="btn-danger" onclick="confirmarBaixa()">📤 Confirmar Baixa</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- ─── Nova RM / Solicitação ─── -->
             <div id="view-pedido" style="display:none;">
@@ -949,6 +1036,7 @@ const DataService = {
 let _usuarios       = [];
 let _empreendimentos= [];
 let _tarefas        = [];
+let _baixas         = [];
 
 const UserService = {
     DEFAULTS: [
@@ -985,6 +1073,18 @@ const TarefasService = {
     ler()        { return _tarefas; },
     salvar(t)    { _tarefas = t; ConfigService.salvar('tarefas', t).catch(logErr); },
     porEmp(eId)  { return _tarefas.filter(t => t.empId === eId); },
+};
+
+const BaixaService = {
+    ler()          { return _baixas; },
+    salvar(lista)  { _baixas = lista; ConfigService.salvar('baixas', lista).catch(logErr); },
+    porObra(obra)  { return _baixas.filter(b => b.obra === obra); },
+    /** Quantidade total baixada de um material em uma obra */
+    totalBaixado(obra, descricao) {
+        return _baixas
+            .filter(b => b.obra === obra && b.material === descricao)
+            .reduce((s, b) => s + toNum(b.quantidade), 0);
+    },
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2339,61 +2439,89 @@ function excluirUsuario(id) {
 /* ══════════════════════════════════════════════════════════════════
    §17b — ALMOXARIFADO
 ══════════════════════════════════════════════════════════════════ */
+let _almAbaAtiva = 'receb'; // 'receb' | 'estoque' | 'baixas'
+
 function populateAlmFiltro() {
-    const sel  = document.getElementById('alm-filtro-obra');
-    const cur  = sel.value;
+    const sel   = document.getElementById('alm-filtro-obra');
+    const cur   = sel.value;
     const nomes = EmpService.nomes();
     sel.innerHTML = `<option value="TODOS">Todos os Empreendimentos</option>` +
         nomes.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
-    // Restaura filtro de obra para perfil obra
     if (usuarioAtivo?.perfil === 'obra' && usuarioAtivo?.obra) {
-        sel.value    = usuarioAtivo.obra;
-        sel.disabled = true;
+        sel.value = usuarioAtivo.obra; sel.disabled = true;
     } else {
         if (cur && sel.querySelector(`option[value="${cur}"]`)) sel.value = cur;
         sel.disabled = false;
     }
 }
 
+function ativarAbaAlm(aba) {
+    _almAbaAtiva = aba;
+    ['receb','estoque','baixas'].forEach(a => {
+        document.getElementById(`alm-tab-${a}`).classList.toggle('active', a === aba);
+        document.getElementById(`alm-pane-${a}`).style.display = a === aba ? 'block' : 'none';
+    });
+    renderAlmoxarifado();
+}
+
+/** Constrói mapa de estoque: { "obra|material" → { obra, descricao, und, recebido, baixado } } */
+function _buildEstoqueMapa(filtroObra) {
+    const mapa = {};
+    db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
+        if (!FASES_OC.includes(p.fase) && p.fase !== 'Nota Processada') return;
+        (p.itens || []).forEach(it => {
+            if (!it.vencedorFornId || it.qtdRecebida <= 0) return;
+            const chave = `${p.obra}|${it.descricao.trim().toLowerCase()}`;
+            if (!mapa[chave]) mapa[chave] = { obra: p.obra, descricao: it.descricao, und: it.und, recebido: 0, baixado: 0 };
+            mapa[chave].recebido += it.qtdRecebida || 0;
+        });
+    });
+    // Aplica baixas
+    BaixaService.ler().filter(b => filtroObra === 'TODOS' || b.obra === filtroObra).forEach(b => {
+        const chave = `${b.obra}|${b.material.trim().toLowerCase()}`;
+        if (mapa[chave]) mapa[chave].baixado += toNum(b.quantidade);
+        else mapa[chave] = { obra: b.obra, descricao: b.material, und: b.und, recebido: 0, baixado: toNum(b.quantidade) };
+    });
+    return mapa;
+}
+
 function renderAlmoxarifado() {
     const filtroObra = document.getElementById('alm-filtro-obra')?.value || 'TODOS';
     const hoje = new Date(); hoje.setHours(0,0,0,0);
 
-    // Coleta todos os pedidos em fase de entrega / processada
-    const pedidosEntrega = db.filter(p => FASES_OC.includes(p.fase));
-    const pedidosFiltrados = filtroObra === 'TODOS'
-        ? pedidosEntrega
-        : pedidosEntrega.filter(p => p.obra === filtroObra);
-
     // ── KPIs ──────────────────────────────────────────────────────────
-    let totalPendentes = 0, totalOCs = 0, totalRecebidos = 0;
-
-    pedidosFiltrados.forEach(p => {
+    const pedidosEntrega = db.filter(p => FASES_OC.includes(p.fase) &&
+        (filtroObra === 'TODOS' || p.obra === filtroObra));
+    let totalPendentes = 0, totalOCs = 0;
+    pedidosEntrega.forEach(p => {
         const ocs = gerarOCs(p);
         ocs.forEach(oc => {
-            const temPendente = oc.itens.some(it => it.qtdRecebida < it.qtdOriginal);
-            if (temPendente) totalOCs++;
-            oc.itens.forEach(it => {
-                if (it.qtdRecebida < it.qtdOriginal) totalPendentes++;
-                if (it.qtdRecebida > 0) totalRecebidos += it.qtdRecebida;
-            });
+            if (oc.itens.some(it => it.qtdRecebida < it.qtdOriginal)) totalOCs++;
+            oc.itens.forEach(it => { if (it.qtdRecebida < it.qtdOriginal) totalPendentes++; });
         });
     });
+    const mapa = _buildEstoqueMapa(filtroObra);
+    const itensSaldo = Object.values(mapa).filter(r => r.recebido - r.baixado > 0).length;
+    const totalBaixas = BaixaService.ler().filter(b => filtroObra === 'TODOS' || b.obra === filtroObra).length;
 
     document.getElementById('alm-kpi-pendentes').textContent = totalPendentes;
     document.getElementById('alm-kpi-ocs').textContent       = totalOCs;
-    document.getElementById('alm-kpi-recebidos').textContent = totalRecebidos;
+    document.getElementById('alm-kpi-estoque').textContent   = itensSaldo;
+    document.getElementById('alm-kpi-baixas').textContent    = totalBaixas;
 
-    // ── Tabela Entregas Pendentes ─────────────────────────────────────
-    const tbodyPend = document.getElementById('alm-tbody-pendentes');
-    const pf = perfil();
-    const podeReceber = ['obra','master'].includes(pf);
-    const rowsPend = [];
+    if (_almAbaAtiva === 'receb')   _renderAlmRecebimentos(filtroObra, hoje);
+    if (_almAbaAtiva === 'estoque') _renderAlmEstoque(filtroObra, mapa);
+    if (_almAbaAtiva === 'baixas')  _renderAlmBaixas(filtroObra);
+}
 
-    pedidosFiltrados.forEach(p => {
-        if (p.fase === 'Nota Processada') return;
-        const ocs = gerarOCs(p);
-        ocs.forEach((oc, ocIdx) => {
+function _renderAlmRecebimentos(filtroObra, hoje) {
+    const tbodyPend  = document.getElementById('alm-tbody-pendentes');
+    const podeReceber = ['obra','master'].includes(perfil());
+    const rows = [];
+
+    db.filter(p => (filtroObra === 'TODOS' || p.obra === filtroObra) &&
+                   FASES_OC.includes(p.fase) && p.fase !== 'Nota Processada').forEach(p => {
+        gerarOCs(p).forEach((oc, ocIdx) => {
             oc.itens.forEach(it => {
                 if (it.qtdRecebida >= it.qtdOriginal) return;
                 const saldo = it.qtdOriginal - it.qtdRecebida;
@@ -2401,32 +2529,31 @@ function renderAlmoxarifado() {
                 if (it.dataEntrega) {
                     const [y,m,d] = it.dataEntrega.split('-');
                     if (new Date(+y,+m-1,+d) < hoje)
-                        atrasHTML = `<span style="color:#ef4444;font-weight:700;font-size:10px;"> ⚠ Vencido</span>`;
+                        atrasHTML = `<span style="color:#ef4444;font-size:10px;font-weight:700;"> ⚠ Vencido</span>`;
                 }
                 const realIdx = p.itens.indexOf(it);
                 const inputId = `alm-rq-${p.id}-${realIdx}`;
-                rowsPend.push(`<tr>
+                rows.push(`<tr>
                     <td class="tl">
                         <strong style="font-size:13px;">${escHtml(it.descricao)}</strong>
-                        <br><span style="font-size:11px;color:var(--muted);">${escHtml(p.obra)}${p.centroCusto ? ' › ' + escHtml(p.centroCusto) : ''}</span>
+                        <br><span style="font-size:11px;color:var(--muted);">${escHtml(p.obra)}${p.centroCusto?' › '+escHtml(p.centroCusto):''}</span>
                     </td>
                     <td>
-                        <span class="ordem-chip" onclick="abrirModal(${p.id})">${labelOC(p, ocIdx)}</span>
+                        <span class="ordem-chip" onclick="abrirModal(${p.id})">${labelOC(p,ocIdx)}</span>
                         <span style="font-size:11px;color:var(--muted);display:block;margin-top:2px;">${escHtml(labelRM(p))}</span>
                     </td>
                     <td style="font-size:12px;">${escHtml(oc.nome)}</td>
-                    <td style="font-size:12px;color:var(--muted);">${escHtml(p.obra)}${p.centroCusto ? '<br><small>' + escHtml(p.centroCusto) + '</small>' : ''}</td>
                     <td style="font-size:12px;">${fmtData(it.dataEntrega)}${atrasHTML}</td>
-                    <td style="text-align:center;font-size:13px;font-weight:700;">${it.qtdOriginal} ${escHtml(it.und)}</td>
-                    <td style="text-align:center;font-size:13px;font-weight:700;color:#f59e0b;">${it.qtdRecebida}</td>
-                    <td style="text-align:center;font-size:13px;font-weight:700;color:#ef4444;">${saldo}</td>
+                    <td style="text-align:center;font-weight:700;">${it.qtdOriginal} ${escHtml(it.und)}</td>
+                    <td style="text-align:center;font-weight:700;color:#f59e0b;">${it.qtdRecebida}</td>
+                    <td style="text-align:center;font-weight:700;color:#ef4444;">${saldo}</td>
                     <td>
                         ${podeReceber
                             ? `<div style="display:flex;gap:5px;justify-content:center;">
                                 <input type="number" id="${inputId}" min="1" max="${saldo}"
-                                       style="width:56px;font-size:12px;padding:4px;" placeholder="Qtd">
+                                       style="width:58px;font-size:12px;padding:4px;" placeholder="Qtd">
                                 <button class="btn-success btn-sm"
-                                        onclick="gravarRecebimentoAlmox(${p.id},${realIdx},'${inputId}')">✓</button>
+                                        onclick="gravarRecebimentoAlmox(${p.id},${realIdx},'${inputId}')">✓ Gravar</button>
                                </div>`
                             : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}
                     </td>
@@ -2435,47 +2562,93 @@ function renderAlmoxarifado() {
         });
     });
 
-    tbodyPend.innerHTML = rowsPend.length
-        ? rowsPend.join('')
-        : `<tr><td colspan="9" class="alm-empty">Nenhuma entrega pendente. 🎉</td></tr>`;
+    tbodyPend.innerHTML = rows.length
+        ? rows.join('')
+        : `<tr><td colspan="8" class="alm-empty">🎉 Nenhuma entrega pendente no momento.</td></tr>`;
+}
 
-    // ── Tabela Posição de Estoque ─────────────────────────────────────
-    const tbodyEst = document.getElementById('alm-tbody-estoque');
-    const mapa = {}; // { chave: { descricao, und, pedido, recebido } }
+function _renderAlmEstoque(filtroObra, mapa) {
+    const tbody = document.getElementById('alm-tbody-estoque');
+    const podeBaixar = ['obra','comprador','master'].includes(perfil());
+    const empsMap = Object.fromEntries(EmpService.ler().map(e => [e.nome, e]));
 
-    db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
-        if (!FASES_OC.includes(p.fase) && p.fase !== 'Nota Processada') return;
-        (p.itens || []).forEach(it => {
-            if (!it.vencedorFornId) return; // só itens com fornecedor escolhido
-            const chave = it.descricao.trim().toLowerCase();
-            if (!mapa[chave]) mapa[chave] = { descricao: it.descricao, und: it.und, pedido: 0, recebido: 0 };
-            mapa[chave].pedido   += it.qtdOriginal;
-            mapa[chave].recebido += it.qtdRecebida || 0;
+    // Agrupa por obra para exibir separadores
+    const porObra = {};
+    Object.values(mapa).forEach(r => {
+        if (!porObra[r.obra]) porObra[r.obra] = [];
+        porObra[r.obra].push(r);
+    });
+
+    const rows = [];
+    Object.entries(porObra).sort(([a],[b]) => a.localeCompare(b)).forEach(([obra, itens]) => {
+        // Separador de obra
+        const emp = empsMap[obra];
+        rows.push(`<tr>
+            <td colspan="6" style="background:#0f172a;color:#e2e8f0;font-weight:700;font-size:12px;
+                padding:7px 14px;letter-spacing:.3px;">
+                🏗️ ${escHtml(obra)} ${emp ? `<span style="color:#60a5fa;margin-left:6px;">${emp.codigo}</span>` : ''}
+            </td>
+        </tr>`);
+
+        itens.sort((a,b) => a.descricao.localeCompare(b.descricao)).forEach(r => {
+            const saldo = r.recebido - r.baixado;
+            const saldoCls = saldo > 0 ? 'saldo-ok' : saldo < 0 ? 'saldo-neg' : 'saldo-zer';
+            const saldoIcon = saldo > 0 ? '✓' : saldo < 0 ? '⚠' : '—';
+            // Serialize para o onclick (sem aspas problemáticas)
+            const descEsc = escHtml(r.descricao);
+            rows.push(`<tr>
+                <td class="tl" style="font-size:13px;font-weight:600;">${descEsc}</td>
+                <td style="text-align:center;font-size:12px;">${escHtml(r.und)}</td>
+                <td style="text-align:center;font-weight:700;color:#10b981;">${fmt(r.recebido)}</td>
+                <td style="text-align:center;font-weight:700;color:#7c3aed;">${fmt(r.baixado)}</td>
+                <td style="text-align:center;" class="${saldoCls}">
+                    ${saldoIcon} ${fmt(saldo)} ${escHtml(r.und)}
+                </td>
+                <td style="text-align:center;">
+                    ${podeBaixar && saldo > 0
+                        ? `<button class="btn-danger btn-sm"
+                                   onclick='abrirBaixaModal(${JSON.stringify(r.obra)},${JSON.stringify(r.descricao)},${JSON.stringify(r.und)},${saldo})'>
+                               📤 Dar Baixa
+                           </button>`
+                        : saldo <= 0
+                            ? '<span style="color:#94a3b8;font-size:12px;">Sem saldo</span>'
+                            : '<span style="color:#cbd5e1;font-size:12px;">—</span>'}
+                </td>
+            </tr>`);
         });
     });
 
-    const rowsEst = Object.values(mapa).sort((a,b) => a.descricao.localeCompare(b.descricao)).map(r => {
-        const saldo = r.pedido - r.recebido;
-        const pct   = r.pedido > 0 ? Math.round((r.recebido / r.pedido) * 100) : 0;
-        const cls   = r.recebido >= r.pedido ? 'b-recebido' : saldo > 0 ? 'b-parcial' : 'b-gerado';
-        const lbl   = r.recebido >= r.pedido ? '✓ Completo' : `${pct}% recebido`;
-        return `<tr>
-            <td class="tl" style="font-size:13px;font-weight:600;">${escHtml(r.descricao)}</td>
-            <td style="text-align:center;font-size:12px;">${escHtml(r.und)}</td>
-            <td style="text-align:center;font-size:13px;font-weight:700;color:#1e3a8a;">${r.pedido}</td>
-            <td style="text-align:center;font-size:13px;font-weight:700;color:#10b981;">${r.recebido}</td>
-            <td style="text-align:center;font-size:13px;font-weight:700;color:${saldo>0?'#f59e0b':'#10b981'};">${saldo}</td>
-            <td style="text-align:center;"><span class="badge ${cls}">${lbl}</span></td>
-        </tr>`;
-    });
-
-    tbodyEst.innerHTML = rowsEst.length
-        ? rowsEst.join('')
-        : `<tr><td colspan="6" class="alm-empty">Nenhum material em trânsito ou recebido.</td></tr>`;
+    tbody.innerHTML = rows.length
+        ? rows.join('')
+        : `<tr><td colspan="6" class="alm-empty">Nenhum material em estoque para o filtro selecionado.</td></tr>`;
 }
 
+function _renderAlmBaixas(filtroObra) {
+    const tbody = document.getElementById('alm-tbody-baixas');
+    const lista = BaixaService.ler()
+        .filter(b => filtroObra === 'TODOS' || b.obra === filtroObra)
+        .slice()
+        .sort((a,b) => (b.ts || 0) - (a.ts || 0)); // mais recente primeiro
+
+    const rows = lista.map(b => `<tr>
+        <td style="font-size:12px;white-space:nowrap;">${escHtml(b.data)}</td>
+        <td class="tl" style="font-size:13px;font-weight:600;">${escHtml(b.material)}</td>
+        <td style="text-align:center;font-size:12px;">${escHtml(b.und)}</td>
+        <td style="text-align:center;font-weight:700;font-size:14px;color:#7c3aed;">${fmt(b.quantidade)}</td>
+        <td style="font-size:12px;">${escHtml(b.motivo || '—')}</td>
+        <td style="text-align:center;font-size:12px;">${escHtml(b.centroCusto || '—')}</td>
+        <td style="font-size:12px;">${escHtml(b.obra)}</td>
+        <td style="font-size:12px;">${escHtml(b.operadorNome || '—')}</td>
+    </tr>`);
+
+    tbody.innerHTML = rows.length
+        ? rows.join('')
+        : `<tr><td colspan="8" class="alm-empty">Nenhuma baixa registrada.</td></tr>`;
+}
+
+/* ── Recebimento no Almoxarifado ── */
 function gravarRecebimentoAlmox(pedidoId, idx, inputId) {
-    const qtd = parseInt(document.getElementById(inputId)?.value || '0');
+    const qtd = parseFloat(document.getElementById(inputId)?.value || '0');
     if (!qtd || qtd <= 0) { alert('Informe uma quantidade válida.'); return; }
 
     const p  = db.find(x => x.id === pedidoId);
@@ -2483,9 +2656,9 @@ function gravarRecebimentoAlmox(pedidoId, idx, inputId) {
     if (!it) return;
     if (it.qtdRecebida + qtd > it.qtdOriginal) { alert('Quantidade excede o saldo pendente.'); return; }
 
-    ativoPedidoId = pedidoId; // para o salvar() saber qual pedido
+    ativoPedidoId = pedidoId;
     it.qtdRecebida += qtd;
-    logHistorico(p, `[Almoxarifado] Recebimento: ${qtd} ${it.und} de "${it.descricao}" — Acum.: ${it.qtdRecebida}/${it.qtdOriginal}`);
+    logHistorico(p, `[Almox] Recebimento: ${qtd} ${it.und} de "${it.descricao}" — Acum.: ${it.qtdRecebida}/${it.qtdOriginal}`);
 
     if (p.itens.every(it => it.qtdRecebida >= it.qtdOriginal)) {
         p.fase = 'Nota Processada';
@@ -2493,7 +2666,69 @@ function gravarRecebimentoAlmox(pedidoId, idx, inputId) {
     }
     salvar(false);
     renderAlmoxarifado();
-    alert(`✓ Recebimento gravado: ${qtd} ${it.und} de "${it.descricao}"`);
+}
+
+/* ── Modal de Baixa ── */
+let _baixaCtx = null; // { obra, material, und, saldoMax }
+
+function abrirBaixaModal(obra, material, und, saldoMax) {
+    _baixaCtx = { obra, material, und, saldoMax };
+
+    document.getElementById('baixa-material-nome').textContent = material;
+    document.getElementById('baixa-material-saldo').textContent = `Saldo: ${fmt(saldoMax)} ${und}`;
+    document.getElementById('baixa-und-lbl').textContent = `(${und})`;
+    document.getElementById('baixa-qtd').value = '';
+    document.getElementById('baixa-motivo').value = '';
+
+    // Popula centros de custo do empreendimento
+    const emp  = EmpService.ler().find(e => e.nome === obra);
+    const ccs  = emp?.centrosCusto || [];
+    const ccSel = document.getElementById('baixa-cc');
+    ccSel.innerHTML = `<option value="">— selecione —</option>` +
+        ccs.map(cc => `<option value="${escHtml(cc)}">${escHtml(cc)}</option>`).join('');
+
+    document.getElementById('baixa-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('baixa-qtd').focus(), 100);
+}
+
+function fecharBaixaModal() {
+    document.getElementById('baixa-modal').style.display = 'none';
+    _baixaCtx = null;
+}
+
+function confirmarBaixa() {
+    if (!_baixaCtx) return;
+    const qtd    = parseFloat(document.getElementById('baixa-qtd').value || '0');
+    const motivo = document.getElementById('baixa-motivo').value.trim();
+    const cc     = document.getElementById('baixa-cc').value;
+
+    if (!qtd || qtd <= 0)               { alert('Informe uma quantidade válida.'); return; }
+    if (qtd > _baixaCtx.saldoMax)       { alert(`Quantidade excede o saldo disponível (${fmt(_baixaCtx.saldoMax)} ${_baixaCtx.und}).`); return; }
+    if (!motivo)                         { alert('Informe o motivo / aplicação da baixa.'); return; }
+
+    const baixa = {
+        id           : uid(),
+        ts           : Date.now(),
+        obra         : _baixaCtx.obra,
+        material     : _baixaCtx.material,
+        und          : _baixaCtx.und,
+        quantidade   : qtd,
+        motivo,
+        centroCusto  : cc,
+        data         : new Date().toLocaleString('pt-BR'),
+        operadorId   : usuarioAtivo?.id     || '?',
+        operadorNome : usuarioAtivo?.nome   || '?',
+        operadorPerfil: usuarioAtivo?.perfil || '?',
+    };
+
+    const lista = BaixaService.ler();
+    lista.push(baixa);
+    BaixaService.salvar(lista);
+
+    fecharBaixaModal();
+    // Muda para aba de histórico para ver a baixa recém-registrada
+    ativarAbaAlm('baixas');
+    alert(`✓ Baixa registrada: ${fmt(qtd)} ${baixa.und} de "${baixa.material}"`);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -3026,12 +3261,13 @@ async function migrarLocalStorage() {
 
 (async function init() {
     try {
-        // 1. Carrega configs (usuários, empreendimentos, tarefas) em paralelo
+        // 1. Carrega configs (usuários, empreendimentos, tarefas, baixas) em paralelo
         setLoadingMsg('Carregando configurações...', 20);
-        [_usuarios, _empreendimentos, _tarefas] = await Promise.all([
+        [_usuarios, _empreendimentos, _tarefas, _baixas] = await Promise.all([
             ConfigService.ler('usuarios'),
             ConfigService.ler('empreendimentos'),
             ConfigService.ler('tarefas'),
+            ConfigService.ler('baixas'),
         ]);
 
         // 2. Popula defaults se vazio
