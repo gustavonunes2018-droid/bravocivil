@@ -969,9 +969,9 @@ const UserService = {
 
 const EmpService = {
     DEFAULTS: [
-        { id:'emp1', codigo:'CVP', nome:'Condomínio Villa Piemonte',           centrosCusto:['Estrutura','Alvenaria','Instalações Elétricas','Acabamento'],  ativo:true },
-        { id:'emp2', codigo:'CTA', nome:'Canteiro Central - Torre Alvorada',   centrosCusto:['Fundação','Estrutura','Vedação','Cobertura'],                  ativo:true },
-        { id:'emp3', codigo:'IPS', nome:'Infraestrutura - Ponte do Setor Sul', centrosCusto:['Terraplenagem','Concreto','Pavimentação','Drenagem'],          ativo:true },
+        { id:'emp1', codigo:'CVP', nome:'Condomínio Villa Piemonte',           centrosCusto:['Estrutura','Alvenaria','Instalações Elétricas','Acabamento'],  ativo:true, proximoNumero:1 },
+        { id:'emp2', codigo:'CTA', nome:'Canteiro Central - Torre Alvorada',   centrosCusto:['Fundação','Estrutura','Vedação','Cobertura'],                  ativo:true, proximoNumero:1 },
+        { id:'emp3', codigo:'IPS', nome:'Infraestrutura - Ponte do Setor Sul', centrosCusto:['Terraplenagem','Concreto','Pavimentação','Drenagem'],          ativo:true, proximoNumero:1 },
     ],
     ler()      { return _empreendimentos; },
     salvar(e)  { _empreendimentos = e; ConfigService.salvar('empreendimentos', e).catch(logErr); },
@@ -1127,16 +1127,36 @@ function menorCot(item) {
     return valid.reduce((m, c) => toNum(c.precoUnit) < toNum(m.precoUnit) ? c : m);
 }
 
-function proximoRM() {
-    return db.length ? Math.max(...db.map(p => p.rmN || 0)) + 1 : 1;
+/** Retorna o próximo número de sequência para um empreendimento (com auto-cálculo para migração) */
+function proximoNumeroEmp(obraNome) {
+    const emps = EmpService.ler();
+    const emp  = emps.find(x => x.nome === obraNome);
+    if (!emp) return 1;
+    // Se ainda não tem proximoNumero (dados antigos), calcula a partir dos pedidos existentes
+    if (emp.proximoNumero == null) {
+        const existing = db.filter(p => p.obra === obraNome).length;
+        emp.proximoNumero = existing + 1;
+        EmpService.salvar(emps);
+    }
+    return emp.proximoNumero;
 }
 
 function labelRM(p) {
-    return p.rmN ? `RM-${String(p.rmN).padStart(3,'0')}` : `#${String(p.id).slice(-5)}`;
+    // Novo formato: SIGLA-NNN (ex: CVP-001)
+    if (p.rmLabel) return p.rmLabel;
+    // Fallback para pedidos antigos sem rmLabel
+    if (p.rmN) {
+        const emps = EmpService.ler();
+        const emp  = emps.find(x => x.nome === p.obra);
+        return emp ? `${emp.codigo}-${String(p.rmN).padStart(3,'0')}` : `RM-${String(p.rmN).padStart(3,'0')}`;
+    }
+    return `#${String(p.id).slice(-5)}`;
 }
 
 function labelOC(p, ocIdx) {
-    return `OC ${String(p.rmN || '?').padStart(3,'0')}.${ocIdx + 1}`;
+    // Ex: OC CVP-001.1
+    const base = p.rmLabel || (p.rmN ? String(p.rmN).padStart(3,'0') : '?');
+    return `OC ${base}.${ocIdx + 1}`;
 }
 
 function gerarOCs(pedido) {
@@ -1324,10 +1344,19 @@ function enviarPedido(e) {
         mailLines.push(`• ${natureza} | ${desc} | ${und} | ${qtd}`);
     }
 
+    const obraNome = document.getElementById('form-obra').value;
+    // ── Sequência por empreendimento ─────────────────────────────────────
+    const empsAtual = EmpService.ler();
+    const empAtual  = empsAtual.find(x => x.nome === obraNome);
+    const seqNum    = proximoNumeroEmp(obraNome);
+    const codigo    = empAtual?.codigo || 'RM';
+    const rmLabel   = `${codigo}-${String(seqNum).padStart(3,'0')}`;
+
     const pedido = {
         id          : Date.now(),
-        rmN         : proximoRM(),
-        obra        : document.getElementById('form-obra').value,
+        rmN         : seqNum,
+        rmLabel,
+        obra        : obraNome,
         centroCusto : document.getElementById('form-cc')?.value || '',
         just        : document.getElementById('form-just').value.trim(),
         dataUtilizacao     : document.getElementById('form-data-util').value       || '',
@@ -1336,11 +1365,18 @@ function enviarPedido(e) {
         fase        : 'Pedido Gerado',
         data        : new Date().toLocaleDateString('pt-BR'),
         fornecedores: [],
+        cotacoesOrdem: {},
         historico   : [],
         solicitanteId    : usuarioAtivo?.id     || null,
         solicitanteNome  : usuarioAtivo?.nome   || null,
         solicitantePerfil: usuarioAtivo?.perfil || null,
     };
+
+    // Incrementa a sequência do empreendimento e salva
+    if (empAtual) {
+        empAtual.proximoNumero = seqNum + 1;
+        EmpService.salvar(empsAtual);
+    }
 
     logHistorico(pedido, 'Pedido criado');
     db.push(pedido);
@@ -2727,12 +2763,17 @@ function renderEmpreendimentos() {
                 </td>
             </tr>`).join('');
 
+        const seqAtual = emp.proximoNumero ?? 1;
+        const proxLabel = `${escHtml(emp.codigo)}-${String(seqAtual).padStart(3,'0')}`;
         return `
         <div class="emp-card" id="emp-${emp.id}">
             <div class="emp-header" onclick="toggleEmpBody('${emp.id}')">
                 <span class="emp-toggle" id="emp-tog-${emp.id}">▶</span>
                 <span class="emp-nome">${escHtml(emp.nome)}</span>
                 <span class="emp-cod">${escHtml(emp.codigo)}</span>
+                <span style="font-size:11px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:2px 9px;margin-left:6px;">
+                    Próximo: <strong style="color:#1e3a8a;">${proxLabel}</strong>
+                </span>
                 <span class="badge ${emp.ativo ? 'b-liberado' : 'b-inativo'}" style="margin-left:8px;">
                     ${emp.ativo ? 'Ativo' : 'Inativo'}
                 </span>
@@ -2744,6 +2785,27 @@ function renderEmpreendimentos() {
                         onclick="event.stopPropagation();excluirEmp('${emp.id}')">Excluir</button>
             </div>
             <div class="emp-body" id="emp-body-${emp.id}">
+
+                <!-- Sequência de Pedidos -->
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+                    <strong style="font-size:13px;color:#1e3a8a;">🔢 Sequência de Pedidos</strong>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                        <div style="font-size:13px;">
+                            Próximo número: <strong style="font-size:16px;color:#1e3a8a;">${proxLabel}</strong>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <label style="font-size:12px;font-weight:600;margin:0;">Ajustar para:</label>
+                            <input type="number" id="seq-inp-${emp.id}" min="1" value="${seqAtual}"
+                                   style="width:80px;font-size:13px;padding:5px 8px;text-align:center;">
+                            <button type="button" class="btn-primary btn-sm"
+                                    onclick="ajustarSequencia('${emp.id}')">Salvar</button>
+                        </div>
+                        <span style="font-size:11px;color:#64748b;">
+                            Formato: <strong>${escHtml(emp.codigo)}-NNN</strong> &nbsp;·&nbsp;
+                            Pedidos criados neste empreendimento: <strong>${db.filter(p => p.obra === emp.nome).length}</strong>
+                        </span>
+                    </div>
+                </div>
 
                 <!-- Centros de Custo -->
                 <div style="margin-bottom:16px;">
@@ -2809,10 +2871,21 @@ function salvarNovoEmp(e) {
     if (emps.find(x => x.nome.toLowerCase() === nome.toLowerCase())) {
         alert('Já existe um empreendimento com este nome.'); return;
     }
-    emps.push({ id: uid(), codigo: cod, nome, centrosCusto: [], ativo: true });
+    emps.push({ id: uid(), codigo: cod, nome, centrosCusto: [], ativo: true, proximoNumero: 1 });
     EmpService.salvar(emps);
     document.getElementById('form-emp').reset();
     populateObraSelects();
+    renderEmpreendimentos();
+}
+
+function ajustarSequencia(empId) {
+    const novoNum = parseInt(document.getElementById(`seq-inp-${empId}`)?.value || '1');
+    if (!novoNum || novoNum < 1) { alert('Informe um número válido (mínimo 1).'); return; }
+    const emps = EmpService.ler();
+    const emp  = emps.find(e => e.id === empId);
+    if (!emp) return;
+    emp.proximoNumero = novoNum;
+    EmpService.salvar(emps);
     renderEmpreendimentos();
 }
 
