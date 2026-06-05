@@ -788,10 +788,85 @@
         </div>
 
         <!-- ══════════════════════════════════
-             BLOCO 0 — EDIÇÃO DO PEDIDO (Obra, antes da cotação)
+             BLOCO 0a — VISUALIZAÇÃO DO COMPRADOR (Pedido Gerado)
+        ══════════════════════════════════ -->
+        <div id="bloco-visualizar-pedido" style="display:none;margin-top:8px;">
+            <h4 class="bloco azul" style="margin-bottom:14px;">📋 Requisição de Material — Análise</h4>
+
+            <!-- Aviso de devolução anterior (se existir) -->
+            <div id="bloco-devolucao-aviso" style="display:none;background:#fef3c7;border:1px solid #fcd34d;
+                 border-radius:8px;padding:12px 16px;margin-bottom:14px;">
+                <strong style="font-size:13px;color:#92400e;">↩ Pedido devolvido anteriormente</strong>
+                <div id="devolucao-detalhe" style="font-size:12px;color:#78350f;margin-top:4px;"></div>
+            </div>
+
+            <!-- Info resumida: justificativa e datas -->
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 14px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Justificativa</div>
+                    <div id="view-just" style="font-size:13px;font-weight:600;color:#0f172a;">—</div>
+                </div>
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 14px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Utilização Prevista</div>
+                    <div id="view-data-util" style="font-size:13px;font-weight:600;color:#1e3a8a;">—</div>
+                </div>
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 14px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">Entrega Solicitada</div>
+                    <div id="view-data-entrega" style="font-size:13px;font-weight:600;color:#059669;">—</div>
+                </div>
+            </div>
+
+            <!-- Tabela de itens (somente leitura) -->
+            <div class="table-scroll" style="margin-bottom:16px;">
+                <table class="items-table" style="min-width:500px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">#</th>
+                            <th style="text-align:left;min-width:110px;">Natureza</th>
+                            <th style="text-align:left;min-width:180px;">Descrição do Material</th>
+                            <th>Und</th>
+                            <th>Qtd</th>
+                        </tr>
+                    </thead>
+                    <tbody id="view-tbody-itens"></tbody>
+                </table>
+            </div>
+
+            <!-- Área para devolução -->
+            <div id="area-devolucao" style="border:1px solid #fcd34d;border-radius:8px;
+                 padding:14px 16px;background:#fffbeb;margin-bottom:16px;display:none;">
+                <label style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px;display:block;">
+                    ↩ Motivo da devolução para a Obra:
+                </label>
+                <textarea id="input-motivo-devolucao" rows="2"
+                    placeholder="Informe o que a obra deve ajustar antes de iniciar a cotação…"
+                    style="resize:vertical;font-size:13px;"></textarea>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+                    <button class="btn-outline btn-sm" onclick="cancelarDevolucao()">Cancelar</button>
+                    <button class="btn-warning btn-sm" onclick="confirmarDevolucao()">↩ Confirmar Devolução</button>
+                </div>
+            </div>
+
+            <!-- Ações do comprador -->
+            <div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:14px;">
+                <button class="btn-outline" onclick="mostrarAreaDevolucao()">↩ Devolver para Obra</button>
+                <button class="btn-primary" onclick="iniciarCotacao()">Iniciar Cotação →</button>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             BLOCO 0b — EDIÇÃO DO PEDIDO (Obra, antes da cotação)
         ══════════════════════════════════ -->
         <div id="bloco-editar-pedido" style="display:none;margin-top:8px;">
             <h4 class="bloco verde" style="margin-bottom:14px;">✏️ Editar Requisição de Material</h4>
+
+            <!-- Aviso de devolução (preenchido dinamicamente) -->
+            <div id="edit-devolucao-aviso" style="display:none;background:#fef3c7;border:1px solid #f59e0b;
+                 border-radius:8px;padding:12px 16px;margin-bottom:14px;">
+                <div id="edit-devolucao-texto" style="font-size:13px;color:#92400e;"></div>
+                <div style="font-size:11px;color:#b45309;margin-top:4px;">Faça os ajustes abaixo e salve para reenviar ao Comprador.</div>
+            </div>
+
             <p style="font-size:12px;color:var(--muted);margin:0 0 14px;">
                 O pedido ainda não entrou em cotação. Você pode ajustar itens, quantidades e datas abaixo.
             </p>
@@ -1610,6 +1685,7 @@ function renderDash() {
                 <td>
                     <span class="badge ${cls}">${pedido.fase}</span>
                     ${atras ? '<span class="badge b-atrasado" style="margin-left:5px;">⚠ ATRASADO</span>' : ''}
+                    ${pedido.devolucao ? '<br><span class="badge b-desvio" style="margin-top:4px;font-size:10px;">↩ Devolvido p/ revisão</span>' : ''}
                 </td>
                 <td>
                     ${res ? `<span class="badge ${res.cls}">${res.label}</span>`
@@ -1720,7 +1796,7 @@ function abrirModal(id) {
     } else { chipsBloco.style.display = 'none'; }
 
     // Reset blocos
-    ['bloco-editar-pedido','bloco-cotacao','bloco-aprovacao','bloco-desvio','bloco-emissao','bloco-recebimento']
+    ['bloco-visualizar-pedido','bloco-editar-pedido','bloco-cotacao','bloco-aprovacao','bloco-desvio','bloco-emissao','bloco-recebimento']
         .forEach(b => document.getElementById(b).style.display = 'none');
     document.getElementById('btn-iniciar-cotacao').style.display = 'none';
     document.getElementById('export-ok').style.display = 'none';
@@ -1733,7 +1809,9 @@ function abrirModal(id) {
 
     // ── Exibe bloco conforme fase + perfil ───────────────────────────
     if (p.fase === 'Pedido Gerado' && ['comprador','master'].includes(pf)) {
-        document.getElementById('btn-iniciar-cotacao').style.display = 'inline-block';
+        // Comprador/Master: visualização + opção de iniciar cotação ou devolver
+        document.getElementById('bloco-visualizar-pedido').style.display = 'block';
+        montarVisualizacaoPedido(p);
     }
     // Obra pode editar o próprio pedido enquanto ainda não foi à cotação
     if (p.fase === 'Pedido Gerado' && pf === 'obra' && p.solicitanteId === usuarioAtivo?.id) {
@@ -2321,9 +2399,89 @@ function concluirEmissaoOC() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   §15a — VISUALIZAÇÃO DO PEDIDO PELO COMPRADOR (Pedido Gerado)
+══════════════════════════════════════════════════════════════════ */
+function montarVisualizacaoPedido(p) {
+    // Info header
+    document.getElementById('view-just').textContent        = p.just               || '—';
+    document.getElementById('view-data-util').textContent   = p.dataUtilizacao     ? fmtData(p.dataUtilizacao)     : '—';
+    document.getElementById('view-data-entrega').textContent= p.dataEntregaSolicit ? fmtData(p.dataEntregaSolicit) : '—';
+
+    // Aviso de devolução anterior
+    const avisoDev = document.getElementById('bloco-devolucao-aviso');
+    if (p.devolucao) {
+        avisoDev.style.display = 'block';
+        document.getElementById('devolucao-detalhe').innerHTML =
+            `<strong>Por:</strong> ${escHtml(p.devolucao.devolvePor)} &nbsp;·&nbsp;
+             <strong>Em:</strong> ${escHtml(p.devolucao.data)}<br>
+             <strong>Motivo:</strong> ${escHtml(p.devolucao.motivo)}`;
+    } else {
+        avisoDev.style.display = 'none';
+    }
+
+    // Oculta área de devolução (reset)
+    document.getElementById('area-devolucao').style.display = 'none';
+    document.getElementById('input-motivo-devolucao').value = '';
+
+    // Tabela de itens (leitura)
+    const tbody = document.getElementById('view-tbody-itens');
+    tbody.innerHTML = (p.itens || []).map((it, i) => `
+        <tr>
+            <td style="text-align:center;color:var(--muted);font-size:12px;">${i + 1}</td>
+            <td style="font-size:12px;color:var(--muted);">${escHtml(it.natureza)}</td>
+            <td style="text-align:left;font-size:13px;font-weight:600;">${escHtml(it.descricao)}</td>
+            <td style="text-align:center;font-size:12px;">${escHtml(it.und)}</td>
+            <td style="text-align:center;font-weight:700;font-size:13px;">${it.qtdOriginal}</td>
+        </tr>`).join('');
+}
+
+function mostrarAreaDevolucao() {
+    document.getElementById('area-devolucao').style.display = 'block';
+    document.getElementById('input-motivo-devolucao').focus();
+}
+
+function cancelarDevolucao() {
+    document.getElementById('area-devolucao').style.display = 'none';
+    document.getElementById('input-motivo-devolucao').value = '';
+}
+
+function confirmarDevolucao() {
+    const motivo = document.getElementById('input-motivo-devolucao').value.trim();
+    if (!motivo) { alert('Informe o motivo da devolução para a Obra.'); return; }
+
+    const p = db.find(x => x.id === ativoPedidoId);
+    if (!p) return;
+
+    p.devolucao = {
+        motivo,
+        devolvePor : usuarioAtivo?.nome   || '?',
+        devolvePorId: usuarioAtivo?.id    || '?',
+        data       : new Date().toLocaleString('pt-BR'),
+    };
+
+    logHistorico(p, `↩ Pedido devolvido para revisão pela Obra — Motivo: "${motivo}"`);
+    salvar();
+    fecharModal();
+    alert('↩ Pedido devolvido. A Obra será notificada para fazer os ajustes necessários.');
+}
+
+/* ══════════════════════════════════════════════════════════════════
    §15b — EDIÇÃO DO PEDIDO PELA OBRA (Pedido Gerado)
 ══════════════════════════════════════════════════════════════════ */
 function montarEdicaoPedido(p) {
+    // Aviso de devolução pelo comprador
+    const avisoEl = document.getElementById('edit-devolucao-aviso');
+    if (avisoEl) {
+        if (p.devolucao) {
+            avisoEl.style.display = 'block';
+            document.getElementById('edit-devolucao-texto').innerHTML =
+                `<strong>↩ Devolvido por ${escHtml(p.devolucao.devolvePor)}</strong> em ${escHtml(p.devolucao.data)}<br>
+                 <strong>Motivo:</strong> ${escHtml(p.devolucao.motivo)}`;
+        } else {
+            avisoEl.style.display = 'none';
+        }
+    }
+
     document.getElementById('edit-just').value         = p.just               || '';
     document.getElementById('edit-data-util').value    = p.dataUtilizacao     || '';
     document.getElementById('edit-data-entrega').value = p.dataEntregaSolicit || '';
@@ -2391,10 +2549,15 @@ function salvarEdicaoPedido() {
     p.dataUtilizacao     = document.getElementById('edit-data-util').value    || '';
     p.dataEntregaSolicit = document.getElementById('edit-data-entrega').value || '';
 
-    logHistorico(p, `Pedido editado pela Obra — ${novosItens.length} item(ns) após criação`);
+    // Se havia devolução pendente, remove (obra já ajustou)
+    const eraDevolucao = !!p.devolucao;
+    p.devolucao = null;
+
+    logHistorico(p, `Pedido editado pela Obra — ${novosItens.length} item(ns)${eraDevolucao ? ' (após devolução do Comprador)' : ''}`);
     salvar();
     fecharModal();
     alert('✓ Pedido atualizado com sucesso!');
+
 }
 
 function gravarRecebimento(idx) {
