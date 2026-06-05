@@ -337,7 +337,7 @@
     <div class="login-box">
         <h2>Bravo Civil
             <span style="display:block;font-size:13px;color:#64748b;font-weight:400;margin-top:4px;">
-                Monitoramento · Siqueira Construções
+                Monitoramento · Abitte Urbanismo
             </span>
         </h2>
         <div id="login-error" class="alert">Credenciais inválidas!</div>
@@ -360,7 +360,7 @@
 ════════════════════════════════════════════════════════════════ -->
 <div id="app-layout" style="display:none;width:100%;">
     <aside class="sidebar">
-        <div class="brand">Bravo Civil<span>SIQUEIRA CONSTRUÇÕES</span></div>
+        <div class="brand">Bravo Civil<span>ABITTE URBANISMO</span></div>
         <nav class="nav-menu">
             <a class="nav-item active" onclick="alternarTela('view-dashboard')">📊 Painel de Controle</a>
             <a class="nav-item" id="nav-solicitar"        onclick="alternarTela('view-pedido')"          style="display:none;">📋 Nova Solicitação RM</a>
@@ -785,6 +785,57 @@
         <!-- Chips de OC -->
         <div id="bloco-oc-chips" style="display:none;margin-bottom:18px;">
             <div class="oc-strip" id="oc-chips-lista"></div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             BLOCO 0 — EDIÇÃO DO PEDIDO (Obra, antes da cotação)
+        ══════════════════════════════════ -->
+        <div id="bloco-editar-pedido" style="display:none;margin-top:8px;">
+            <h4 class="bloco verde" style="margin-bottom:14px;">✏️ Editar Requisição de Material</h4>
+            <p style="font-size:12px;color:var(--muted);margin:0 0 14px;">
+                O pedido ainda não entrou em cotação. Você pode ajustar itens, quantidades e datas abaixo.
+            </p>
+
+            <!-- Justificativa e datas -->
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+                <div class="form-group" style="margin:0;">
+                    <label>Justificativa / Observação</label>
+                    <input type="text" id="edit-just" placeholder="Justificativa do pedido">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>Data de Utilização</label>
+                    <input type="date" id="edit-data-util">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>Entrega Prevista</label>
+                    <input type="date" id="edit-data-entrega">
+                </div>
+            </div>
+
+            <!-- Tabela de itens editável -->
+            <div class="table-scroll" style="margin-bottom:10px;">
+                <table class="items-table" style="min-width:600px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;min-width:110px;">Natureza</th>
+                            <th style="text-align:left;min-width:180px;">Descrição do Material</th>
+                            <th style="min-width:60px;">Und</th>
+                            <th style="min-width:80px;">Qtd</th>
+                            <th style="width:46px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="edit-tbody-itens"></tbody>
+                </table>
+            </div>
+
+            <button type="button" class="btn-outline btn-sm" onclick="adicionarItemEdicao()" style="margin-bottom:16px;">
+                + Adicionar Item
+            </button>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:14px;">
+                <button class="btn-outline" onclick="fecharModal()">Cancelar</button>
+                <button class="btn-success" onclick="salvarEdicaoPedido()">✓ Salvar Alterações</button>
+            </div>
         </div>
 
         <!-- ══════════════════════════════════
@@ -1566,7 +1617,11 @@ function renderDash() {
                 </td>
                 <td>${solHtml}</td>
                 <td style="text-align:right;">
-                    <button class="btn-primary btn-sm" onclick="abrirModal(${pedido.id})">Auditar RM</button>
+                    <button class="btn-primary btn-sm" onclick="abrirModal(${pedido.id})">
+                        ${perfil() === 'obra' && pedido.fase === 'Pedido Gerado' && pedido.solicitanteId === usuarioAtivo?.id
+                            ? '✏️ Ver / Editar'
+                            : 'Auditar RM'}
+                    </button>
                 </td>`;
             tbody.appendChild(rp);
 
@@ -1665,7 +1720,7 @@ function abrirModal(id) {
     } else { chipsBloco.style.display = 'none'; }
 
     // Reset blocos
-    ['bloco-cotacao','bloco-aprovacao','bloco-desvio','bloco-emissao','bloco-recebimento']
+    ['bloco-editar-pedido','bloco-cotacao','bloco-aprovacao','bloco-desvio','bloco-emissao','bloco-recebimento']
         .forEach(b => document.getElementById(b).style.display = 'none');
     document.getElementById('btn-iniciar-cotacao').style.display = 'none';
     document.getElementById('export-ok').style.display = 'none';
@@ -1679,6 +1734,11 @@ function abrirModal(id) {
     // ── Exibe bloco conforme fase + perfil ───────────────────────────
     if (p.fase === 'Pedido Gerado' && ['comprador','master'].includes(pf)) {
         document.getElementById('btn-iniciar-cotacao').style.display = 'inline-block';
+    }
+    // Obra pode editar o próprio pedido enquanto ainda não foi à cotação
+    if (p.fase === 'Pedido Gerado' && pf === 'obra' && p.solicitanteId === usuarioAtivo?.id) {
+        document.getElementById('bloco-editar-pedido').style.display = 'block';
+        montarEdicaoPedido(p);
     }
     if (p.fase === 'Em Cotação') {
         document.getElementById('bloco-cotacao').style.display = 'block';
@@ -2258,6 +2318,83 @@ function concluirEmissaoOC() {
     fecharModal();
     expandidos.add(p.id);
     alert('OCs emitidas com sucesso! Almoxarifado notificado para aguardar recebimento.');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   §15b — EDIÇÃO DO PEDIDO PELA OBRA (Pedido Gerado)
+══════════════════════════════════════════════════════════════════ */
+function montarEdicaoPedido(p) {
+    document.getElementById('edit-just').value         = p.just               || '';
+    document.getElementById('edit-data-util').value    = p.dataUtilizacao     || '';
+    document.getElementById('edit-data-entrega').value = p.dataEntregaSolicit || '';
+
+    const tbody = document.getElementById('edit-tbody-itens');
+    tbody.innerHTML = (p.itens || []).map((it, i) => `
+        <tr id="edit-row-${i}">
+            <td><input class="edit-nat"  value="${escHtml(it.natureza)}"  style="font-size:12px;" placeholder="Natureza"></td>
+            <td><input class="edit-desc" value="${escHtml(it.descricao)}" style="font-size:12px;" placeholder="Descrição"></td>
+            <td><input class="edit-und"  value="${escHtml(it.und)}"       style="font-size:12px;width:60px;text-align:center;" placeholder="Un"></td>
+            <td><input type="number" class="edit-qtd" value="${it.qtdOriginal}" min="1"
+                       style="font-size:12px;width:70px;text-align:center;"></td>
+            <td style="text-align:center;">
+                <button type="button" class="btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button>
+            </td>
+        </tr>`).join('');
+}
+
+function adicionarItemEdicao() {
+    const tbody = document.getElementById('edit-tbody-itens');
+    const idx   = tbody.rows.length;
+    const tr    = document.createElement('tr');
+    tr.id = `edit-row-new-${idx}`;
+    tr.innerHTML = `
+        <td><input class="edit-nat"  placeholder="Natureza"   style="font-size:12px;"></td>
+        <td><input class="edit-desc" placeholder="Descrição"  style="font-size:12px;"></td>
+        <td><input class="edit-und"  placeholder="Un"         style="font-size:12px;width:60px;text-align:center;"></td>
+        <td><input type="number" class="edit-qtd" value="1" min="1" style="font-size:12px;width:70px;text-align:center;"></td>
+        <td style="text-align:center;">
+            <button type="button" class="btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button>
+        </td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('.edit-nat').focus();
+}
+
+function salvarEdicaoPedido() {
+    const p = db.find(x => x.id === ativoPedidoId);
+    if (!p || p.fase !== 'Pedido Gerado') return;
+
+    const tbody     = document.getElementById('edit-tbody-itens');
+    const novosItens = [];
+
+    for (const tr of tbody.rows) {
+        const natureza = tr.querySelector('.edit-nat')?.value.trim()  || '';
+        const desc     = tr.querySelector('.edit-desc')?.value.trim() || '';
+        const und      = tr.querySelector('.edit-und')?.value.trim()  || 'un';
+        const qtd      = Math.max(1, parseFloat(tr.querySelector('.edit-qtd')?.value) || 1);
+        if (!desc) continue;
+        // Preserva dados de cotação existentes se o item for o mesmo
+        const original = (p.itens || []).find(it => it.descricao.trim() === desc.trim()) || {};
+        novosItens.push({
+            natureza, descricao: desc, und, qtdOriginal: qtd,
+            qtdRecebida   : original.qtdRecebida    || 0,
+            cotacoes      : original.cotacoes        || [],
+            vencedorFornId: original.vencedorFornId  || null,
+            dataEntrega   : original.dataEntrega      || '',
+            tarefa        : original.tarefa           || '',
+        });
+    }
+
+    if (!novosItens.length) { alert('O pedido deve ter ao menos um item.'); return; }
+
+    p.itens              = novosItens;
+    p.just               = document.getElementById('edit-just').value.trim();
+    p.dataUtilizacao     = document.getElementById('edit-data-util').value    || '';
+    p.dataEntregaSolicit = document.getElementById('edit-data-entrega').value || '';
+
+    logHistorico(p, `Pedido editado pela Obra — ${novosItens.length} item(ns) após criação`);
+    salvar();
+    fecharModal();
+    alert('✓ Pedido atualizado com sucesso!');
 }
 
 function gravarRecebimento(idx) {
