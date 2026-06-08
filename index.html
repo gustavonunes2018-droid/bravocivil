@@ -305,6 +305,51 @@
                      box-shadow:0 20px 40px rgba(0,0,0,.2); }
         .baixa-box h3 { margin:0 0 18px; font-size:17px; color:#0f172a; }
         .baixa-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+        /* ── Importação de Estoque ── */
+        .import-drop { border:2px dashed #93c5fd; border-radius:8px; padding:28px 20px;
+                       text-align:center; background:#f8fafc; cursor:pointer; transition:.2s; }
+        .import-drop:hover, .import-drop.drag-over { background:#eff6ff; border-color:#2563eb; }
+        .import-drop p { margin:8px 0 0; font-size:13px; color:var(--muted); }
+        .import-preview { margin-top:16px; max-height:320px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; }
+        .import-preview table { width:100%; border-collapse:collapse; font-size:12px; }
+        .import-preview th { background:#f8fafc; padding:7px 10px; font-weight:700; text-transform:uppercase;
+                             font-size:10px; color:var(--muted); border-bottom:1px solid var(--border); }
+        .import-preview td { padding:6px 10px; border-bottom:1px solid var(--border); }
+        .import-preview tr:last-child td { border-bottom:none; }
+        .import-ok  { color:#059669; font-size:10px; font-weight:700; }
+        .import-err { color:#dc2626; font-size:10px; font-weight:700; }
+
+        /* ── Modal de Relatório ── */
+        #relatorio-modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,.6);
+                           justify-content:center; align-items:flex-start; z-index:1200;
+                           overflow-y:auto; padding:40px 16px; }
+        .relatorio-box { background:#fff; border-radius:10px; padding:28px; width:100%;
+                         max-width:900px; box-shadow:0 20px 40px rgba(0,0,0,.18); }
+        #relatorio-print-container { display:none; }
+
+        /* ── Estilos de impressão ── */
+        @media print {
+            body > * { display:none !important; }
+            #relatorio-print-container { display:block !important; }
+            .print-page { padding:20px; font-family:'Inter','Segoe UI',sans-serif; color:#000; }
+            .print-header { border-bottom:2px solid #0f172a; padding-bottom:12px; margin-bottom:18px; }
+            .print-header h1 { font-size:20px; margin:0 0 4px; color:#0f172a; }
+            .print-header p  { margin:0; font-size:12px; color:#475569; }
+            .print-section { margin-bottom:24px; }
+            .print-section h2 { font-size:14px; font-weight:700; color:#1e3a8a; border-bottom:1px solid #93c5fd;
+                                padding-bottom:4px; margin:0 0 8px; }
+            .print-table { width:100%; border-collapse:collapse; font-size:11px; }
+            .print-table th { background:#f8fafc; padding:6px 8px; text-align:left; font-weight:700;
+                              border:1px solid #cbd5e1; font-size:10px; }
+            .print-table td { padding:5px 8px; border:1px solid #cbd5e1; }
+            .print-table tr:nth-child(even) td { background:#f8fafc; }
+            .print-total { text-align:right; font-size:12px; font-weight:700; margin-top:4px; color:#0f172a; }
+            .print-empty { font-size:12px; color:#94a3b8; padding:8px 0; }
+            .print-footer { margin-top:20px; border-top:1px solid #cbd5e1; padding-top:8px;
+                            font-size:10px; color:#94a3b8; text-align:center; }
+            @page { margin:1.5cm; }
+        }
     </style>
 </head>
 <body>
@@ -437,11 +482,15 @@
             <div id="view-almoxarifado" style="display:none;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                     <h2>🏪 Almoxarifado</h2>
-                    <div style="display:flex;gap:10px;align-items:center;">
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                         <label style="font-size:13px;font-weight:600;margin:0;">Empreendimento:</label>
-                        <select id="alm-filtro-obra" onchange="renderAlmoxarifado()" style="width:240px;">
+                        <select id="alm-filtro-obra" onchange="renderAlmoxarifado()" style="width:220px;">
                             <option value="TODOS">Todos os Empreendimentos</option>
                         </select>
+                        <button class="btn-outline btn-sm" onclick="abrirRelatorioModal()"
+                                style="white-space:nowrap;border-color:#1e3a8a;color:#1e3a8a;">
+                            📄 Relatório PDF
+                        </button>
                     </div>
                 </div>
 
@@ -467,9 +516,10 @@
 
                 <!-- Abas -->
                 <div class="alm-tabs">
-                    <div class="alm-tab active" id="alm-tab-receb"  onclick="ativarAbaAlm('receb')">📦 Recebimentos</div>
-                    <div class="alm-tab"         id="alm-tab-estoque" onclick="ativarAbaAlm('estoque')">📊 Estoque por Obra</div>
-                    <div class="alm-tab"         id="alm-tab-baixas" onclick="ativarAbaAlm('baixas')">📋 Histórico de Baixas</div>
+                    <div class="alm-tab active" id="alm-tab-receb"    onclick="ativarAbaAlm('receb')">📦 Recebimentos</div>
+                    <div class="alm-tab"         id="alm-tab-estoque"  onclick="ativarAbaAlm('estoque')">📊 Estoque por Obra</div>
+                    <div class="alm-tab"         id="alm-tab-baixas"   onclick="ativarAbaAlm('baixas')">📋 Histórico de Baixas</div>
+                    <div class="alm-tab"         id="alm-tab-importar" onclick="ativarAbaAlm('importar')" style="display:none;">📤 Importar Estoque</div>
                 </div>
 
                 <!-- Aba: Recebimentos -->
@@ -539,7 +589,145 @@
                     </div>
                 </div>
 
+                <!-- Aba: Importar Estoque (Master) -->
+                <div id="alm-pane-importar" style="display:none;">
+                    <div class="alm-section">
+                        <div class="alm-section-hdr">
+                            <h4>📤 Importar Estoque Existente</h4>
+                            <span style="font-size:12px;color:var(--muted);">Apenas Master — popula saldo inicial sem pedidos</span>
+                        </div>
+                        <div style="padding:20px;">
+                            <!-- Instrução de formato -->
+                            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:13px;">
+                                <strong style="color:#1e3a8a;">📋 Formato da Planilha (CSV)</strong>
+                                <p style="margin:8px 0 4px;color:#374151;">
+                                    Salve como <strong>.csv</strong> com ponto-e-vírgula (;) ou vírgula (,) como separador.
+                                    A <strong>primeira linha deve ser o cabeçalho</strong> (será ignorada).
+                                </p>
+                                <code style="display:block;background:#dbeafe;padding:8px 12px;border-radius:5px;font-size:12px;margin-top:6px;white-space:pre-wrap;">Empreendimento;Material;Unidade;Quantidade;CentroCusto
+Condomínio Villa Piemonte;Cimento CP-II;sc;120;EST-01
+Condomínio Villa Piemonte;Areia Média;m³;45;EST-01</code>
+                                <p style="margin:6px 0 0;color:#6b7280;font-size:12px;">* CentroCusto é opcional. Empreendimento deve bater com o nome cadastrado.</p>
+                            </div>
+
+                            <!-- Área de upload -->
+                            <div class="import-drop" id="import-drop-zone" onclick="document.getElementById('import-file-input').click()"
+                                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                                 ondragleave="this.classList.remove('drag-over')"
+                                 ondrop="handleImportDrop(event)">
+                                <div style="font-size:36px;">📂</div>
+                                <strong style="font-size:14px;color:#0f172a;">Clique para selecionar ou arraste o arquivo CSV aqui</strong>
+                                <p>Formatos aceitos: .csv, .txt</p>
+                            </div>
+                            <input type="file" id="import-file-input" accept=".csv,.txt" style="display:none;" onchange="lerArquivoImport(this)">
+
+                            <!-- Preview da importação -->
+                            <div id="import-preview-wrap" style="display:none;margin-top:16px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <strong id="import-preview-label" style="font-size:14px;color:#0f172a;"></strong>
+                                    <button class="btn-outline btn-sm" onclick="limparImport()">✕ Limpar</button>
+                                </div>
+                                <div class="import-preview">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th style="text-align:left;">Empreendimento</th>
+                                                <th style="text-align:left;">Material</th>
+                                                <th>Und</th>
+                                                <th>Qtd</th>
+                                                <th>Centro Custo</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="import-preview-tbody"></tbody>
+                                    </table>
+                                </div>
+                                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;" id="import-action-btns">
+                                    <button class="btn-outline" onclick="limparImport()">Cancelar</button>
+                                    <button class="btn-success" id="btn-confirmar-import" onclick="confirmarImportacao()">
+                                        ✓ Confirmar Importação
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Estoque inicial já importado -->
+                            <div style="margin-top:24px;" id="import-historico-wrap">
+                                <h4 class="bloco verde" style="margin-bottom:12px;">Entradas Manuais Importadas</h4>
+                                <table class="alm-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="min-width:110px;">Data</th>
+                                            <th style="text-align:left;min-width:200px;">Material</th>
+                                            <th>Und</th>
+                                            <th>Qtd</th>
+                                            <th>Centro Custo</th>
+                                            <th style="text-align:left;">Empreendimento</th>
+                                            <th>Importado por</th>
+                                            <th>Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="import-hist-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div><!-- /view-almoxarifado -->
+
+            <!-- ════ Modal de Relatório PDF ════ -->
+            <div id="relatorio-modal" onclick="if(event.target===this)fecharRelatorioModal()">
+                <div class="relatorio-box">
+                    <div class="modal-hdr">
+                        <h3>📄 Relatório de Estoque</h3>
+                        <button onclick="fecharRelatorioModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;">✕</button>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+                        <div class="form-group" style="margin:0;">
+                            <label>Empreendimento</label>
+                            <select id="rel-filtro-obra">
+                                <option value="TODOS">Todos os Empreendimentos</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Data Inicial</label>
+                            <input type="date" id="rel-data-ini">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Data Final</label>
+                            <input type="date" id="rel-data-fim">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:16px;margin-bottom:18px;">
+                        <label style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="rel-chk-entradas" checked style="width:16px;height:16px;"> Entradas (Recebimentos + Estoque Inicial)
+                        </label>
+                        <label style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="rel-chk-saidas" checked style="width:16px;height:16px;"> Saídas (Baixas)
+                        </label>
+                        <label style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="rel-chk-posicao" checked style="width:16px;height:16px;"> Posição de Estoque
+                        </label>
+                    </div>
+
+                    <button class="btn-primary" onclick="gerarRelatorio()" style="margin-bottom:16px;">🔍 Gerar Relatório</button>
+
+                    <!-- Área de preview do relatório -->
+                    <div id="rel-preview" style="display:none;border:1px solid var(--border);border-radius:8px;padding:18px;background:#f8fafc;max-height:400px;overflow-y:auto;">
+                    </div>
+
+                    <div id="rel-print-btns" style="display:none;margin-top:14px;justify-content:flex-end;gap:10px;">
+                        <button class="btn-outline" onclick="fecharRelatorioModal()">Fechar</button>
+                        <button class="btn-primary" onclick="imprimirRelatorio()">🖨️ Imprimir / Salvar PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conteúdo de impressão (oculto na tela, visível apenas ao imprimir) -->
+            <div id="relatorio-print-container"></div>
 
             <!-- ════ Modal de Baixa de Material ════ -->
             <div id="baixa-modal" onclick="if(event.target===this)fecharBaixaModal()">
@@ -1211,6 +1399,13 @@ const BaixaService = {
             .filter(b => b.obra === obra && b.material === descricao)
             .reduce((s, b) => s + toNum(b.quantidade), 0);
     },
+};
+
+let _estoqueInicial = [];
+const EstoqueInicialService = {
+    ler()         { return _estoqueInicial; },
+    salvar(lista) { _estoqueInicial = lista; ConfigService.salvar('estoque_inicial', lista).catch(logErr); },
+    porObra(obra) { return _estoqueInicial.filter(e => e.obra === obra); },
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2739,7 +2934,7 @@ function excluirUsuario(id) {
 /* ══════════════════════════════════════════════════════════════════
    §17b — ALMOXARIFADO
 ══════════════════════════════════════════════════════════════════ */
-let _almAbaAtiva = 'receb'; // 'receb' | 'estoque' | 'baixas'
+let _almAbaAtiva = 'receb'; // 'receb' | 'estoque' | 'baixas' | 'importar'
 
 function populateAlmFiltro() {
     const sel   = document.getElementById('alm-filtro-obra');
@@ -2757,16 +2952,21 @@ function populateAlmFiltro() {
 
 function ativarAbaAlm(aba) {
     _almAbaAtiva = aba;
-    ['receb','estoque','baixas'].forEach(a => {
-        document.getElementById(`alm-tab-${a}`).classList.toggle('active', a === aba);
-        document.getElementById(`alm-pane-${a}`).style.display = a === aba ? 'block' : 'none';
+    const abas = ['receb','estoque','baixas','importar'];
+    abas.forEach(a => {
+        const tab  = document.getElementById(`alm-tab-${a}`);
+        const pane = document.getElementById(`alm-pane-${a}`);
+        if (tab)  tab.classList.toggle('active', a === aba);
+        if (pane) pane.style.display = a === aba ? 'block' : 'none';
     });
-    renderAlmoxarifado();
+    if (aba === 'importar') _renderAlmImportar();
+    else renderAlmoxarifado();
 }
 
 /** Constrói mapa de estoque: { "obra|material" → { obra, descricao, und, recebido, baixado } } */
 function _buildEstoqueMapa(filtroObra) {
     const mapa = {};
+    // Recebimentos via pedidos (OCs)
     db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
         if (!FASES_OC.includes(p.fase) && p.fase !== 'Nota Processada') return;
         (p.itens || []).forEach(it => {
@@ -2775,6 +2975,12 @@ function _buildEstoqueMapa(filtroObra) {
             if (!mapa[chave]) mapa[chave] = { obra: p.obra, descricao: it.descricao, und: it.und, recebido: 0, baixado: 0 };
             mapa[chave].recebido += it.qtdRecebida || 0;
         });
+    });
+    // Estoque inicial importado (entrada manual)
+    EstoqueInicialService.ler().filter(e => filtroObra === 'TODOS' || e.obra === filtroObra).forEach(e => {
+        const chave = `${e.obra}|${e.material.trim().toLowerCase()}`;
+        if (!mapa[chave]) mapa[chave] = { obra: e.obra, descricao: e.material, und: e.und, recebido: 0, baixado: 0 };
+        mapa[chave].recebido += toNum(e.quantidade);
     });
     // Aplica baixas
     BaixaService.ler().filter(b => filtroObra === 'TODOS' || b.obra === filtroObra).forEach(b => {
@@ -3032,6 +3238,421 @@ function confirmarBaixa() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   §18a — IMPORTAÇÃO DE ESTOQUE INICIAL (Master)
+══════════════════════════════════════════════════════════════════ */
+let _importBuffer = []; // linhas parsed antes da confirmação
+
+function _renderAlmImportar() {
+    const filtroObra = document.getElementById('alm-filtro-obra')?.value || 'TODOS';
+    const tbody = document.getElementById('import-hist-tbody');
+    if (!tbody) return;
+
+    const lista = EstoqueInicialService.ler()
+        .filter(e => filtroObra === 'TODOS' || e.obra === filtroObra)
+        .slice().sort((a,b) => (b.ts||0) - (a.ts||0));
+
+    tbody.innerHTML = lista.length
+        ? lista.map(e => `<tr>
+            <td style="font-size:12px;white-space:nowrap;">${escHtml(e.data || '—')}</td>
+            <td class="tl" style="font-weight:600;">${escHtml(e.material)}</td>
+            <td style="text-align:center;font-size:12px;">${escHtml(e.und)}</td>
+            <td style="text-align:center;font-weight:700;color:#059669;">${fmt(e.quantidade)}</td>
+            <td style="text-align:center;font-size:12px;">${escHtml(e.centroCusto||'—')}</td>
+            <td style="font-size:12px;">${escHtml(e.obra)}</td>
+            <td style="font-size:12px;">${escHtml(e.importadoPor||'—')}</td>
+            <td style="text-align:center;">
+                <button class="btn-danger btn-sm"
+                        onclick="excluirEstoqueInicial(${JSON.stringify(e.id)})">✕</button>
+            </td>
+          </tr>`).join('')
+        : `<tr><td colspan="8" class="alm-empty">Nenhuma entrada manual importada ainda.</td></tr>`;
+}
+
+function excluirEstoqueInicial(id) {
+    if (!confirm('Remover esta entrada do estoque inicial?')) return;
+    const lista = EstoqueInicialService.ler().filter(e => e.id !== id);
+    EstoqueInicialService.salvar(lista);
+    _renderAlmImportar();
+}
+
+function handleImportDrop(event) {
+    event.preventDefault();
+    document.getElementById('import-drop-zone').classList.remove('drag-over');
+    const file = event.dataTransfer?.files?.[0];
+    if (file) processarArquivoImport(file);
+}
+
+function lerArquivoImport(input) {
+    const file = input.files?.[0];
+    if (file) processarArquivoImport(file);
+    input.value = ''; // permite re-selecionar o mesmo arquivo
+}
+
+function processarArquivoImport(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const text = e.target.result;
+        parsearCSVImport(text);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function parsearCSVImport(text) {
+    const emps = EmpService.ler().map(e => e.nome.trim().toLowerCase());
+    const linhas = text.split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
+
+    if (!linhas.length) { alert('Arquivo vazio ou inválido.'); return; }
+
+    // Detecta separador (ponto-e-vírgula ou vírgula)
+    const sep = linhas[0].includes(';') ? ';' : ',';
+
+    // Pula a primeira linha (cabeçalho)
+    const dados = linhas.slice(1);
+
+    const empsNomesOriginais = EmpService.ler().map(e => e.nome);
+
+    _importBuffer = dados.map((linha, idx) => {
+        const cols = linha.split(sep).map(c => c.trim().replace(/^["']|["']$/g, ''));
+        const [obraRaw='', materialRaw='', undRaw='', qtdRaw='', ccRaw=''] = cols;
+
+        const obraMatch = empsNomesOriginais.find(n =>
+            n.trim().toLowerCase() === obraRaw.trim().toLowerCase());
+
+        const qtd = parseFloat(qtdRaw.replace(',', '.')) || 0;
+
+        const erros = [];
+        if (!obraMatch) erros.push('Empreendimento não encontrado');
+        if (!materialRaw) erros.push('Material vazio');
+        if (!undRaw) erros.push('Unidade vazia');
+        if (!qtd || qtd <= 0) erros.push('Quantidade inválida');
+
+        return {
+            _linha    : idx + 2, // linha real no CSV (cabeçalho é linha 1)
+            obra      : obraMatch || obraRaw,
+            material  : materialRaw,
+            und       : undRaw,
+            quantidade: qtd,
+            centroCusto: ccRaw || '',
+            _ok       : erros.length === 0,
+            _erros    : erros,
+        };
+    }).filter(r => r.obra || r.material); // remove linhas totalmente vazias
+
+    if (!_importBuffer.length) { alert('Nenhuma linha de dados encontrada após o cabeçalho.'); return; }
+
+    const okCount  = _importBuffer.filter(r => r._ok).length;
+    const errCount = _importBuffer.filter(r => !r._ok).length;
+
+    document.getElementById('import-preview-label').textContent =
+        `${_importBuffer.length} linhas lidas — ✓ ${okCount} válidas${errCount ? ` · ✕ ${errCount} com erro` : ''}`;
+
+    const tbody = document.getElementById('import-preview-tbody');
+    tbody.innerHTML = _importBuffer.map(r => `<tr style="${r._ok ? '' : 'background:#fff1f2;'}">
+        <td style="color:#94a3b8;">${r._linha}</td>
+        <td>${escHtml(r.obra)}</td>
+        <td>${escHtml(r.material)}</td>
+        <td style="text-align:center;">${escHtml(r.und)}</td>
+        <td style="text-align:center;font-weight:700;">${r.quantidade > 0 ? fmt(r.quantidade) : r.quantidade}</td>
+        <td style="text-align:center;">${escHtml(r.centroCusto||'—')}</td>
+        <td>${r._ok
+            ? '<span class="import-ok">✓ OK</span>'
+            : `<span class="import-err">✕ ${r._erros.join('; ')}</span>`}</td>
+    </tr>`).join('');
+
+    document.getElementById('btn-confirmar-import').disabled = okCount === 0;
+    document.getElementById('btn-confirmar-import').textContent =
+        okCount > 0 ? `✓ Importar ${okCount} item(ns)` : '✕ Nenhum item válido';
+
+    document.getElementById('import-preview-wrap').style.display = 'block';
+}
+
+function limparImport() {
+    _importBuffer = [];
+    document.getElementById('import-preview-wrap').style.display = 'none';
+    document.getElementById('import-preview-tbody').innerHTML = '';
+}
+
+function confirmarImportacao() {
+    const validos = _importBuffer.filter(r => r._ok);
+    if (!validos.length) { alert('Nenhum item válido para importar.'); return; }
+
+    const agora    = Date.now();
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const lista    = EstoqueInicialService.ler();
+
+    validos.forEach(r => {
+        lista.push({
+            id          : uid(),
+            ts          : agora,
+            data        : dataHoje,
+            obra        : r.obra,
+            material    : r.material,
+            und         : r.und,
+            quantidade  : r.quantidade,
+            centroCusto : r.centroCusto,
+            importadoPor: usuarioAtivo?.nome || '—',
+            importadoPorId: usuarioAtivo?.id || '—',
+        });
+    });
+
+    EstoqueInicialService.salvar(lista);
+    limparImport();
+    _renderAlmImportar();
+    alert(`✓ ${validos.length} item(ns) importado(s) para o estoque inicial!`);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   §18b — RELATÓRIO PDF DE ESTOQUE
+══════════════════════════════════════════════════════════════════ */
+let _relatorioHTML = ''; // cache do HTML do último relatório gerado
+
+function abrirRelatorioModal() {
+    // Popula select de obras
+    const sel = document.getElementById('rel-filtro-obra');
+    const empAtual = document.getElementById('alm-filtro-obra')?.value || 'TODOS';
+    sel.innerHTML = '<option value="TODOS">Todos os Empreendimentos</option>' +
+        EmpService.ler().filter(e => e.ativo).map(e =>
+            `<option value="${escHtml(e.nome)}"${e.nome===empAtual?' selected':''}>${escHtml(e.nome)}</option>`
+        ).join('');
+
+    // Datas padrão: último mês
+    const hoje = new Date();
+    const ini  = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    document.getElementById('rel-data-ini').value = ini.toISOString().slice(0,10);
+    document.getElementById('rel-data-fim').value = hoje.toISOString().slice(0,10);
+
+    document.getElementById('rel-preview').style.display = 'none';
+    document.getElementById('rel-print-btns').style.display = 'none';
+    document.getElementById('relatorio-modal').style.display = 'flex';
+}
+
+function fecharRelatorioModal() {
+    document.getElementById('relatorio-modal').style.display = 'none';
+}
+
+function _tsParaData(ts) {
+    // converte timestamp ms para Date obj
+    return ts ? new Date(ts) : null;
+}
+
+function _dataIsoParaTs(isoStr) {
+    // ex.: "2024-01-31" → ts do início do dia
+    if (!isoStr) return null;
+    const [y,m,d] = isoStr.split('-').map(Number);
+    return new Date(y, m-1, d).getTime();
+}
+
+function _dataIsoParaTsFim(isoStr) {
+    // fim do dia
+    if (!isoStr) return null;
+    const [y,m,d] = isoStr.split('-').map(Number);
+    return new Date(y, m-1, d, 23, 59, 59, 999).getTime();
+}
+
+function gerarRelatorio() {
+    const filtroObra  = document.getElementById('rel-filtro-obra').value;
+    const dataIniStr  = document.getElementById('rel-data-ini').value;
+    const dataFimStr  = document.getElementById('rel-data-fim').value;
+    const chkEntradas = document.getElementById('rel-chk-entradas').checked;
+    const chkSaidas   = document.getElementById('rel-chk-saidas').checked;
+    const chkPosicao  = document.getElementById('rel-chk-posicao').checked;
+
+    const tsIni = _dataIsoParaTs(dataIniStr);
+    const tsFim = _dataIsoParaTsFim(dataFimStr);
+
+    const empLabel = filtroObra === 'TODOS'
+        ? 'Todos os Empreendimentos'
+        : filtroObra;
+
+    const periodoLabel = dataIniStr && dataFimStr
+        ? `${fmtData(dataIniStr)} a ${fmtData(dataFimStr)}`
+        : 'Período completo';
+
+    let html = `<div class="print-page">
+    <div class="print-header">
+        <h1>🏗️ Bravo Civil — Relatório de Estoque</h1>
+        <p>Empreendimento: <strong>${escHtml(empLabel)}</strong> &nbsp;|&nbsp;
+           Período: <strong>${periodoLabel}</strong> &nbsp;|&nbsp;
+           Gerado em: <strong>${new Date().toLocaleString('pt-BR')}</strong></p>
+    </div>`;
+
+    // ── SEÇÃO ENTRADAS ──────────────────────────────────────────
+    if (chkEntradas) {
+        // Entradas do estoque inicial
+        const iniLista = EstoqueInicialService.ler()
+            .filter(e => (filtroObra === 'TODOS' || e.obra === filtroObra)
+                      && (!tsIni || e.ts >= tsIni)
+                      && (!tsFim || e.ts <= tsFim))
+            .sort((a,b) => (a.ts||0) - (b.ts||0));
+
+        // Entradas via recebimento de pedidos (scan historico)
+        const recebLista = [];
+        db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
+            (p.historico || []).forEach(h => {
+                if (!h.acao.startsWith('[Almox] Recebimento:')) return;
+                if (tsIni && h.ts < tsIni) return;
+                if (tsFim && h.ts > tsFim) return;
+                // Extrai dados do historico: "[Almox] Recebimento: QTD UND de "MATERIAL" — Acum.: X/Y"
+                const m = h.acao.match(/Recebimento: ([\d.,]+) ([^ ]+) de "(.+?)" — Acum\.: ([\d.,]+)\/([\d.,]+)/);
+                if (!m) return;
+                recebLista.push({
+                    data    : new Date(h.ts).toLocaleDateString('pt-BR'),
+                    ts      : h.ts,
+                    obra    : p.obra,
+                    material: m[3],
+                    und     : m[2],
+                    qtd     : parseFloat(m[1].replace(',','.')) || 0,
+                    rm      : labelRM(p),
+                    usuario : h.usuario,
+                });
+            });
+        });
+        recebLista.sort((a,b) => a.ts - b.ts);
+
+        html += `<div class="print-section">
+        <h2>📦 Entradas — Estoque Inicial Importado (${iniLista.length} item(ns))</h2>`;
+
+        if (iniLista.length) {
+            html += `<table class="print-table">
+            <thead><tr>
+                <th>Data</th><th>Empreendimento</th><th>Material</th>
+                <th>Und</th><th style="text-align:right;">Qtd</th><th>Centro Custo</th><th>Importado por</th>
+            </tr></thead><tbody>` +
+            iniLista.map(e => `<tr>
+                <td>${escHtml(e.data||'—')}</td>
+                <td>${escHtml(e.obra)}</td>
+                <td><strong>${escHtml(e.material)}</strong></td>
+                <td>${escHtml(e.und)}</td>
+                <td style="text-align:right;font-weight:700;">${fmt(e.quantidade)}</td>
+                <td>${escHtml(e.centroCusto||'—')}</td>
+                <td>${escHtml(e.importadoPor||'—')}</td>
+            </tr>`).join('') +
+            `</tbody></table>
+            <p class="print-total">Total: ${fmt(iniLista.reduce((s,e)=>s+e.quantidade,0))} unidades (soma de todas und)</p>`;
+        } else {
+            html += `<p class="print-empty">Nenhuma entrada de estoque inicial no período.</p>`;
+        }
+        html += `</div>`;
+
+        html += `<div class="print-section">
+        <h2>📦 Entradas — Recebimentos de Pedidos (${recebLista.length} evento(s))</h2>`;
+
+        if (recebLista.length) {
+            html += `<table class="print-table">
+            <thead><tr>
+                <th>Data</th><th>Empreendimento</th><th>Material</th>
+                <th>Und</th><th style="text-align:right;">Qtd</th><th>RM</th><th>Operador</th>
+            </tr></thead><tbody>` +
+            recebLista.map(r => `<tr>
+                <td>${escHtml(r.data)}</td>
+                <td>${escHtml(r.obra)}</td>
+                <td><strong>${escHtml(r.material)}</strong></td>
+                <td>${escHtml(r.und)}</td>
+                <td style="text-align:right;font-weight:700;">${fmt(r.qtd)}</td>
+                <td>${escHtml(r.rm)}</td>
+                <td>${escHtml(r.usuario||'—')}</td>
+            </tr>`).join('') +
+            `</tbody></table>
+            <p class="print-total">Total: ${fmt(recebLista.reduce((s,r)=>s+r.qtd,0))} unidades (soma de todas und)</p>`;
+        } else {
+            html += `<p class="print-empty">Nenhum recebimento de pedido no período.</p>`;
+        }
+        html += `</div>`;
+    }
+
+    // ── SEÇÃO SAÍDAS (BAIXAS) ───────────────────────────────────
+    if (chkSaidas) {
+        const baixasLista = BaixaService.ler()
+            .filter(b => (filtroObra === 'TODOS' || b.obra === filtroObra)
+                      && (!tsIni || b.ts >= tsIni)
+                      && (!tsFim || b.ts <= tsFim))
+            .sort((a,b) => (a.ts||0) - (b.ts||0));
+
+        html += `<div class="print-section">
+        <h2>📤 Saídas — Baixas de Material (${baixasLista.length} baixa(s))</h2>`;
+
+        if (baixasLista.length) {
+            html += `<table class="print-table">
+            <thead><tr>
+                <th>Data</th><th>Empreendimento</th><th>Material</th>
+                <th>Und</th><th style="text-align:right;">Qtd</th>
+                <th>Motivo</th><th>Centro Custo</th><th>Operador</th>
+            </tr></thead><tbody>` +
+            baixasLista.map(b => `<tr>
+                <td style="white-space:nowrap;">${escHtml(b.data||'—')}</td>
+                <td>${escHtml(b.obra)}</td>
+                <td><strong>${escHtml(b.material)}</strong></td>
+                <td>${escHtml(b.und)}</td>
+                <td style="text-align:right;font-weight:700;">${fmt(b.quantidade)}</td>
+                <td>${escHtml(b.motivo||'—')}</td>
+                <td>${escHtml(b.centroCusto||'—')}</td>
+                <td>${escHtml(b.operadorNome||'—')}</td>
+            </tr>`).join('') +
+            `</tbody></table>
+            <p class="print-total">Total: ${fmt(baixasLista.reduce((s,b)=>s+toNum(b.quantidade),0))} unidades (soma de todas und)</p>`;
+        } else {
+            html += `<p class="print-empty">Nenhuma baixa registrada no período.</p>`;
+        }
+        html += `</div>`;
+    }
+
+    // ── SEÇÃO POSIÇÃO DE ESTOQUE ────────────────────────────────
+    if (chkPosicao) {
+        const mapa = _buildEstoqueMapa(filtroObra);
+        const itens = Object.values(mapa).sort((a,b) =>
+            a.obra.localeCompare(b.obra) || a.descricao.localeCompare(b.descricao));
+
+        html += `<div class="print-section">
+        <h2>📊 Posição de Estoque Atual (referência: ${new Date().toLocaleDateString('pt-BR')})</h2>`;
+
+        if (itens.length) {
+            html += `<table class="print-table">
+            <thead><tr>
+                <th>Empreendimento</th><th>Material</th><th>Und</th>
+                <th style="text-align:right;">Entradas</th>
+                <th style="text-align:right;">Saídas</th>
+                <th style="text-align:right;">Saldo</th>
+            </tr></thead><tbody>` +
+            itens.map(r => {
+                const saldo = r.recebido - r.baixado;
+                const saldoCor = saldo > 0 ? 'color:#059669;' : saldo < 0 ? 'color:#dc2626;' : 'color:#94a3b8;';
+                return `<tr>
+                    <td>${escHtml(r.obra)}</td>
+                    <td><strong>${escHtml(r.descricao)}</strong></td>
+                    <td>${escHtml(r.und)}</td>
+                    <td style="text-align:right;">${fmt(r.recebido)}</td>
+                    <td style="text-align:right;">${fmt(r.baixado)}</td>
+                    <td style="text-align:right;font-weight:800;${saldoCor}">${fmt(saldo)}</td>
+                </tr>`;
+            }).join('') +
+            `</tbody></table>`;
+        } else {
+            html += `<p class="print-empty">Nenhum item em estoque.</p>`;
+        }
+        html += `</div>`;
+    }
+
+    html += `<div class="print-footer">
+        Bravo Civil — Suprimentos · Abitte Urbanismo &nbsp;|&nbsp;
+        Relatório gerado em ${new Date().toLocaleString('pt-BR')} por ${escHtml(usuarioAtivo?.nome||'—')}
+    </div></div>`;
+
+    _relatorioHTML = html;
+
+    // Mostra preview
+    const prevDiv = document.getElementById('rel-preview');
+    prevDiv.innerHTML = html;
+    prevDiv.style.display = 'block';
+    document.getElementById('rel-print-btns').style.display = 'flex';
+}
+
+function imprimirRelatorio() {
+    // Injeta o conteúdo no container de impressão
+    document.getElementById('relatorio-print-container').innerHTML = _relatorioHTML;
+    window.print();
+}
+
+/* ══════════════════════════════════════════════════════════════════
    §18 — NAVEGAÇÃO
 ══════════════════════════════════════════════════════════════════ */
 function alternarTela(id) {
@@ -3046,6 +3667,9 @@ function alternarTela(id) {
         renderDash();
     } else if (id === 'view-almoxarifado') {
         document.getElementById('nav-almoxarifado').classList.add('active');
+        // Aba "Importar" visível apenas para master
+        document.getElementById('alm-tab-importar').style.display =
+            perfil() === 'master' ? 'block' : 'none';
         populateAlmFiltro();
         renderAlmoxarifado();
     } else if (id === 'view-pedido') {
@@ -3561,13 +4185,14 @@ async function migrarLocalStorage() {
 
 (async function init() {
     try {
-        // 1. Carrega configs (usuários, empreendimentos, tarefas, baixas) em paralelo
+        // 1. Carrega configs (usuários, empreendimentos, tarefas, baixas, estoque_inicial) em paralelo
         setLoadingMsg('Carregando configurações...', 20);
-        [_usuarios, _empreendimentos, _tarefas, _baixas] = await Promise.all([
+        [_usuarios, _empreendimentos, _tarefas, _baixas, _estoqueInicial] = await Promise.all([
             ConfigService.ler('usuarios'),
             ConfigService.ler('empreendimentos'),
             ConfigService.ler('tarefas'),
             ConfigService.ler('baixas'),
+            ConfigService.ler('estoque_inicial'),
         ]);
 
         // 2. Popula defaults se vazio
