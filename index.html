@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo Civil — Suprimentos</title>
+    <title>Bravo Civil — Suprimentos v1.1.01</title>
+    <!-- v1.1.01 | Relatório executivo · OC Excel · Retornar cotação · Restrição obra · Cargo nos logs -->
     <!-- Firebase SDK (compat — funciona sem bundler) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
@@ -332,24 +333,76 @@
         @media print {
             body > * { display:none !important; }
             #relatorio-print-container { display:block !important; }
-            .print-page { padding:20px; font-family:'Inter','Segoe UI',sans-serif; color:#000; }
-            .print-header { border-bottom:2px solid #0f172a; padding-bottom:12px; margin-bottom:18px; }
-            .print-header h1 { font-size:20px; margin:0 0 4px; color:#0f172a; }
-            .print-header p  { margin:0; font-size:12px; color:#475569; }
-            .print-section { margin-bottom:24px; }
-            .print-section h2 { font-size:14px; font-weight:700; color:#1e3a8a; border-bottom:1px solid #93c5fd;
-                                padding-bottom:4px; margin:0 0 8px; }
-            .print-table { width:100%; border-collapse:collapse; font-size:11px; }
-            .print-table th { background:#f8fafc; padding:6px 8px; text-align:left; font-weight:700;
-                              border:1px solid #cbd5e1; font-size:10px; }
-            .print-table td { padding:5px 8px; border:1px solid #cbd5e1; }
+            .print-page { padding:0; font-family:'Segoe UI','Inter',Arial,sans-serif; color:#111; font-size:11pt; }
+
+            /* Cabeçalho executivo */
+            .print-header { display:flex; justify-content:space-between; align-items:flex-end;
+                            border-bottom:3px solid #1e3a8a; padding-bottom:10px; margin-bottom:20px; }
+            .print-header-left h1 { font-size:18pt; font-weight:900; margin:0; color:#0f172a; }
+            .print-header-left p  { margin:2px 0 0; font-size:9pt; color:#475569; }
+            .print-header-right   { text-align:right; font-size:8.5pt; color:#475569; line-height:1.5; }
+            .print-header-right strong { color:#0f172a; font-size:10pt; display:block; }
+
+            /* KPI row */
+            .print-kpi-row { display:flex; gap:12px; margin-bottom:18px; }
+            .print-kpi { flex:1; border:1px solid #cbd5e1; border-radius:4px; padding:8px 12px;
+                         text-align:center; }
+            .print-kpi .kpi-l { font-size:7.5pt; text-transform:uppercase; font-weight:700;
+                                color:#475569; letter-spacing:.4px; display:block; margin-bottom:2px; }
+            .print-kpi .kpi-v { font-size:15pt; font-weight:900; display:block; }
+            .print-kpi.green .kpi-v { color:#065f46; }
+            .print-kpi.red   .kpi-v { color:#991b1b; }
+            .print-kpi.blue  .kpi-v { color:#1e3a8a; }
+            .print-kpi.gray  .kpi-v { color:#374151; }
+
+            /* Seções */
+            .print-section { margin-bottom:18px; page-break-inside:avoid; }
+            .print-section-hdr { background:#1e3a8a; color:#fff; padding:5px 10px; font-size:10pt;
+                                 font-weight:700; margin:0 0 0; border-radius:3px 3px 0 0; }
+            .print-section-hdr.green { background:#065f46; }
+            .print-section-hdr.red   { background:#991b1b; }
+            .print-section-hdr.gray  { background:#374151; }
+
+            /* Separador de obra */
+            .print-obra-sep { background:#f1f5f9; border-left:3px solid #1e3a8a; padding:4px 10px;
+                              font-size:9pt; font-weight:700; color:#1e3a8a; margin-bottom:0; }
+
+            /* Tabelas */
+            .print-table { width:100%; border-collapse:collapse; font-size:9pt; }
+            .print-table th { background:#e2e8f0; padding:5px 8px; text-align:left; font-weight:700;
+                              border:1px solid #cbd5e1; font-size:8pt; color:#374151; }
+            .print-table td { padding:4px 8px; border:1px solid #e2e8f0; vertical-align:middle; }
             .print-table tr:nth-child(even) td { background:#f8fafc; }
-            .print-total { text-align:right; font-size:12px; font-weight:700; margin-top:4px; color:#0f172a; }
-            .print-empty { font-size:12px; color:#94a3b8; padding:8px 0; }
-            .print-footer { margin-top:20px; border-top:1px solid #cbd5e1; padding-top:8px;
-                            font-size:10px; color:#94a3b8; text-align:center; }
-            @page { margin:1.5cm; }
+            .print-table .td-num  { text-align:right; font-variant-numeric:tabular-nums; }
+            .print-table .td-ok   { color:#065f46; font-weight:700; }
+            .print-table .td-bad  { color:#991b1b; font-weight:700; }
+            .print-table .td-zero { color:#94a3b8; }
+            .print-subtotal { text-align:right; font-size:8.5pt; font-weight:700;
+                              padding:4px 8px; border-top:1px solid #94a3b8; color:#374151; }
+
+            /* Notas e alertas */
+            .print-alert { background:#fef3c7; border:1px solid #f59e0b; padding:5px 10px;
+                           font-size:9pt; color:#92400e; margin:6px 0; border-radius:3px; }
+            .print-empty { font-size:9pt; color:#94a3b8; padding:6px 10px; font-style:italic; }
+
+            /* Assinatura */
+            .print-sign { margin-top:28px; display:flex; gap:40px; }
+            .print-sign-box { flex:1; border-top:1px solid #374151; padding-top:6px;
+                              font-size:8pt; color:#475569; text-align:center; }
+
+            /* Rodapé */
+            .print-footer { margin-top:14px; border-top:1px solid #cbd5e1; padding-top:6px;
+                            font-size:7.5pt; color:#94a3b8; display:flex; justify-content:space-between; }
+            @page { margin:1.8cm; }
         }
+
+        /* ── Estilos do preview do relatório (na tela) ── */
+        .rel-preview-kpi { display:flex; gap:10px; margin-bottom:16px; }
+        .rel-preview-kpi-box { flex:1; border:1px solid var(--border); border-radius:6px;
+                                padding:10px 14px; text-align:center; background:var(--card); }
+        .rel-preview-kpi-box .lbl { font-size:10px; text-transform:uppercase; font-weight:700;
+                                    color:var(--muted); display:block; margin-bottom:3px; }
+        .rel-preview-kpi-box .val { font-size:20px; font-weight:800; display:block; }
     </style>
 </head>
 <body>
@@ -405,7 +458,7 @@
 ════════════════════════════════════════════════════════════════ -->
 <div id="app-layout" style="display:none;width:100%;">
     <aside class="sidebar">
-        <div class="brand">Bravo Civil<span>ABITTE URBANISMO</span></div>
+        <div class="brand">Bravo Civil<span>ABITTE URBANISMO &nbsp;·&nbsp; v1.1.01</span></div>
         <nav class="nav-menu">
             <a class="nav-item active" onclick="alternarTela('view-dashboard')">📊 Painel de Controle</a>
             <a class="nav-item" id="nav-solicitar"        onclick="alternarTela('view-pedido')"          style="display:none;">📋 Nova Solicitação RM</a>
@@ -1119,7 +1172,22 @@ Condomínio Villa Piemonte;Areia Média;m³;45;EST-01</code>
                     <tfoot id="tfoot-cotacao"></tfoot>
                 </table>
             </div>
-            <div id="acoes-cotacao" style="text-align:right;margin-top:14px;">
+            <div id="acoes-cotacao" style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:14px;gap:12px;">
+                <!-- Retornar para Obra -->
+                <div>
+                    <button class="btn-warning btn-sm" onclick="toggleRetornarObraCotacao()"
+                            style="margin-bottom:6px;">↩ Retornar para a Obra editar</button>
+                    <div id="retornar-cotacao-form" style="display:none;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;max-width:380px;">
+                        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:6px;">Motivo da devolução para a Obra:</label>
+                        <textarea id="retornar-cotacao-motivo" rows="2"
+                                  style="font-size:13px;padding:7px 10px;border:1px solid #fcd34d;border-radius:5px;resize:vertical;width:100%;"
+                                  placeholder="Ex: Itens incorretos, quantidade errada..."></textarea>
+                        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+                            <button class="btn-outline btn-sm" onclick="toggleRetornarObraCotacao()">Cancelar</button>
+                            <button class="btn-warning btn-sm" onclick="confirmarRetornarParaObra()">↩ Confirmar Retorno</button>
+                        </div>
+                    </div>
+                </div>
                 <button class="btn-primary" onclick="enviarParaAprovacao()">Encaminhar para Aprovação →</button>
             </div>
         </div>
@@ -1637,12 +1705,15 @@ function perfilBadge(p) {
 ══════════════════════════════════════════════════════════════════ */
 function logHistorico(pedido, acao) {
     if (!pedido.historico) pedido.historico = [];
+    const perfKey = usuarioAtivo?.perfil || '?';
     pedido.historico.push({
         acao,
-        data        : new Date().toLocaleString('pt-BR'),
-        usuarioId   : usuarioAtivo?.id    || '?',
-        usuarioNome : usuarioAtivo?.nome  || '?',
-        usuarioPerfil: usuarioAtivo?.perfil || '?',
+        ts           : Date.now(),
+        data         : new Date().toLocaleString('pt-BR'),
+        usuarioId    : usuarioAtivo?.id   || '?',
+        usuarioNome  : usuarioAtivo?.nome || '?',
+        usuarioPerfil: perfKey,
+        usuarioCargo : PERFIL_LABELS[perfKey] || perfKey,
     });
 }
 
@@ -1986,6 +2057,8 @@ function abrirModal(id) {
                 <strong>${labelOC(p, i)}</strong>
                 <span>${escHtml(oc.nome)} · R$ ${fmt(valor)} · Entrega: ${dtMax}</span>
                 ${entregue ? '<br><span class="badge b-recebido" style="margin-top:4px;font-size:10px;">✓ Entregue</span>' : ''}
+                <br><button class="btn-outline btn-sm" style="margin-top:5px;font-size:10px;padding:2px 7px;border-color:#1e3a8a;color:#1e3a8a;"
+                            onclick="exportarOCExcel(${p.id},${i})">📊 Excel</button>
             </div>`;
         }).join('');
     } else { chipsBloco.style.display = 'none'; }
@@ -2013,7 +2086,7 @@ function abrirModal(id) {
         document.getElementById('bloco-editar-pedido').style.display = 'block';
         montarEdicaoPedido(p);
     }
-    if (p.fase === 'Em Cotação') {
+    if (p.fase === 'Em Cotação' && pf !== 'obra') {
         document.getElementById('bloco-cotacao').style.display = 'block';
         const soLeitura = !['comprador','master'].includes(pf);
         montarCotacao(p, soLeitura);
@@ -2061,18 +2134,22 @@ function montarHistorico(p) {
     if (!hist.length) { bloco.style.display = 'none'; return; }
 
     bloco.style.display = 'block';
-    lista.innerHTML = hist.map(h => `
+    lista.innerHTML = hist.map(h => {
+        const cargoLabel = h.usuarioCargo
+            || (h.usuarioPerfil ? (PERFIL_LABELS[h.usuarioPerfil] || h.usuarioPerfil) : '');
+        return `
         <div class="hist-entry">
             <div class="hist-dot"></div>
             <div class="hist-body">
                 <div class="hist-acao">${escHtml(h.acao)}</div>
                 <div class="hist-meta">
                     <span>🕐 ${escHtml(h.data)}</span>
-                    <span>👤 ${escHtml(h.usuarioNome || h.usuarioId || '?')}</span>
+                    <span>👤 ${cargoLabel ? `<strong>${escHtml(cargoLabel)}</strong> · ` : ''}${escHtml(h.usuarioNome || h.usuarioId || '?')}</span>
                     ${h.usuarioPerfil ? perfilBadge(h.usuarioPerfil) : ''}
                 </div>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2081,7 +2158,12 @@ function montarHistorico(p) {
 function montarCotacao(p, bloqueado) {
     renderFornBar(p, bloqueado);
     montarTabelaCotacao(p, bloqueado);
-    document.getElementById('acoes-cotacao').style.display = bloqueado ? 'none' : 'block';
+    document.getElementById('acoes-cotacao').style.display = bloqueado ? 'none' : 'flex';
+    // Reset do form de retorno para obra
+    const retForm = document.getElementById('retornar-cotacao-form');
+    if (retForm) { retForm.style.display = 'none'; }
+    const retInput = document.getElementById('retornar-cotacao-motivo');
+    if (retInput) retInput.value = '';
 }
 
 function renderFornBar(p, bloqueado) {
@@ -3238,6 +3320,157 @@ function confirmarBaixa() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   §17c — RETORNAR PEDIDO EM COTAÇÃO → PEDIDO GERADO (Comprador/Master)
+══════════════════════════════════════════════════════════════════ */
+function toggleRetornarObraCotacao() {
+    const form = document.getElementById('retornar-cotacao-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') {
+        document.getElementById('retornar-cotacao-motivo').focus();
+    }
+}
+
+function confirmarRetornarParaObra() {
+    const motivo = document.getElementById('retornar-cotacao-motivo').value.trim();
+    if (!motivo) { alert('Informe o motivo da devolução para a Obra.'); return; }
+
+    const p = db.find(x => x.id === ativoPedidoId);
+    if (!p) return;
+
+    p.fase = 'Pedido Gerado';
+    p.devolucao = {
+        motivo,
+        devolvePor   : usuarioAtivo?.nome  || '?',
+        devolvePorId : usuarioAtivo?.id    || '?',
+        data         : new Date().toLocaleString('pt-BR'),
+    };
+
+    logHistorico(p, `↩ Pedido retornado para revisão da Obra pelo Comprador — Motivo: "${motivo}"`);
+    salvar();
+    fecharModal();
+    alert('↩ Pedido retornado para "Pedido Gerado". A Obra poderá editar as informações.');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   §17d — EXPORTAR OC PARA EXCEL
+══════════════════════════════════════════════════════════════════ */
+function exportarOCExcel(pedidoId, ocIdx) {
+    const p  = db.find(x => x.id === pedidoId);
+    if (!p) return;
+    const ocs = gerarOCs(p);
+    const oc  = ocs[ocIdx];
+    if (!oc) return;
+
+    const ocLabel    = labelOC(p, ocIdx);
+    const rmLabel    = labelRM(p);
+    const ord        = (p.cotacoesOrdem || {})[oc.fornId] || {};
+    const metPag     = ord.metodoPagamento || '—';
+    const frete      = toNum(ord.frete);
+    const impostos   = toNum(ord.impostos);
+    const subtotal   = oc.itens.reduce((s, it) => s + precoItemForn(it, oc.fornId) * it.qtdOriginal, 0);
+    const total      = subtotal + frete + impostos;
+    const dataEmissao= new Date().toLocaleDateString('pt-BR');
+
+    // Constrói HTML tabular (Excel abre .xls com HTML corretamente)
+    const cabRows = [
+        ['Ordem de Compra', ocLabel],
+        ['Requisição (RM)', rmLabel],
+        ['Empreendimento',  p.obra + (p.centroCusto ? ' › ' + p.centroCusto : '')],
+        ['Fornecedor',      oc.nome],
+        ['Data de Emissão', dataEmissao],
+        ['Método Pagamento', metPag],
+    ].map(([k, v]) =>
+        `<tr><td style="font-weight:700;background:#f1f5f9;padding:4px 8px;border:1px solid #ccc;">${k}</td>
+             <td style="padding:4px 8px;border:1px solid #ccc;">${v}</td></tr>`
+    ).join('');
+
+    const itemRows = oc.itens.map((it, i) => {
+        const pu   = precoItemForn(it, oc.fornId);
+        const sub  = pu * it.qtdOriginal;
+        return `<tr>
+            <td style="text-align:center;border:1px solid #ccc;">${i + 1}</td>
+            <td style="border:1px solid #ccc;">${it.descricao}</td>
+            <td style="border:1px solid #ccc;">${it.natureza || '—'}</td>
+            <td style="text-align:center;border:1px solid #ccc;">${it.und}</td>
+            <td style="text-align:right;border:1px solid #ccc;">${it.qtdOriginal}</td>
+            <td style="text-align:right;border:1px solid #ccc;">${fmt(pu)}</td>
+            <td style="text-align:right;font-weight:700;border:1px solid #ccc;">${fmt(sub)}</td>
+            <td style="border:1px solid #ccc;">${it.dataEntrega ? fmtData(it.dataEntrega) : '—'}</td>
+        </tr>`;
+    }).join('');
+
+    const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head><meta charset="UTF-8">
+<style>
+  body { font-family:Calibri,Arial,sans-serif; font-size:11pt; }
+  h1   { font-size:14pt; color:#1e3a8a; margin:0 0 4px; }
+  h2   { font-size:11pt; color:#374151; margin:14px 0 6px; }
+  table { border-collapse:collapse; width:100%; }
+  .header-table td { font-size:10pt; }
+  .items-table th  { background:#1e3a8a; color:#fff; padding:5px 8px; border:1px solid #1e3a8a; font-size:10pt; }
+  .items-table td  { font-size:10pt; padding:4px 8px; }
+  .total-row td    { font-weight:700; background:#f1f5f9; border:1px solid #ccc; padding:4px 8px; }
+  .sign-table td   { padding:8px; width:33%; border-top:1px solid #374151; text-align:center; font-size:9pt; color:#475569; }
+  .footer          { margin-top:12px; font-size:8pt; color:#94a3b8; }
+</style>
+</head>
+<body>
+<h1>ORDEM DE COMPRA &nbsp; ${ocLabel}</h1>
+<p style="font-size:9pt;color:#475569;margin:0 0 10px;">Bravo Civil — Suprimentos · Abitte Urbanismo</p>
+
+<h2>Dados da OC</h2>
+<table class="header-table" style="width:50%;">${cabRows}</table>
+
+<h2>Itens da Ordem</h2>
+<table class="items-table">
+<thead><tr>
+  <th style="width:4%;">#</th>
+  <th style="width:28%;text-align:left;">Material / Especificação</th>
+  <th style="width:14%;text-align:left;">Grupo/Natureza</th>
+  <th style="width:6%;">Und</th>
+  <th style="width:7%;">Qtd</th>
+  <th style="width:12%;">Preço Unit (R$)</th>
+  <th style="width:12%;">Subtotal (R$)</th>
+  <th style="width:17%;">Prev. Entrega</th>
+</tr></thead>
+<tbody>${itemRows}</tbody>
+</table>
+
+<br>
+<table style="width:40%;margin-left:auto;">
+  <tr class="total-row"><td>Subtotal Itens (R$)</td><td style="text-align:right;">${fmt(subtotal)}</td></tr>
+  <tr class="total-row"><td>Frete (R$)</td><td style="text-align:right;">${fmt(frete)}</td></tr>
+  <tr class="total-row"><td>Impostos (R$)</td><td style="text-align:right;">${fmt(impostos)}</td></tr>
+  <tr style="background:#1e3a8a;color:#fff;">
+    <td style="font-weight:900;padding:6px 8px;font-size:12pt;">TOTAL GERAL (R$)</td>
+    <td style="text-align:right;font-weight:900;padding:6px 8px;font-size:12pt;">${fmt(total)}</td>
+  </tr>
+</table>
+
+<br><br>
+<table class="sign-table" style="width:80%;margin-top:20px;">
+  <tr>
+    <td>Comprador Responsável<br><br><br>_________________________<br>${escHtml(usuarioAtivo?.nome || '—')}</td>
+    <td>Gestor Aprovador<br><br><br>_________________________<br>&nbsp;</td>
+    <td>Fornecedor<br><br><br>_________________________<br>${escHtml(oc.nome)}</td>
+  </tr>
+</table>
+
+<p class="footer">Documento gerado em ${dataEmissao} · ${ocLabel} · RM: ${rmLabel} · Bravo Civil v1.1.01</p>
+</body></html>`;
+
+    const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `OC_${ocLabel.replace(/\s/g,'_')}_${oc.nome.replace(/[^a-zA-Z0-9]/g,'_').slice(0,20)}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/* ══════════════════════════════════════════════════════════════════
    §18a — IMPORTAÇÃO DE ESTOQUE INICIAL (Master)
 ══════════════════════════════════════════════════════════════════ */
 let _importBuffer = []; // linhas parsed antes da confirmação
@@ -3460,188 +3693,260 @@ function gerarRelatorio() {
     const tsIni = _dataIsoParaTs(dataIniStr);
     const tsFim = _dataIsoParaTsFim(dataFimStr);
 
-    const empLabel = filtroObra === 'TODOS'
-        ? 'Todos os Empreendimentos'
-        : filtroObra;
-
+    const empLabel     = filtroObra === 'TODOS' ? 'Todos os Empreendimentos' : filtroObra;
     const periodoLabel = dataIniStr && dataFimStr
-        ? `${fmtData(dataIniStr)} a ${fmtData(dataFimStr)}`
-        : 'Período completo';
+        ? `${fmtData(dataIniStr)} a ${fmtData(dataFimStr)}` : 'Período completo';
+    const geradoEm     = new Date().toLocaleString('pt-BR');
 
-    let html = `<div class="print-page">
-    <div class="print-header">
-        <h1>🏗️ Bravo Civil — Relatório de Estoque</h1>
-        <p>Empreendimento: <strong>${escHtml(empLabel)}</strong> &nbsp;|&nbsp;
-           Período: <strong>${periodoLabel}</strong> &nbsp;|&nbsp;
-           Gerado em: <strong>${new Date().toLocaleString('pt-BR')}</strong></p>
-    </div>`;
+    // ── Coleta de dados ─────────────────────────────────────────
+    // Entradas: estoque inicial
+    const iniLista = EstoqueInicialService.ler()
+        .filter(e => (filtroObra === 'TODOS' || e.obra === filtroObra)
+                  && (!tsIni || e.ts >= tsIni) && (!tsFim || e.ts <= tsFim))
+        .sort((a,b) => (a.ts||0) - (b.ts||0));
 
-    // ── SEÇÃO ENTRADAS ──────────────────────────────────────────
-    if (chkEntradas) {
-        // Entradas do estoque inicial
-        const iniLista = EstoqueInicialService.ler()
-            .filter(e => (filtroObra === 'TODOS' || e.obra === filtroObra)
-                      && (!tsIni || e.ts >= tsIni)
-                      && (!tsFim || e.ts <= tsFim))
-            .sort((a,b) => (a.ts||0) - (b.ts||0));
-
-        // Entradas via recebimento de pedidos (scan historico)
-        const recebLista = [];
-        db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
-            (p.historico || []).forEach(h => {
-                if (!h.acao.startsWith('[Almox] Recebimento:')) return;
-                if (tsIni && h.ts < tsIni) return;
-                if (tsFim && h.ts > tsFim) return;
-                // Extrai dados do historico: "[Almox] Recebimento: QTD UND de "MATERIAL" — Acum.: X/Y"
-                const m = h.acao.match(/Recebimento: ([\d.,]+) ([^ ]+) de "(.+?)" — Acum\.: ([\d.,]+)\/([\d.,]+)/);
-                if (!m) return;
-                recebLista.push({
-                    data    : new Date(h.ts).toLocaleDateString('pt-BR'),
-                    ts      : h.ts,
-                    obra    : p.obra,
-                    material: m[3],
-                    und     : m[2],
-                    qtd     : parseFloat(m[1].replace(',','.')) || 0,
-                    rm      : labelRM(p),
-                    usuario : h.usuario,
-                });
+    // Entradas: recebimentos via pedidos (scan historico)
+    const recebLista = [];
+    db.filter(p => filtroObra === 'TODOS' || p.obra === filtroObra).forEach(p => {
+        (p.historico || []).forEach(h => {
+            if (!h.acao.startsWith('[Almox] Recebimento:')) return;
+            if (tsIni && (h.ts||0) < tsIni) return;
+            if (tsFim && (h.ts||0) > tsFim) return;
+            const m = h.acao.match(/Recebimento: ([\d.,]+) ([^ ]+) de "(.+?)" — Acum\.: ([\d.,]+)\/([\d.,]+)/);
+            if (!m) return;
+            recebLista.push({
+                data: h.ts ? new Date(h.ts).toLocaleDateString('pt-BR') : (h.data || '—'),
+                ts: h.ts || 0, obra: p.obra,
+                material: m[3], und: m[2],
+                qtd: parseFloat(m[1].replace(',','.')) || 0,
+                rm: labelRM(p), usuario: h.usuarioNome || h.usuario || '—',
+                cargo: h.usuarioCargo || (h.usuarioPerfil ? (PERFIL_LABELS[h.usuarioPerfil]||h.usuarioPerfil) : ''),
             });
         });
-        recebLista.sort((a,b) => a.ts - b.ts);
+    });
+    recebLista.sort((a,b) => a.ts - b.ts);
 
-        html += `<div class="print-section">
-        <h2>📦 Entradas — Estoque Inicial Importado (${iniLista.length} item(ns))</h2>`;
+    // Saídas: baixas
+    const baixasLista = BaixaService.ler()
+        .filter(b => (filtroObra === 'TODOS' || b.obra === filtroObra)
+                  && (!tsIni || (b.ts||0) >= tsIni) && (!tsFim || (b.ts||0) <= tsFim))
+        .sort((a,b) => (a.ts||0) - (b.ts||0));
 
-        if (iniLista.length) {
-            html += `<table class="print-table">
-            <thead><tr>
-                <th>Data</th><th>Empreendimento</th><th>Material</th>
-                <th>Und</th><th style="text-align:right;">Qtd</th><th>Centro Custo</th><th>Importado por</th>
-            </tr></thead><tbody>` +
-            iniLista.map(e => `<tr>
-                <td>${escHtml(e.data||'—')}</td>
-                <td>${escHtml(e.obra)}</td>
-                <td><strong>${escHtml(e.material)}</strong></td>
-                <td>${escHtml(e.und)}</td>
-                <td style="text-align:right;font-weight:700;">${fmt(e.quantidade)}</td>
-                <td>${escHtml(e.centroCusto||'—')}</td>
-                <td>${escHtml(e.importadoPor||'—')}</td>
-            </tr>`).join('') +
-            `</tbody></table>
-            <p class="print-total">Total: ${fmt(iniLista.reduce((s,e)=>s+e.quantidade,0))} unidades (soma de todas und)</p>`;
-        } else {
-            html += `<p class="print-empty">Nenhuma entrada de estoque inicial no período.</p>`;
-        }
-        html += `</div>`;
+    // Posição: mapa de estoque
+    const mapa  = _buildEstoqueMapa(filtroObra);
+    const itens = Object.values(mapa).sort((a,b) =>
+        a.obra.localeCompare(b.obra) || a.descricao.localeCompare(b.descricao));
 
-        html += `<div class="print-section">
-        <h2>📦 Entradas — Recebimentos de Pedidos (${recebLista.length} evento(s))</h2>`;
+    // ── KPIs para o relatório ───────────────────────────────────
+    const totalEntradas  = iniLista.length + recebLista.length;
+    const totalSaidas    = baixasLista.length;
+    const itensSaldoPos  = itens.filter(r => r.recebido - r.baixado > 0).length;
+    const itensSaldoNeg  = itens.filter(r => r.recebido - r.baixado < 0).length;
 
-        if (recebLista.length) {
-            html += `<table class="print-table">
-            <thead><tr>
-                <th>Data</th><th>Empreendimento</th><th>Material</th>
-                <th>Und</th><th style="text-align:right;">Qtd</th><th>RM</th><th>Operador</th>
-            </tr></thead><tbody>` +
-            recebLista.map(r => `<tr>
-                <td>${escHtml(r.data)}</td>
-                <td>${escHtml(r.obra)}</td>
-                <td><strong>${escHtml(r.material)}</strong></td>
-                <td>${escHtml(r.und)}</td>
-                <td style="text-align:right;font-weight:700;">${fmt(r.qtd)}</td>
-                <td>${escHtml(r.rm)}</td>
-                <td>${escHtml(r.usuario||'—')}</td>
-            </tr>`).join('') +
-            `</tbody></table>
-            <p class="print-total">Total: ${fmt(recebLista.reduce((s,r)=>s+r.qtd,0))} unidades (soma de todas und)</p>`;
-        } else {
-            html += `<p class="print-empty">Nenhum recebimento de pedido no período.</p>`;
-        }
-        html += `</div>`;
-    }
+    // ── HTML do relatório executivo ─────────────────────────────
+    let html = `<div class="print-page">
 
-    // ── SEÇÃO SAÍDAS (BAIXAS) ───────────────────────────────────
-    if (chkSaidas) {
-        const baixasLista = BaixaService.ler()
-            .filter(b => (filtroObra === 'TODOS' || b.obra === filtroObra)
-                      && (!tsIni || b.ts >= tsIni)
-                      && (!tsFim || b.ts <= tsFim))
-            .sort((a,b) => (a.ts||0) - (b.ts||0));
+<div class="print-header">
+  <div class="print-header-left">
+    <h1>RELATORIO DE ESTOQUE</h1>
+    <p>Bravo Civil — Suprimentos &nbsp;·&nbsp; Abitte Urbanismo &nbsp;·&nbsp; v1.1.01</p>
+  </div>
+  <div class="print-header-right">
+    <strong>${escHtml(empLabel)}</strong>
+    Periodo: ${periodoLabel}<br>
+    Gerado em: ${geradoEm}<br>
+    Por: ${escHtml(usuarioAtivo?.nome||'—')} (${escHtml(PERFIL_LABELS[usuarioAtivo?.perfil||'']||'—')})
+  </div>
+</div>
 
-        html += `<div class="print-section">
-        <h2>📤 Saídas — Baixas de Material (${baixasLista.length} baixa(s))</h2>`;
+<div class="print-kpi-row">
+  <div class="print-kpi blue">
+    <span class="kpi-l">Eventos de Entrada</span>
+    <span class="kpi-v">${totalEntradas}</span>
+  </div>
+  <div class="print-kpi red">
+    <span class="kpi-l">Baixas no Periodo</span>
+    <span class="kpi-v">${totalSaidas}</span>
+  </div>
+  <div class="print-kpi green">
+    <span class="kpi-l">Itens com Saldo Positivo</span>
+    <span class="kpi-v">${itensSaldoPos}</span>
+  </div>
+  <div class="print-kpi gray">
+    <span class="kpi-l">Itens com Saldo Zero/Neg</span>
+    <span class="kpi-v">${itens.length - itensSaldoPos}</span>
+  </div>
+</div>
+${itensSaldoNeg > 0 ? `<div class="print-alert">ATENCAO: ${itensSaldoNeg} item(ns) com saldo negativo — verificar consistencia dos dados.</div>` : ''}`;
 
-        if (baixasLista.length) {
-            html += `<table class="print-table">
-            <thead><tr>
-                <th>Data</th><th>Empreendimento</th><th>Material</th>
-                <th>Und</th><th style="text-align:right;">Qtd</th>
-                <th>Motivo</th><th>Centro Custo</th><th>Operador</th>
-            </tr></thead><tbody>` +
-            baixasLista.map(b => `<tr>
-                <td style="white-space:nowrap;">${escHtml(b.data||'—')}</td>
-                <td>${escHtml(b.obra)}</td>
-                <td><strong>${escHtml(b.material)}</strong></td>
-                <td>${escHtml(b.und)}</td>
-                <td style="text-align:right;font-weight:700;">${fmt(b.quantidade)}</td>
-                <td>${escHtml(b.motivo||'—')}</td>
-                <td>${escHtml(b.centroCusto||'—')}</td>
-                <td>${escHtml(b.operadorNome||'—')}</td>
-            </tr>`).join('') +
-            `</tbody></table>
-            <p class="print-total">Total: ${fmt(baixasLista.reduce((s,b)=>s+toNum(b.quantidade),0))} unidades (soma de todas und)</p>`;
-        } else {
-            html += `<p class="print-empty">Nenhuma baixa registrada no período.</p>`;
-        }
-        html += `</div>`;
-    }
-
-    // ── SEÇÃO POSIÇÃO DE ESTOQUE ────────────────────────────────
+    // ── POSIÇÃO DE ESTOQUE (primeiro no relatório executivo) ────
     if (chkPosicao) {
-        const mapa = _buildEstoqueMapa(filtroObra);
-        const itens = Object.values(mapa).sort((a,b) =>
-            a.obra.localeCompare(b.obra) || a.descricao.localeCompare(b.descricao));
-
         html += `<div class="print-section">
-        <h2>📊 Posição de Estoque Atual (referência: ${new Date().toLocaleDateString('pt-BR')})</h2>`;
+<div class="print-section-hdr">POSICAO DE ESTOQUE &nbsp;(referencia: ${new Date().toLocaleDateString('pt-BR')})</div>`;
 
         if (itens.length) {
-            html += `<table class="print-table">
-            <thead><tr>
-                <th>Empreendimento</th><th>Material</th><th>Und</th>
-                <th style="text-align:right;">Entradas</th>
-                <th style="text-align:right;">Saídas</th>
-                <th style="text-align:right;">Saldo</th>
+            // Agrupa por obra
+            const porObra = {};
+            itens.forEach(r => {
+                if (!porObra[r.obra]) porObra[r.obra] = [];
+                porObra[r.obra].push(r);
+            });
+
+            html += `<table class="print-table"><thead><tr>
+              <th style="width:28%;">Material</th>
+              <th style="width:6%;">Und</th>
+              <th class="td-num" style="width:15%;">Entradas</th>
+              <th class="td-num" style="width:15%;">Saidas (Baixas)</th>
+              <th class="td-num" style="width:15%;">Saldo Atual</th>
+              <th style="width:21%;">Status</th>
+            </tr></thead><tbody>`;
+
+            let totalEntStock = 0, totalSaiStock = 0;
+            Object.entries(porObra).sort(([a],[b])=>a.localeCompare(b)).forEach(([obra, rows]) => {
+                const empObj = EmpService.ler().find(e => e.nome === obra);
+                html += `<tr><td colspan="6" class="print-obra-sep">${escHtml(obra)}${empObj ? ' [' + empObj.codigo + ']' : ''}</td></tr>`;
+                rows.forEach(r => {
+                    const saldo = r.recebido - r.baixado;
+                    totalEntStock += r.recebido;
+                    totalSaiStock += r.baixado;
+                    const cls    = saldo > 0 ? 'td-ok' : saldo < 0 ? 'td-bad' : 'td-zero';
+                    const status = saldo > 0 ? 'Disponivel' : saldo < 0 ? 'NEGATIVO' : 'Zerado';
+                    html += `<tr>
+                      <td><strong>${escHtml(r.descricao)}</strong></td>
+                      <td style="text-align:center;">${escHtml(r.und)}</td>
+                      <td class="td-num">${fmt(r.recebido)}</td>
+                      <td class="td-num">${fmt(r.baixado)}</td>
+                      <td class="td-num ${cls}">${fmt(saldo)}</td>
+                      <td class="${cls}" style="font-size:8pt;">${status}</td>
+                    </tr>`;
+                });
+            });
+
+            html += `</tbody><tfoot><tr>
+              <td colspan="2" style="text-align:right;font-weight:700;padding:5px 8px;border:1px solid #ccc;background:#f1f5f9;">TOTAIS GERAIS</td>
+              <td class="td-num" style="font-weight:700;border:1px solid #ccc;background:#f1f5f9;">${fmt(totalEntStock)}</td>
+              <td class="td-num" style="font-weight:700;border:1px solid #ccc;background:#f1f5f9;">${fmt(totalSaiStock)}</td>
+              <td class="td-num" style="font-weight:900;border:1px solid #ccc;background:#e2e8f0;">${fmt(totalEntStock - totalSaiStock)}</td>
+              <td style="border:1px solid #ccc;background:#f1f5f9;"></td>
+            </tr></tfoot></table>`;
+        } else {
+            html += `<p class="print-empty">Nenhum item em estoque para o filtro selecionado.</p>`;
+        }
+        html += `</div>`;
+    }
+
+    // ── ENTRADAS ────────────────────────────────────────────────
+    if (chkEntradas) {
+        // Estoque inicial
+        html += `<div class="print-section">
+<div class="print-section-hdr green">ENTRADAS — Estoque Inicial Importado (${iniLista.length} registro(s))</div>`;
+        if (iniLista.length) {
+            html += `<table class="print-table"><thead><tr>
+              <th>Data</th><th>Empreendimento</th><th>Material</th>
+              <th>Und</th><th class="td-num">Qtd</th><th>C. Custo</th><th>Importado por</th>
             </tr></thead><tbody>` +
-            itens.map(r => {
-                const saldo = r.recebido - r.baixado;
-                const saldoCor = saldo > 0 ? 'color:#059669;' : saldo < 0 ? 'color:#dc2626;' : 'color:#94a3b8;';
+            iniLista.map(e => `<tr>
+              <td style="white-space:nowrap;">${escHtml(e.data||'—')}</td>
+              <td>${escHtml(e.obra)}</td>
+              <td><strong>${escHtml(e.material)}</strong></td>
+              <td style="text-align:center;">${escHtml(e.und)}</td>
+              <td class="td-num td-ok">${fmt(e.quantidade)}</td>
+              <td>${escHtml(e.centroCusto||'—')}</td>
+              <td>${escHtml(e.importadoPor||'—')}</td>
+            </tr>`).join('') +
+            `</tbody></table>`;
+        } else {
+            html += `<p class="print-empty">Nenhuma entrada de estoque inicial no periodo.</p>`;
+        }
+        html += `</div>`;
+
+        // Recebimentos de pedidos
+        html += `<div class="print-section">
+<div class="print-section-hdr green">ENTRADAS — Recebimentos de Pedidos (${recebLista.length} evento(s))</div>`;
+        if (recebLista.length) {
+            html += `<table class="print-table"><thead><tr>
+              <th>Data</th><th>Empreendimento</th><th>Material</th>
+              <th>Und</th><th class="td-num">Qtd</th><th>RM/OC</th><th>Cargo</th><th>Operador</th>
+            </tr></thead><tbody>` +
+            recebLista.map(r => `<tr>
+              <td style="white-space:nowrap;">${escHtml(r.data)}</td>
+              <td>${escHtml(r.obra)}</td>
+              <td><strong>${escHtml(r.material)}</strong></td>
+              <td style="text-align:center;">${escHtml(r.und)}</td>
+              <td class="td-num td-ok">${fmt(r.qtd)}</td>
+              <td>${escHtml(r.rm)}</td>
+              <td style="font-size:8pt;">${escHtml(r.cargo)}</td>
+              <td>${escHtml(r.usuario)}</td>
+            </tr>`).join('') +
+            `</tbody></table>`;
+        } else {
+            html += `<p class="print-empty">Nenhum recebimento de pedido no periodo.</p>`;
+        }
+        html += `</div>`;
+    }
+
+    // ── SAÍDAS ──────────────────────────────────────────────────
+    if (chkSaidas) {
+        html += `<div class="print-section">
+<div class="print-section-hdr red">SAIDAS — Baixas de Material (${baixasLista.length} baixa(s))</div>`;
+        if (baixasLista.length) {
+            html += `<table class="print-table"><thead><tr>
+              <th>Data</th><th>Empreendimento</th><th>Material</th>
+              <th>Und</th><th class="td-num">Qtd</th><th>Motivo</th><th>C. Custo</th><th>Cargo</th><th>Operador</th>
+            </tr></thead><tbody>` +
+            baixasLista.map(b => {
+                const cargo = b.operadorPerfil ? (PERFIL_LABELS[b.operadorPerfil]||b.operadorPerfil) : '—';
                 return `<tr>
-                    <td>${escHtml(r.obra)}</td>
-                    <td><strong>${escHtml(r.descricao)}</strong></td>
-                    <td>${escHtml(r.und)}</td>
-                    <td style="text-align:right;">${fmt(r.recebido)}</td>
-                    <td style="text-align:right;">${fmt(r.baixado)}</td>
-                    <td style="text-align:right;font-weight:800;${saldoCor}">${fmt(saldo)}</td>
+                  <td style="white-space:nowrap;">${escHtml(b.data||'—')}</td>
+                  <td>${escHtml(b.obra)}</td>
+                  <td><strong>${escHtml(b.material)}</strong></td>
+                  <td style="text-align:center;">${escHtml(b.und)}</td>
+                  <td class="td-num td-bad">${fmt(b.quantidade)}</td>
+                  <td style="font-size:8.5pt;">${escHtml(b.motivo||'—')}</td>
+                  <td>${escHtml(b.centroCusto||'—')}</td>
+                  <td style="font-size:8pt;">${escHtml(cargo)}</td>
+                  <td>${escHtml(b.operadorNome||'—')}</td>
                 </tr>`;
             }).join('') +
             `</tbody></table>`;
         } else {
-            html += `<p class="print-empty">Nenhum item em estoque.</p>`;
+            html += `<p class="print-empty">Nenhuma baixa registrada no periodo.</p>`;
         }
         html += `</div>`;
     }
 
-    html += `<div class="print-footer">
-        Bravo Civil — Suprimentos · Abitte Urbanismo &nbsp;|&nbsp;
-        Relatório gerado em ${new Date().toLocaleString('pt-BR')} por ${escHtml(usuarioAtivo?.nome||'—')}
-    </div></div>`;
+    // ── ASSINATURA + RODAPÉ ─────────────────────────────────────
+    html += `
+<div class="print-sign">
+  <div class="print-sign-box">Responsavel pelo Almoxarifado<br><br>${escHtml(usuarioAtivo?.nome||'—')}</div>
+  <div class="print-sign-box">Gestor Aprovador<br><br>&nbsp;</div>
+  <div class="print-sign-box">Diretoria<br><br>&nbsp;</div>
+</div>
+<div class="print-footer">
+  <span>Bravo Civil — Suprimentos &nbsp;·&nbsp; Abitte Urbanismo &nbsp;·&nbsp; v1.1.01</span>
+  <span>Gerado em ${geradoEm} por ${escHtml(usuarioAtivo?.nome||'—')} (${escHtml(PERFIL_LABELS[usuarioAtivo?.perfil||'']||'—')})</span>
+</div>
+</div>`;
 
     _relatorioHTML = html;
 
-    // Mostra preview
+    // ── Preview na tela ─────────────────────────────────────────
     const prevDiv = document.getElementById('rel-preview');
-    prevDiv.innerHTML = html;
+    prevDiv.innerHTML = `
+      <div class="rel-preview-kpi">
+        <div class="rel-preview-kpi-box"><span class="lbl">Entradas</span><span class="val" style="color:#2563eb;">${totalEntradas}</span></div>
+        <div class="rel-preview-kpi-box"><span class="lbl">Baixas</span><span class="val" style="color:#ef4444;">${totalSaidas}</span></div>
+        <div class="rel-preview-kpi-box"><span class="lbl">Itens c/ Saldo</span><span class="val" style="color:#10b981;">${itensSaldoPos}</span></div>
+        <div class="rel-preview-kpi-box"><span class="lbl">Total Itens</span><span class="val" style="color:#64748b;">${itens.length}</span></div>
+      </div>
+      ${itensSaldoNeg > 0
+        ? `<div style="background:#fee2e2;border:1px solid #f87171;border-radius:6px;padding:8px 14px;font-size:12px;color:#991b1b;margin-bottom:10px;">
+             ⚠ ${itensSaldoNeg} item(ns) com saldo negativo — verificar consistencia dos dados.
+           </div>` : ''}
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">
+        Relatorio gerado: <strong>${escHtml(empLabel)}</strong> · Periodo: <strong>${periodoLabel}</strong><br>
+        Clique em <strong>Imprimir / Salvar PDF</strong> para exportar o documento executivo completo.
+      </div>`;
     prevDiv.style.display = 'block';
     document.getElementById('rel-print-btns').style.display = 'flex';
 }
