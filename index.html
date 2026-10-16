@@ -690,7 +690,7 @@ function write(path,op,body){const prev=pend.get(path);let next;
   else next=prev&&prev.op!=='delete'?{op:prev.op,body:deepMerge(prev.body,body)}:{op:'update',body:clone(body)};
   pend.set(path,next);pump(path)}
 async function pump(path){if(running.has(path))return;running.add(path);renderSync();
-  while(pend.has(path)){const w=pend.get(path);pend.delete(path);inflight.set(path,w);const ref=STORE.doc(path);
+  while(pend.has(path)){const w=pend.get(path);pend.delete(path);w.t0=Date.now();inflight.set(path,w);const ref=STORE.doc(path);
     for(let tent=0;tent<2;tent++){try{if(w.op==='delete')await ref.delete();else if(w.op==='set')await ref.set(w.body);else await ref.update(w.body);syncErr=false;break}
       catch(e){const c=e&&e.code;
         if(c==='unavailable'&&tent===0){await new Promise(r=>setTimeout(r,400+Math.random()*600));continue}
@@ -1023,7 +1023,7 @@ function render(){
   renderSync();renderPeers();
   if(loading)return;
   if(ui.view==='port'){renderPort();renderBanner();return}
-  if(!state){renderBanner();return}
+  if(!state){renderBanner();if(LOGIN()&&EU){const can=EU.master||EU.podeCriar;const box=$('#v-empty .box');if(box&&!box.dataset.lg){box.dataset.lg=1}$('#v-empty h2').textContent=can?'Nenhum projeto ainda':'Você ainda não tem acesso a nenhum projeto';$('#v-empty p').textContent=can?'Comece pelo modelo de loteamento, por um projeto em branco ou importe um arquivo.':'Peça ao master para liberar seu acesso em Usuários e acessos. Assim que ele liberar, o projeto aparece aqui sozinho.';$('#v-empty .acts').hidden=!can}return}
   structure();setSC(schedule());
   if(ui.sel!=null&&ST.idx[ui.sel]==null)ui.sel=null;if(ui.sel==null)ui.open=false;
   renderBanner();
@@ -1036,7 +1036,7 @@ function render(){
   pendingFocus=null}
 function renderSync(){const el=$('#sync');let cls,txt;
   if(MODE==='carregando'){cls='local';txt='Conectando…'}
-  else if(MODE==='firebase'){if(syncErr){cls='err';txt='Erro ao salvar no Firebase'}else if(running.size||pend.size){cls='saving';txt='Salvando…'}else{cls='';txt=papel()==='admin'?'Salvo no Firebase':PAPEIS_PROJ[papel()].split(' (')[0]}}
+  else if(MODE==='firebase'){const velho=[...inflight.values()].some(w=>Date.now()-(w.t0||0)>10000);if(velho||(FBSTAT&&FBSTAT.erro)){cls='err';txt='Sem conexão com o servidor: as alterações ainda não chegaram aos outros'}else if(syncErr){cls='err';txt='Erro ao salvar no Firebase'}else if(running.size||pend.size){cls='saving';txt='Salvando…'}else{cls='';txt=papel()==='admin'?'Salvo no Firebase':PAPEIS_PROJ[papel()].split(' (')[0]}}
   else if(MODE==='arquivo'){cls=!FDB?'local':FDB.err?'err':FDB.pending?'saving':'';txt=!FDB?'Pasta não conectada':FDB.err?'Erro ao gravar na pasta':FDB.pending?'Salvando na pasta…':'Salvo na pasta compartilhada'}else if(MODE==='local'){cls='local';txt='Salvo só neste navegador'}
   else if(syncErr){cls='err';txt='Erro ao salvar'}else if(running.size||pend.size){cls='saving';txt='Salvando…'}
   else{cls='';txt=RO?'Somente leitura':papel()!=='admin'?PAPEIS[papel()].split(' (')[0]:'Salvo para a equipe'}
@@ -1046,6 +1046,8 @@ function renderBanner(){const b=$('#banner');let h='';
   if(RO&&MODE==='nuvem')h=`${ic('lock')}<span>Você está vendo este planejador sem permissão de edição. Peça ao dono para compartilhar com você como Editor ou Colaborador.</span>`;
   else if(oldData&&MODE!=='carregando'&&remote.loadedP)h=`<span>Encontrei um projeto da primeira versão salvo neste navegador (“${esc(oldData.nome||'Projeto')}”).</span><button class="btn sm" data-act2="importOld">Trazer para cá</button><button class="btn sm ghost" data-act2="dismissOld">Ignorar</button>`;
   else if(state&&SC&&SC.cycle)h=`<span>Há vínculos em ciclo entre tarefas (provavelmente duas pessoas editaram ao mesmo tempo). O caminho crítico fica desligado até corrigir as predecessoras.</span>`;
+  else if(MODE==='nuvem'&&!(()=>{try{return localStorage.getItem('pl-aviso-link')}catch(e){return'1'}})())h=`<span>Este link do Claude tem um banco próprio. Quem usa o arquivo “Planejador de Obras.html” (banco Firebase) não vê os projetos daqui, e vice-versa. Para levar um projeto, use Importar / exportar.</span><button class="btn sm ghost" data-act2="okLink">Entendi</button>`;
+  else if(MODE==='firebase'&&FBSTAT&&FBSTAT.erro)h=`<span>${esc(explicaErroFB(FBSTAT.erro))}</span><button class="btn sm" data-act2="diag">Diagnóstico</button>`;
   else if(state&&state.cenarioDe&&remote.projs.has(state.cenarioDe))h=`<span>Este é um cenário de “${esc(remote.projs.get(state.cenarioDe).nome)}”. Mude o que quiser aqui sem afetar o original e compare na aba Fluxo e resultado.</span>`;
   b.innerHTML=h;b.hidden=!h}
 function renderToolbar(){const base=auxDoc('base');
@@ -1897,8 +1899,8 @@ function renderUserChip(){const el=$('#user-chip');if(!el)return;if(!LOGIN()||!E
   el.innerHTML=`<img src="${iniciaisAvatar(EU.nome)}" alt=""><span>${esc(EU.nome)}${EU.master?' · master':''}</span>`}
 function openUserMenu(){const r=$('#user-chip').getBoundingClientRect();
   $('#menu-root').innerHTML=`<div class="menu" style="left:${Math.max(16,Math.min(r.left,window.innerWidth-300))}px;top:${r.bottom+6}px"><div class="mh">${esc(EU.nome)} (${esc(EU.login)})</div>
-    <button class="mi" data-u="senha">Trocar minha senha</button>${EU.master?'<button class="mi" data-u="usuarios">Usuários e acessos</button>':''}<button class="mi" data-u="pasta">${MODE==='firebase'?'Banco: Firebase ('+esc(FIREBASE_CFG.projectId)+')':'Pasta de dados: '+esc(FOLDER_NAME)}</button><hr><button class="mi" data-u="sair">Sair</button></div>`;
-  $('#menu-root .menu').onclick=e=>{const b=e.target.closest('[data-u]');if(!b)return;closeMenu();({senha:()=>openTrocarSenha(false),usuarios:openUsuarios,sair,pasta:()=>toast(MODE==='firebase'?'Os dados ficam no Firebase, em planejador/v1, separados do sistema de Compras.':'Os dados ficam nos arquivos dados-*.json da pasta “'+FOLDER_NAME+'”.')})[b.dataset.u]()}}
+    <button class="mi" data-u="senha">Trocar minha senha</button><button class="mi" data-u="diag">Diagnóstico da conexão</button>${EU.master?'<button class="mi" data-u="usuarios">Usuários e acessos</button>':''}<button class="mi" data-u="pasta">${MODE==='firebase'?'Banco: Firebase ('+esc(FIREBASE_CFG.projectId)+')':'Pasta de dados: '+esc(FOLDER_NAME)}</button><hr><button class="mi" data-u="sair">Sair</button></div>`;
+  $('#menu-root .menu').onclick=e=>{const b=e.target.closest('[data-u]');if(!b)return;closeMenu();({diag:openDiag,senha:()=>openTrocarSenha(false),usuarios:openUsuarios,sair,pasta:()=>toast(MODE==='firebase'?'Os dados ficam no Firebase, em planejador/v1, separados do sistema de Compras.':'Os dados ficam nos arquivos dados-*.json da pasta “'+FOLDER_NAME+'”.')})[b.dataset.u]()}}
 function openTrocarSenha(obrig){modal(`<h2>${obrig?'Crie uma senha nova':'Trocar minha senha'}</h2>${obrig?'<p>Você entrou com a senha inicial. Defina uma senha só sua antes de continuar.</p>':''}
   <div class="row2"><label class="lbl">Nova senha<input class="inp" type="password" id="ns1" autocomplete="new-password"></label><label class="lbl">Repita a senha<input class="inp" type="password" id="ns2" autocomplete="new-password"></label></div>
   <div class="acts">${obrig?'':'<button class="btn" data-m="x">Cancelar</button>'}<button class="btn primary" data-m="ok">Salvar senha</button></div>`,
@@ -1988,17 +1990,46 @@ function fbAuthCache(store){
   const a={docs:{},pending:false,ready:false,setMe(){},flush(){},
     doc:p=>{const r=store.doc(p);return{...r,set:async b=>{a.docs[p]=clone(b);await r.set(b)},delete:async()=>{delete a.docs[p];await r.delete()}}}};
   return a}
+let FBRAW=null,FBSTAT={ok:false,ultimaConfirmacao:0,erro:null};
+const comTempo=(p,ms,msg)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(new Error(msg),{code:'timeout'})),ms))]);
+function explicaErroFB(e){const c=(e&&e.code)||'',m=String((e&&e.message)||e||'');
+  if(c==='permission-denied'||c==='denied'||/permission/i.test(m))return'O Firebase recusou o acesso: as regras do Firestore não permitem ler ou gravar em “planejador”. No Console do Firebase → Firestore → Regras, inclua: match /planejador/{document=**} { allow read, write: if true; } e publique.';
+  if(/API_KEY|referer|referrer|blocked/i.test(m))return'A chave do Firebase está restrita a outros sites e bloqueou este arquivo. No Google Cloud Console → APIs e serviços → Credenciais, libere a chave para este endereço (ou tire a restrição de sites).';
+  if(c==='timeout'||c==='unavailable'||/offline|network|timeout/i.test(m))return'Não consegui falar com o servidor do Firebase. Verifique a internet ou se a rede da empresa bloqueia firestore.googleapis.com.';
+  return'Erro do Firebase: '+m}
+async function pingServidor(){const db=FBRAW;const r=db.doc(FB_ROOT+'/_diag/ping');
+  await comTempo(r.set({em:Date.now(),por:(EU&&EU.login)||'login'}),15000,'O servidor não confirmou a gravação.');
+  const s=await comTempo(r.get({source:'server'}),15000,'O servidor não respondeu à leitura.');FBSTAT={ok:true,ultimaConfirmacao:Date.now(),erro:null};return s}
 async function initFirebase(){
   await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
   await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js');
   let app;try{app=firebase.app('planejador')}catch(e){app=firebase.initializeApp(FIREBASE_CFG,'planejador')}
-  const db=app.firestore();try{db.settings({ignoreUndefinedProperties:true,merge:true})}catch(e){}try{await db.enablePersistence({synchronizeTabs:true})}catch(e){}
-  FBDB=fbAdapter(db);STORE=FBDB;ADB=fbAuthCache(FBDB);
-  const first=k=>new Promise((res,rej)=>{let done=false;const t=setTimeout(()=>{if(!done)rej(new Error('O Firebase não respondeu. Verifique a internet.'))},15000);
-    FBDB.collection(k).onSnapshot(s=>{Object.keys(ADB.docs).forEach(p=>{if(p.startsWith(k+'/'))delete ADB.docs[p]});s.docs.forEach(d=>ADB.docs[k+'/'+d.id]=d.data());
+  const db=app.firestore();try{db.settings({ignoreUndefinedProperties:true,merge:true,experimentalAutoDetectLongPolling:true})}catch(e){}
+  FBRAW=db;FBDB=fbAdapter(db);STORE=FBDB;ADB=fbAuthCache(FBDB);
+  try{await pingServidor()}catch(e){FBSTAT={ok:false,ultimaConfirmacao:0,erro:e};throw new Error(explicaErroFB(e))}
+  const first=k=>new Promise((res,rej)=>{let done=false;const t=setTimeout(()=>{if(!done)rej(new Error('O Firebase não enviou a lista de '+k+'. '+explicaErroFB({code:'timeout'})))},20000);
+    FBDB.collection(k).onSnapshot(s=>{if(!done&&s.metadata&&s.metadata.fromCache)return;
+      Object.keys(ADB.docs).forEach(p=>{if(p.startsWith(k+'/'))delete ADB.docs[p]});s.docs.forEach(d=>ADB.docs[k+'/'+d.id]=d.data());
       if(!done){done=true;clearTimeout(t);res()}else{syncPerfis();if(EU){const u=usuarioDoc(EU.login);if(!u||u.ativo===false){toast('Seu acesso foi desativado.');setTimeout(sair,1500);return}EU.master=!!u.master;EU.podeCriar=!!(u.master||u.podeCriar);EU.nome=u.nome||EU.login}refiltrarProjs();scheduleRender()}},
-    e=>{if(!done){done=true;clearTimeout(t);rej(new Error(e.code==='denied'?'O Firebase recusou o acesso. Confira as regras do Firestore (veja as instruções).':e.message))}})});
-  await Promise.all([first('usuarios'),first('senhas')]);ADB.ready=true}
+    e=>{if(!done){done=true;clearTimeout(t);rej(new Error(explicaErroFB(e)))}})});
+  await Promise.all([first('usuarios'),first('senhas')]);ADB.ready=true;
+  setInterval(()=>{if(MODE==='firebase')renderSyncSafe()},3000);
+  setInterval(()=>{if(MODE==='firebase'&&!document.hidden)pingServidor().catch(e=>{FBSTAT={ok:false,ultimaConfirmacao:FBSTAT.ultimaConfirmacao,erro:e};renderSyncSafe()})},60000)}
+function telaErroFirebase(msg){$('#v-load').hidden=true;const v=$('#v-pasta');v.hidden=false;
+  v.innerHTML=`<div class="box" style="max-width:640px"><h2>Não consegui conectar ao banco</h2><p>${esc(msg)}</p>
+    <p class="hint">Enquanto isso não for resolvido, nada do que for feito aqui chega aos outros usuários. Por isso o planejador não abre sem o banco.</p>
+    <div class="acts"><button class="btn primary" id="fb-retry">Tentar de novo</button>${window.showDirectoryPicker?'<button class="btn" id="fb-pasta">Usar pasta compartilhada no lugar</button>':''}</div>
+    <p class="hint">Detalhes técnicos: projeto ${esc(FIREBASE_CFG.projectId)} · endereço ${esc(location.protocol+'//'+location.host+location.pathname)}</p></div>`;
+  $('#fb-retry').onclick=()=>location.reload();const fp=$('#fb-pasta');if(fp)fp.onclick=()=>{MODE='arquivo';telaPasta()}}
+async function openDiag(){modal(`<h2>Diagnóstico da conexão</h2><div id="dg" class="hint">Testando…</div><div class="acts"><button class="btn" data-m="copy">Copiar resultado</button><button class="btn primary" data-m="x">Fechar</button></div>`,
+  r=>r.querySelector('.acts').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;if(b.dataset.m==='x')return closeModal();const t=$('#dg').innerText;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copiado.'),()=>openText('Diagnóstico','Copie o texto abaixo.',t))});
+  const L=[];const add=(k,v)=>L.push(`<div><b>${esc(k)}:</b> ${esc(v)}</div>`);
+  add('Modo',MODE==='firebase'?'Firebase ('+FIREBASE_CFG.projectId+')':MODE);add('Usuário',EU?EU.login+(EU.master?' (master)':''):'—');
+  add('Projetos que você enxerga',String(remote.projs.size));add('Projetos no banco',String(remote.projsAll?remote.projsAll.size:'?'));
+  add('Alterações aguardando o servidor',String(pend.size+inflight.size));
+  if(MODE==='firebase'){try{const t0=Date.now();await pingServidor();add('Servidor','OK, respondeu em '+(Date.now()-t0)+' ms')}catch(e){add('Servidor','FALHOU: '+explicaErroFB(e))}}
+  if(EU&&!EU.master&&remote.projsAll&&remote.projsAll.size>remote.projs.size)add('Atenção',`Existem ${remote.projsAll.size-remote.projs.size} projeto(s) aos quais você ainda não tem acesso. O master libera em Usuários e acessos.`);
+  const el=$('#dg');if(el)el.innerHTML=L.join('')}
 async function importarUsuariosCompras(){
   try{const db=firebase.app('planejador').firestore();const s=await db.collection('_config').doc('usuarios').get();const lista=s.exists?(s.data().lista||[]):[];
     let n=0;for(const u of lista){const l=String(u.login||'').trim().toLowerCase();if(!/^[a-z0-9_.-]{3,40}$/.test(l)||usuarioDoc(l))continue;
@@ -2132,6 +2163,8 @@ $('#zoom').addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&actions[b.dataset.act]){actions[b.dataset.act]();return}
   const b2=e.target.closest('[data-act2]');
   if(b2&&b2.dataset.act2==='importOld'){try{importJSON(JSON.stringify(oldData));try{localStorage.removeItem(OLDKEY)}catch(_){}oldData=null}catch(err){toast(err.message)}return}
+  if(b2&&b2.dataset.act2==='okLink'){try{localStorage.setItem('pl-aviso-link','1')}catch(_){}renderBanner();return}
+  if(b2&&b2.dataset.act2==='diag'){openDiag();return}
   if(b2&&b2.dataset.act2==='dismissOld'){oldData=null;try{localStorage.removeItem(OLDKEY)}catch(_){}renderBanner();return}
   if(!e.target.closest('.menu')&&!e.target.closest('#pj-btn')&&!e.target.closest('#btn-cor')&&!e.target.closest('#user-chip'))closeMenu()});
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(!b)return;ui.view=b.dataset.view;if(ui.view==='port')PORT=null;saveUI();presence();render()});
@@ -2166,7 +2199,7 @@ function startApp(){
   DL=dl;USER=user;ASSETS=assets;
   if(!db&&!C&&FIREBASE_CFG.apiKey){MODE='carregando';renderSync();$('#v-load').querySelector('p').textContent='Conectando ao banco Firebase…';
     try{await initFirebase();MODE='firebase';$('#v-load').hidden=true;aposConectar();return}
-    catch(e){toast((e&&e.message)||'Sem conexão com o Firebase.');MODE='carregando'}}
+    catch(e){MODE='carregando';renderSync();telaErroFirebase((e&&e.message)||'Sem conexão com o Firebase.');return}}
   if(!db&&!C&&window.showDirectoryPicker){MODE='arquivo';renderSync();telaPasta();return}
   if(db){STORE=db;MODE='nuvem'}else{STORE=localDB();MODE='local';if(!C)setTimeout(()=>toast('Este navegador não acessa pastas. Para trabalhar em equipe pela pasta do SharePoint, abra no Edge ou no Chrome.'),800)}
   if(user){try{ME=await user.me()}catch(e){}try{CANEDIT=!!(await user.canEdit())}catch(e){}if(MODE==='nuvem'){try{const w=await user.can('data.write');if(w===false)setRO(true)}catch(e){}}
